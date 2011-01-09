@@ -1,97 +1,53 @@
-# -*- coding: utf-8 -*-
 
-import socket
-import threading
-import SocketServer, time
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-import xmlrpclib, os
+import xmlrpclib, string, tarfile, os, os.path
+from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
+from SocketServer import ThreadingMixIn, ForkingMixIn
 
-def binData(ip, port):
-	def python_logo():
-		with open("python_logo.jpg", "rb") as handle:
-			return xmlrpclib.Binary(handle.read())
+class ThreadServer(ThreadingMixIn, DocXMLRPCServer):pass
 
-	def server_shutdown(self):
-		self.shutdown()
-		self.close()
+def parseFileList(name, tarObj) :
+	tar = tarObj
+	if os.path.isdir(name) :
+		tar.add(name)
+		#parseFileList(name, tar)
+	elif os.path.isfile(name) :
+		tar.add(name)
 
-	try :
-		x = ''
-		server = SimpleXMLRPCServer((ip, port))
-		print "Listening on port :", port, " Address :", ip
-		print os.getcwd()
-		server.register_function(python_logo, 'python_logo')
-		server.register_function(server_shutdown(server), 'server_shutdown')
-		print '=__='
-		server.serve_forever()
-		print '__==__'
-	except IOError, x:
-		print x, ' 0'
-	except socket.error, x:
-		print x, ' 1'
-	except x:
-		print x, ' 2'
-	finally :
-		print 'end serv_'
+def python_clean(name):
+	os.remove(str(name + '.tar'))
 
-class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
+def python_logo(name):
+	#os.chdir('/tmp')
+	tar = tarfile.open(str(name + '.tar'), 'w|bz2')
+	#parseFileList(name, tar)
+	tar.add(name)
+	tar.close()
+	with open(str(name + '.tar'), "rb") as handle:
+		return xmlrpclib.Binary(handle.read())
 
-	def handle(self):
+class Daemon:
+	def __init__(self):
+		self.serveraddr = ('', 35113)
+		self._srv = ThreadServer(self.serveraddr, DocXMLRPCRequestHandler, allow_none=True)
+		self._srv.set_server_title('PySADAM server')
+		self._srv.set_server_name('Example server') #TODO: need fix it
+		self._srv.set_server_documentation("""Welcome to""")
+		#self._srv.register_instance(MainInterface(), allow_dotted_names=True)
+		self._srv.register_introspection_functions()
+		self._srv.register_function(python_logo, 'python_logo')
+		self._srv.register_function(python_clean, 'python_clean')
 
-		data = self.request.recv(1024)
-		print data, ' data'
-		cur_thread = threading.currentThread()
-		s = socket.socket()
-		s.bind(('', 0))
-		data = s.getsockname()
-		#s.connect(('', data[1]))
-		#s.shutdown(socket.SHUT_RDWR)
-		s.close()
+	def run(self):
+		self._srv.serve_forever()
 
-		p = threading.Thread(target = binData, args = [ip, data[1]])
-		p.start()
+	def _shutdown(self):
+		self._srv.shutdown()
 
-		response = "%s %s %s" % (cur_thread.getName(), ip, data[1] )
-		self.request.send(response)
-
-class ThreadedTCPServer(SocketServer.ForkingMixIn, SocketServer.TCPServer):
-	pass
-
-def client(ip, port, message):
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.connect((ip, port))
-	sock.send(message + '_http://' + str(ip) + ':' + str(port))
-	response = sock.recv(1024)
-	print "Received: %s" % response
-	sock.close()
-
-if __name__ == "__main__":
-	# Port 0 means to select an arbitrary unused port
-	HOST, PORT = "localhost", 0
-
-	server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
-	ip, port = server.server_address
-	print ip, port, '__'
-
-	# Start a thread with the server -- that thread will then start one
-	# more thread for each request
-	server_thread = threading.Thread(target=server.serve_forever)
-	# Exit the server thread when the main thread terminates
-	server_thread.setDaemon(True)
-	server_thread.start()
-	print "Server loop running in thread:", server_thread.getName()
-
-	#client(ip, port, "Hello World 1")
-	#client(ip, port, "Hello World 2")
-	#client(ip, port, "Hello World 3")
-	#for i in xrange(12):
-	#	c = threading.Thread(target = client, args = [ip, port, "Hello World " + str(i)])
-	#	c.start()
-	#	c.join()
+if __name__ == '__main__':
 
 	try :
-		while 1:
-			time.sleep(10)
+		d = Daemon()
+		d.run()
 	except KeyboardInterrupt :
-		server.shutdown()
+		d._shutdown()
 		print '\nexit'
