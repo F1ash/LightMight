@@ -1,7 +1,33 @@
+# -*- coding: utf-8 -*-
 
 import xmlrpclib, string, tarfile, os, os.path
 from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
 from SocketServer import ThreadingMixIn, ForkingMixIn
+
+class DataRendering:
+	def __init__(self):
+		pass
+
+	def fileToList(self, path_ = ''):
+		if os.path.isfile(path_) :
+			f=open(path_, 'rb')
+			l = f.read()
+			f.close()
+			return string.split(l, '\n')
+		else :
+			return []
+
+	def listToFile(self, list_ = [], name_ = ''):
+		if name_ != '' :
+			fileName = str('/dev/shm/' + name_)
+			l = string.join(list_, '\n')
+			print l, '---'
+			f=open(fileName, 'wb')
+			f.write(l)
+			f.close()
+			return fileName
+		else :
+			return ''
 
 class ThreadServer(ThreadingMixIn, DocXMLRPCServer):pass
 
@@ -11,14 +37,13 @@ def typePath(name):
 	else :
 		return False
 
-def readCatalogStruct(name, tarObj, listObj):
-	tar = tarObj
-	listFile = listObj
+def readCatalogStruct(name, tarObj, listFile):
 	print name
-	tar.add(name, None, False)
+	tarObj.add(name, None, False)
 	for name_ in os.listdir(name):
+		name_ = str(name + '/' + name_)
 		if os.path.isdir(name_) :
-			readCatalogStruct(name_, tar, listFile)
+			readCatalogStruct(name_, tarObj, listFile)
 		else :
 			listFile += [name_]
 
@@ -44,19 +69,25 @@ def python_logo(name):
 
 def python_file(name):
 	#os.chdir('/tmp')
+	if not os.path.isfile(name) :
+		f =  open(name, 'wb')
+		f.write(str('File ' + name + ' not found\n'))
+		f.close()
 	with open(name, "rb") as handle:
 		return xmlrpclib.Binary(handle.read())
 
-def requistCatalogStruct(name):
+def requestCatalogStruct(name):
 	listCatalogFiles = []
 	f1 = tarfile.open('/dev/shm/_struct', 'w|bz2')
 	readCatalogStruct(name, f1, listCatalogFiles)
-	f2 = open('/dev/shm/_listFiles', 'wb')
-	f2.writelines(listCatalogFiles)
-	f2.close()
-	f1.add('/dev/shm/_listFiles')
+	#f2 = open('/dev/shm/_listFiles', 'wb')
+	#f2.writelines(listCatalogFiles)
+	#f2.close()
+	print listCatalogFiles, ' ===='
+	fileName = DataRendering().listToFile(listCatalogFiles, '_listFiles')
+	f1.add(fileName)
 	f1.close()
-	os.remove('/dev/shm/_listFiles')
+	os.remove(fileName)
 	with open('/dev/shm/_struct', "rb") as handle:
 		return xmlrpclib.Binary(handle.read())
 
@@ -73,7 +104,7 @@ class Daemon:
 		self._srv.register_function(python_clean, 'python_clean')
 		self._srv.register_function(typePath, 'typePath')
 		self._srv.register_function(python_file, 'python_file')
-		self._srv.register_function(requistCatalogStruct, 'requistCatalogStruct')
+		self._srv.register_function(requestCatalogStruct, 'requestCatalogStruct')
 
 	def run(self):
 		self._srv.serve_forever()
