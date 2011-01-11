@@ -2,7 +2,10 @@
 
 from xmlrpclib import ServerProxy
 from threading import Thread
-import os, os.path, tarfile, string
+import os, os.path, tarfile, string, random
+
+def randomString( j = 1):
+	return "".join( [random.choice(string.letters) for i in xrange(j)] )
 
 class DataRendering:
 	def __init__(self):
@@ -57,28 +60,36 @@ class xr_client:
 		s = ServerProxy(servaddr)
 
 		methods = s.system.listMethods()
+		# получение ID сессии
+		randomFileName = str('/dev/shm/' + randomString(24))
+		with open(randomFileName, "wb") as handle:
+			handle.write(s.sessionID().data)
+		listRandomString = DataRendering().fileToList(randomFileName)
+		s.python_clean(listRandomString[0])
+		os.remove(randomFileName)
+		print listRandomString
+		sessionID = listRandomString[1]
+
 		os.chdir('/tmp')
 		fileList = ["python_logo.jpg", 'clnt.py', 'iy']
 		for name in fileList :
 			if s.typePath(name) :
 				# print True
 				# получаем структуру каталога со списком его файлов
-				with open('/dev/shm/struct_', "wb") as handle:
-					handle.write(s.requestCatalogStruct(name).data)
-				s.python_clean('/dev/shm/_struct')
+				structFileName = str('/dev/shm/struct_' + sessionID)
+				with open(structFileName, "wb") as handle:
+					handle.write(s.requestCatalogStruct(name, sessionID).data)
+				s.python_clean(str('/dev/shm/_struct_' + sessionID))
 				# создаём структуру каталогов
-				tar = tarfile.open('/dev/shm/struct_', 'r')
+				tar = tarfile.open(structFileName, 'r')
 				tar.extractall()
 				tar.close()
 				# читаем список файлов
-				# f = open(str(os.getcwd() + '/dev/shm/_listFiles'), 'rb')
-				# catalogFileList = f.readlines()
-				# f.close()
-				listFiles = str(os.getcwd() + '/dev/shm/_listFiles')
+				listFiles = str(os.getcwd() + '/dev/shm/_listFiles_' + sessionID)
 				catalogFileList = DataRendering().fileToList(listFiles)
 				print catalogFileList
 				os.remove(listFiles)
-				os.remove(str('/dev/shm/struct_'))
+				os.remove(structFileName)
 				# копируем файлы
 				for name in catalogFileList :
 					if name not in ['', ' ', '\n'] :

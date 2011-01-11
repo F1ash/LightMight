@@ -1,8 +1,20 @@
 # -*- coding: utf-8 -*-
 
-import xmlrpclib, string, tarfile, os, os.path
+import xmlrpclib, string, tarfile, os, os.path, random
 from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
 from SocketServer import ThreadingMixIn, ForkingMixIn
+
+def randomString( j = 1):
+	return "".join( [random.choice(string.letters) for i in xrange(j)] )
+
+def sessionID():
+	fileName = str('/dev/shm/' + randomString(24))
+	_id= randomString(24)
+	f = open(fileName, 'wb')
+	f.write(str(fileName + '\n' + _id + '\n'))
+	f.close()
+	with open(fileName, "rb") as handle:
+		return xmlrpclib.Binary(handle.read())
 
 class DataRendering:
 	def __init__(self):
@@ -38,7 +50,7 @@ def typePath(name):
 		return False
 
 def readCatalogStruct(name, tarObj, listFile):
-	print name
+	#print name
 	tarObj.add(name, None, False)
 	for name_ in os.listdir(name):
 		name_ = str(name + '/' + name_)
@@ -47,21 +59,12 @@ def readCatalogStruct(name, tarObj, listFile):
 		else :
 			listFile += [name_]
 
-def parseFileList(name, tarObj) :
-	tar = tarObj
-	if os.path.isdir(name) :
-		tar.add(name)
-		#parseFileList(name, tar)
-	elif os.path.isfile(name) :
-		tar.add(name)
-
 def python_clean(name):
 	os.remove(name)
 
 def python_logo(name):
 	#os.chdir('/tmp')
 	tar = tarfile.open(str(name + '.tar'), 'w|bz2')
-	#parseFileList(name, tar)
 	tar.add(name)
 	tar.close()
 	with open(str(name + '.tar'), "rb") as handle:
@@ -71,24 +74,22 @@ def python_file(name):
 	#os.chdir('/tmp')
 	if not os.path.isfile(name) :
 		f =  open(name, 'wb')
-		f.write(str('File ' + name + ' not found\n'))
+		f.write(str('File ' + name + ' not found in server.\n'))
 		f.close()
 	with open(name, "rb") as handle:
 		return xmlrpclib.Binary(handle.read())
 
-def requestCatalogStruct(name):
+def requestCatalogStruct(name, _id):
 	listCatalogFiles = []
-	f1 = tarfile.open('/dev/shm/_struct', 'w|bz2')
+	fileList = str('/dev/shm/_struct_' + _id)
+	f1 = tarfile.open(fileList, 'w|bz2')
 	readCatalogStruct(name, f1, listCatalogFiles)
-	#f2 = open('/dev/shm/_listFiles', 'wb')
-	#f2.writelines(listCatalogFiles)
-	#f2.close()
-	print listCatalogFiles, ' ===='
-	fileName = DataRendering().listToFile(listCatalogFiles, '_listFiles')
+	#print listCatalogFiles, ' ===='
+	fileName = DataRendering().listToFile(listCatalogFiles, str('_listFiles_' + _id))
 	f1.add(fileName)
 	f1.close()
 	os.remove(fileName)
-	with open('/dev/shm/_struct', "rb") as handle:
+	with open(fileList, "rb") as handle:
 		return xmlrpclib.Binary(handle.read())
 
 class Daemon:
@@ -105,6 +106,7 @@ class Daemon:
 		self._srv.register_function(typePath, 'typePath')
 		self._srv.register_function(python_file, 'python_file')
 		self._srv.register_function(requestCatalogStruct, 'requestCatalogStruct')
+		self._srv.register_function(sessionID, 'sessionID')
 
 	def run(self):
 		self._srv.serve_forever()
