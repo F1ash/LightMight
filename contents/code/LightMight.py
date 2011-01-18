@@ -102,7 +102,7 @@ class MainWindow(QtGui.QMainWindow):
 			self.show_n_hide()
 
 	def showHelp_(self):
-		showHelp = ListingText("backupper.help", self)
+		showHelp = ListingText("MSG: LightMight.help", self)
 		showHelp.exec_()
 
 class BoxLayout(QtGui.QWidget):
@@ -124,7 +124,39 @@ class BoxLayout(QtGui.QWidget):
 
 		self.setLayout(vbox)
 
-class MyElem(QtCore.QModelIndex()):
+class ListingText(QtGui.QDialog):
+	def __init__(self, path_, parent = None):
+		QtGui.QDialog.__init__(self, parent)
+
+		self.setWindowTitle('LightMight Text')
+		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
+
+		browseText = QtGui.QTextEdit()
+		browseText.setReadOnly(True)
+
+		if path_[:3] != 'MSG':
+			f = open(path_,'rU')
+			data_ = f.readlines()
+			f.close()
+			raw_data = string.join(data_)
+			megadata = QtCore.QString.fromUtf8(raw_data)
+			browseText.setText(megadata)
+			width_ = '450'
+		else:
+			path_ = QtCore.QString.fromUtf8(path_)
+			browseText.setText(path_)
+			width_ = '750'
+
+		form = QtGui.QGridLayout()
+		form.addWidget(browseText,0,0)
+		self.setLayout(form)
+		self.resize(int(width_, 10), 100)
+
+	def closeEvent(self, event):
+		event.ignore()
+		self.done(0)
+
+class MyElem(QtCore.QModelIndex):
 	def __init__(self, parent = None):
 		QtCore.QModelIndex.__init__(self, parent)
 
@@ -144,6 +176,7 @@ class Box(QtGui.QWidget):
 		self.layout = QtGui.QGridLayout()
 
 		self.userList = QtGui.QListWidget()
+		self.userList.setMinimumSize(100, 75)
 		self.userList.setToolTip('Users in Web')
 		self.layout.addWidget(self.userList, 0, 0)
 
@@ -151,6 +184,7 @@ class Box(QtGui.QWidget):
 		self.sharedTree.setModel(MyTree())
 		#self.sharedTree.setRootIndex(QtCore.QModelIndex())
 		self.sharedTree.setRootIsDecorated(True)
+		self.sharedTree.setMinimumSize(100, 75)
 		self.sharedTree.setToolTip('Shared Source')
 		self.layout.addWidget(self.sharedTree, 0, 1)
 
