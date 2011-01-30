@@ -57,6 +57,7 @@ class MainWindow(QtGui.QMainWindow):
 		help_.addAction(listHelp)
 
 		self.menuTab = BoxLayout(Box)
+		self.menuTab.setMaximumSize(800, 650)
 		#self.menuTab.clear()
 		#self.menuTab.setUsesScrollButtons(True)
 		#self.create_menuTab(0)
@@ -156,18 +157,90 @@ class ListingText(QtGui.QDialog):
 		event.ignore()
 		self.done(0)
 
-class MyElem(QtCore.QModelIndex):
-	def __init__(self, parent = None):
-		QtCore.QModelIndex.__init__(self, parent)
+class TreeItem(object):
+	def __init__(self, data = [], parent = None):
 
-		pass
+		self.parentItem = parent
+		self.itemData = data
+		self.childItems = self.parentItem.children()
 
-class MyTree(QtCore.QAbstractItemModel):
-	def __init__(self, listObj = [], parent = None):
+	def child(self, row):
+		#return self.childItems.value(row)
+		return self.childItems[row]
+
+	def childCount(self):
+		return len(self.childItems)
+
+	def columnCount(self):
+		return len(self.itemData)
+
+	def data(self, column):
+		# return self.itemData.value(colunm)
+		return self.itemData[column]
+
+	def row(self):
+		if (self.parentItem is not None):
+			return self.parentItem.childItems.index(self)
+		return 0
+
+	def parent(self):
+		return self.parentItem
+
+	def appendChild(self, item):
+		if item:
+			self.childItems.append(item);
+
+class TreeModel(QtCore.QAbstractItemModel):
+	def __init__(self, data = [], parent = None):
 		QtCore.QAbstractItemModel.__init__(self, parent)
 
-		self.createIndex(0, 0, QtCore.QString('lkhwvglerht;'))
-		pass
+		self.rootItem = TreeItem(data, parent = self)
+
+	def index(self, row, column, parent):
+		if (not self.hasIndex(row, column, parent)) :
+			return QtCore.QModelIndex()
+
+		if (not parent.isValid()) :
+			parentItem = rootItem
+		else :
+			parentItem = parent.internalPointer()
+
+		childItem = parentItem.child(row)
+		if ( childItem is not None) :
+			return self.createIndex(row, column, childItem)
+
+		return QtCore.QModelIndex()
+
+	def parent(self, child):
+		if ( not child.isValid() ) :
+			return QModelIndex()
+
+		childItem = child.internalPointer()
+		parentItem = childItem.parent()
+		if ( parentItem is not None or parentItem == self.rootItem ) :
+			return QtCore.QModelIndex()
+
+		return self.createIndex(parentItem.row(), 0, parentItem)
+
+	def rowCount(self, parent):
+		if ( parent.column() > 0 ):
+			return 0
+
+		if ( not parent.isValid() ) :
+			item = self.rootItem;
+		else :
+			item = parent.internalPointer()
+
+		return item.childCount()
+
+	def columnCount(self, parent):
+		if (parent.isValid()) :
+			return (parent.internalPointer()).columnCount()
+		else :
+			return self.rootItem.columnCount()
+
+	def data(self, index, role):
+		return QtCore.QVariant()
 
 class Box(QtGui.QWidget):
 	def __init__(self, job_key = None, parent = None):
@@ -180,12 +253,13 @@ class Box(QtGui.QWidget):
 		self.userList.setToolTip('Users in Web')
 		self.layout.addWidget(self.userList, 0, 0)
 
+		treeModel = TreeModel(['Name', 'Description'], self)
 		self.sharedTree = QtGui.QTreeView()
-		self.sharedTree.setModel(MyTree())
-		#self.sharedTree.setRootIndex(QtCore.QModelIndex())
+		self.sharedTree.setModel(treeModel)
+		self.sharedTree.setRootIndex(treeModel.index(0, 0, QtCore.QModelIndex()))
 		self.sharedTree.setRootIsDecorated(True)
-		self.sharedTree.setMinimumSize(100, 75)
 		self.sharedTree.setToolTip('Shared Source')
+		self.sharedTree.setExpandsOnDoubleClick(True)
 		self.layout.addWidget(self.sharedTree, 0, 1)
 
 		self.setLayout(self.layout)

@@ -13,7 +13,7 @@ class DataRendering:
 
 	def fileToList(self, path_ = ''):
 		if os.path.isfile(path_) :
-			f=open(path_, 'rb')
+			f = open(path_, 'rb')
 			l = f.read()
 			f.close()
 			return string.split(l, '\n')
