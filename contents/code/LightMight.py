@@ -196,7 +196,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 
 		self.rootItem = TreeItem(data, parent = self)
 
-	def index(self, row, column, parent):
+	def index(self, row, column, parent = QtCore.QModelIndex()):
 		if (not self.hasIndex(row, column, parent)) :
 			return QtCore.QModelIndex()
 
@@ -242,6 +242,11 @@ class TreeModel(QtCore.QAbstractItemModel):
 	def data(self, index, role):
 		return QtCore.QVariant()
 
+	def headerData(self, section, orientation = QtCore.Qt.Horizontal, role = QtCore.Qt.DisplayRole):
+		if (orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole) :
+			return self.rootItem.data(section)
+		return QtCore.QVariant()
+
 class Box(QtGui.QWidget):
 	def __init__(self, job_key = None, parent = None):
 		QtGui.QWidget.__init__(self, parent)
@@ -253,10 +258,10 @@ class Box(QtGui.QWidget):
 		self.userList.setToolTip('Users in Web')
 		self.layout.addWidget(self.userList, 0, 0)
 
-		treeModel = TreeModel(['Name', 'Description'], self)
+		treeModel = TreeModel(['Name', 'Description'], parent = self)
 		self.sharedTree = QtGui.QTreeView()
 		self.sharedTree.setModel(treeModel)
-		self.sharedTree.setRootIndex(treeModel.index(0, 0, QtCore.QModelIndex()))
+		self.sharedTree.setRootIndex(treeModel.index(0, 0))
 		self.sharedTree.setRootIsDecorated(True)
 		self.sharedTree.setToolTip('Shared Source')
 		self.sharedTree.setExpandsOnDoubleClick(True)
