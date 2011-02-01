@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os, sys, os.path
-from PyQt4 import QtGui, QtCore, Qt
+from PyQt4 import QtGui, QtCore
+from xml.dom.minidom import Document, parse
 
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self):
@@ -57,6 +58,7 @@ class MainWindow(QtGui.QMainWindow):
 		help_.addAction(listHelp)
 
 		self.menuTab = BoxLayout(Box)
+		#self.menuTab = BoxLayout(Box)
 		self.menuTab.setMaximumSize(800, 650)
 		#self.menuTab.clear()
 		#self.menuTab.setUsesScrollButtons(True)
@@ -124,6 +126,7 @@ class BoxLayout(QtGui.QWidget):
 		hbox.addWidget(self.boxTable)
 
 		self.setLayout(vbox)
+		self.setMinimumSize(250, 175)
 
 class ListingText(QtGui.QDialog):
 	def __init__(self, path_, parent = None):
@@ -157,16 +160,18 @@ class ListingText(QtGui.QDialog):
 		event.ignore()
 		self.done(0)
 
-class TreeItem(object):
-	def __init__(self, data = [], parent = None):
-
-		self.parentItem = parent
+class TreeItem(QtCore.QObject):
+	def __init__(self, data = [], parentItem = None, parent = None):
+		QtCore.QObject.__init__(self, parent)
+		self.parentItem = parentItem
 		self.itemData = data
-		self.childItems = self.parentItem.children()
+		self.childItems = []
+		#self.parentItem.children()
 
 	def child(self, row):
-		#return self.childItems.value(row)
-		return self.childItems[row]
+		if row <= len(self.childItems):
+			return self.childItems[row]
+		return None
 
 	def childCount(self):
 		return len(self.childItems)
@@ -175,35 +180,39 @@ class TreeItem(object):
 		return len(self.itemData)
 
 	def data(self, column):
-		# return self.itemData.value(colunm)
 		return self.itemData[column]
+
+	def childIndex(self, child_link = None):
+		if child_link in self.childItems and child_link is not None:
+			return self.childItems.index(child_link)
 
 	def row(self):
 		if (self.parentItem is not None):
-			return self.parentItem.childItems.index(self)
-		return 0
+			return self.parentItem.childIndex(self)
+			#self.parentItem.childItems.index(self)
+		return None
 
-	def parent(self):
+	def getParentItem(self):
 		return self.parentItem
 
 	def appendChild(self, item):
-		if item:
-			self.childItems.append(item);
+		if item is not None:
+			self.childItems.append(item)
 
 class TreeModel(QtCore.QAbstractItemModel):
 	def __init__(self, data = [], parent = None):
 		QtCore.QAbstractItemModel.__init__(self, parent)
 
-		self.rootItem = TreeItem(data, parent = self)
+		self.rootItem = TreeItem(data, None, self)
 
-	def index(self, row, column, parent = QtCore.QModelIndex()):
-		if (not self.hasIndex(row, column, parent)) :
+	def index(self, row, column, prnt = QtCore.QModelIndex()):
+		if (not self.hasIndex(row, column, prnt)) :
 			return QtCore.QModelIndex()
 
-		if (not parent.isValid()) :
-			parentItem = rootItem
-		else :
-			parentItem = parent.internalPointer()
+		parentItem = self.rootItem;
+		if prnt.isValid():
+			parentItem = prnt.internalPointer()
+			#print "=====> %s\t-\t%s" % (parentItem, parentItem.data(0))
 
 		childItem = parentItem.child(row)
 		if ( childItem is not None) :
@@ -211,41 +220,81 @@ class TreeModel(QtCore.QAbstractItemModel):
 
 		return QtCore.QModelIndex()
 
-	def parent(self, child):
+	def parent(self, child = QtCore.QModelIndex()):
 		if ( not child.isValid() ) :
-			return QModelIndex()
+			return QtCore.QModelIndex()
 
 		childItem = child.internalPointer()
-		parentItem = childItem.parent()
-		if ( parentItem is not None or parentItem == self.rootItem ) :
+		#print "--> %s" % type(childItem)
+		if childItem is None:
+			return QtCore.QModelIndex()
+
+		parentItem = childItem.getParentItem()
+		if ( parentItem is None or parentItem == self.rootItem ) :
 			return QtCore.QModelIndex()
 
 		return self.createIndex(parentItem.row(), 0, parentItem)
 
-	def rowCount(self, parent):
+	def rowCount(self, parent = QtCore.QModelIndex()):
 		if ( parent.column() > 0 ):
 			return 0
 
 		if ( not parent.isValid() ) :
-			item = self.rootItem;
+			item = self.rootItem
 		else :
 			item = parent.internalPointer()
 
 		return item.childCount()
 
-	def columnCount(self, parent):
-		if (parent.isValid()) :
-			return (parent.internalPointer()).columnCount()
-		else :
-			return self.rootItem.columnCount()
+	def columnCount(self, parent = QtCore.QModelIndex()):
+		#if parent.isValid() :
+		#	return parent.internalPointer().columnCount()
+		#else :
+		#	return self.rootItem.columnCount()
+		return 2
 
-	def data(self, index, role):
-		return QtCore.QVariant()
+	def data(self, index_, role):
+		if (not index_.isValid()) :
+			return QtCore.QVariant()
+
+		if (role != QtCore.Qt.DisplayRole) :
+			return QtCore.QVariant()
+
+		item = index_.internalPointer()
+		return item.data(index_.column())
 
 	def headerData(self, section, orientation = QtCore.Qt.Horizontal, role = QtCore.Qt.DisplayRole):
 		if (orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole) :
 			return self.rootItem.data(section)
 		return QtCore.QVariant()
+
+	def setupItemData(self, pathList):
+		for path in pathList :
+			datasource = open(path)
+			dom2 = parse(datasource)   # parse an open file
+			#print dom2
+
+			self.parseFile(dom2.childNodes, self.rootItem)
+
+		#self.debugPrintObj(self.rootItem)
+
+	def parseFile(self, listNodes, parent_obj, tab = '	'):
+		for i in xrange(listNodes.length):
+			node = listNodes.item(i)
+			name_ = node.localName
+
+			#print tab, name_, node.attributes.item(0).value
+			_ddata = [node.attributes.item(0).value, name_]
+			_newobj = TreeItem(_ddata, parent_obj, parent_obj)
+			parent_obj.appendChild(_newobj)
+			if name_ == 'dir':
+				self.parseFile(node.childNodes, _newobj, tab + '\t')
+
+	def debugPrintObj(self, some_obj, tab = '	'):
+		return
+		print "obj->%s", tab, some_obj.data(0)
+		for child in some_obj.childItems:
+			self.debugPrintObj(child, tab + '	')
 
 class Box(QtGui.QWidget):
 	def __init__(self, job_key = None, parent = None):
@@ -258,19 +307,22 @@ class Box(QtGui.QWidget):
 		self.userList.setToolTip('Users in Web')
 		self.layout.addWidget(self.userList, 0, 0)
 
+		pathList = ['result1', 'result2', 'result3']
 		treeModel = TreeModel(['Name', 'Description'], parent = self)
 		self.sharedTree = QtGui.QTreeView()
-		self.sharedTree.setModel(treeModel)
-		self.sharedTree.setRootIndex(treeModel.index(0, 0))
+		#self.sharedTree.setRootIndex(treeModel.index(0, 0))
 		self.sharedTree.setRootIsDecorated(True)
+		treeModel.setupItemData(pathList)
 		self.sharedTree.setToolTip('Shared Source')
 		self.sharedTree.setExpandsOnDoubleClick(True)
+		self.sharedTree.setModel(treeModel)
 		self.layout.addWidget(self.sharedTree, 0, 1)
 
 		self.setLayout(self.layout)
 
 #os.system('cd $HOME && xauth merge /dev/shm/dsa && rm /dev/shm/dsa')
 name_ = os.path.basename(sys.argv[0])
+print sys.argv[0][:-len(name_)]
 os.chdir(sys.argv[0][:-len(name_)])
 app = QtGui.QApplication(sys.argv)
 main = MainWindow()
