@@ -33,11 +33,11 @@ class MainWindow(QtGui.QMainWindow):
 		listHelp.setStatusTip('Read help')
 		self.connect(listHelp,QtCore.SIGNAL('triggered()'), self.showHelp_)
 
-		serverSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Client Settings', self)
+		serverSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Server Settings', self)
 		serverSettings.setStatusTip('Read help')
 		self.connect(serverSettings, QtCore.SIGNAL('triggered()'), self.showServerSettingsShild)
 
-		clientSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Server Settings', self)
+		clientSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Client Settings', self)
 		clientSettings.setStatusTip('Read help')
 		self.connect(clientSettings, QtCore.SIGNAL('triggered()'), self.showClientSettingsShild)
 
@@ -121,27 +121,167 @@ class MainWindow(QtGui.QMainWindow):
 
 class ClientSettingsShild(QtGui.QDialog):
 	def __init__(self, parent = None):
-		QtGui.QWidget.__init__(self, parent)
-
-		self.setWindowTitle('LightMight Server Settings')
-		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
-
-	def closeEvent(self, event):
-		event.ignore()
-		self.done(0)
-
-
-class ServerSettingsShild(QtGui.QDialog):
-	def __init__(self, parent = None):
-		QtGui.QWidget.__init__(self, parent)
+		QtGui.QDialog.__init__(self, parent)
 
 		self.setWindowTitle('LightMight Client Settings')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
 
+		form = QtGui.QGridLayout()
+
+		self.listenPort = QtGui.QLabel('Listen Port Diapason :')
+		form.addWidget(self.listenPort, 0, 0)
+
+		self.checkMinPortBox = QtGui.QSpinBox()
+		self.checkMinPortBox.setMinimum(0)
+		self.checkMinPortBox.setMaximum(65000)
+		self.checkMinPortBox.setValue(34100)
+		self.checkMinPortBox.setSingleStep(1)
+		form.addWidget(self.checkMinPortBox, 0, 2)
+
+		self.checkMaxPortBox = QtGui.QSpinBox()
+		self.checkMaxPortBox.setMinimum(0)
+		self.checkMaxPortBox.setMaximum(65000)
+		self.checkMaxPortBox.setValue(34200)
+		self.checkMaxPortBox.setSingleStep(1)
+		form.addWidget(self.checkMaxPortBox, 1, 2)
+
+		self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
+		form.addWidget(self.useAvahi, 2, 0)
+
+		self.checkUseAvahi = QtGui.QCheckBox()
+		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
+		form.addWidget(self.checkUseAvahi, 2, 2)
+
+		self.upLoadPathLabel = QtGui.QLabel('DownLoad Path :')
+		form.addWidget(self.upLoadPathLabel, 3, 0)
+
+		self.upLoadPathString = QtGui.QLineEdit('/tmp/LightMight/DownLoad')
+		form.addWidget(self.upLoadPathString, 4, 0)
+
+		self.upLoadPathButton = QtGui.QPushButton('&Path')
+		self.upLoadPathButton.setMaximumWidth(75)
+		self.connect(self.upLoadPathButton, QtCore.SIGNAL('clicked()'), self.getPath)
+		form.addWidget(self.upLoadPathButton, 3, 2)
+
+		self.cancelButton = QtGui.QPushButton('&Cancel')
+		self.cancelButton.setMaximumWidth(75)
+		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
+		form.addWidget(self.cancelButton, 4, 1)
+
+		self.okButton = QtGui.QPushButton('&Ok')
+		self.okButton.setMaximumWidth(75)
+		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
+		form.addWidget(self.okButton, 4, 2)
+
+		self.setLayout(form)
+
+	def getPath(self):
+		nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
+		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.W_OK) and os.access(nameDir, os.X_OK) :
+			self.upLoadPathString.setText(nameDir)
+		else :
+			showHelp = ListingText("MSG: uncorrect Path (access denied)", self)
+			showHelp.exec_()
+
+	def ok(self):
+		pass
+
+	def cancel(self):
+		self.done(0)
+
 	def closeEvent(self, event):
 		event.ignore()
 		self.done(0)
 
+class ServerSettingsShild(QtGui.QDialog):
+	def __init__(self, parent = None):
+		QtGui.QDialog.__init__(self, parent)
+
+		self.setWindowTitle('LightMight Server Settings')
+		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
+
+		form = QtGui.QGridLayout()
+
+		self.emittPort = QtGui.QLabel('Emitt on Port Diapason :')
+		form.addWidget(self.emittPort, 0, 0)
+
+		self.checkMinPortBox = QtGui.QSpinBox()
+		self.checkMinPortBox.setMinimum(0)
+		self.checkMinPortBox.setMaximum(65000)
+		self.checkMinPortBox.setValue(34100)
+		self.checkMinPortBox.setSingleStep(1)
+		form.addWidget(self.checkMinPortBox, 0, 2)
+
+		self.checkMaxPortBox = QtGui.QSpinBox()
+		self.checkMaxPortBox.setMinimum(0)
+		self.checkMaxPortBox.setMaximum(65000)
+		self.checkMaxPortBox.setValue(34200)
+		self.checkMaxPortBox.setSingleStep(1)
+		form.addWidget(self.checkMaxPortBox, 1, 2)
+
+		self.pool = QtGui.QLabel('Pool :')
+		form.addWidget(self.pool, 2, 0)
+
+		self.checkPoolBox = QtGui.QSpinBox()
+		self.checkPoolBox.setMinimum(1)
+		self.checkPoolBox.setMaximum(300)
+		self.checkPoolBox.setValue(100)
+		self.checkPoolBox.setSingleStep(1)
+		form.addWidget(self.checkPoolBox, 2, 2)
+
+		self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
+		form.addWidget(self.useAvahi, 3, 0)
+
+		self.checkUseAvahi = QtGui.QCheckBox()
+		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
+		form.addWidget(self.checkUseAvahi, 3, 2)
+
+		self.sharedSource = QtGui.QLabel('Shared Sources :')
+		form.addWidget(self.sharedSource, 4, 0)
+
+		self.sharedTree = QtGui.QTreeView()
+		form.addWidget(self.sharedTree, 5, 0, 6, 2)
+
+		self.addPathButton = QtGui.QPushButton('&Add')
+		self.addPathButton.setMaximumWidth(75)
+		self.connect(self.addPathButton, QtCore.SIGNAL('clicked()'), self.getPath)
+		form.addWidget(self.addPathButton, 5, 2)
+
+		self.delPathButton = QtGui.QPushButton('&Del')
+		self.delPathButton.setMaximumWidth(75)
+		self.connect(self.delPathButton, QtCore.SIGNAL('clicked()'), self.ok)
+		form.addWidget(self.delPathButton, 6, 2)
+
+		self.okButton = QtGui.QPushButton('&Ok')
+		self.okButton.setMaximumWidth(75)
+		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
+		form.addWidget(self.okButton, 7, 2)
+
+		self.cancelButton = QtGui.QPushButton('&Cancel')
+		self.cancelButton.setMaximumWidth(75)
+		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
+		form.addWidget(self.cancelButton, 8, 2)
+
+		self.setLayout(form)
+
+	def getPath(self):
+		nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
+		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.W_OK) and os.access(nameDir, os.X_OK) :
+			#self.upLoadPathString.setText(nameDir)
+			pass
+		else :
+			showHelp = ListingText("MSG: uncorrect Path (access denied)", self)
+			showHelp.exec_()
+
+	def ok(self):
+		pass
+
+	def cancel(self):
+		self.done(0)
+
+	def closeEvent(self, event):
+		event.ignore()
+		self.done(0)
 
 class ButtonPanel(QtGui.QWidget):
 	def __init__(self, Obj_, job_key = None, parent = None):
@@ -195,7 +335,7 @@ class ListingText(QtGui.QDialog):
 	def __init__(self, path_, parent = None):
 		QtGui.QDialog.__init__(self, parent)
 
-		self.setWindowTitle('LightMight Text')
+		self.setWindowTitle('LightMight Message')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
 
 		browseText = QtGui.QTextEdit()
