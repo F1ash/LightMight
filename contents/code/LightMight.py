@@ -4,6 +4,8 @@ import os, sys, os.path
 from PyQt4 import QtGui, QtCore
 from xml.dom.minidom import Document, parse
 
+doc = Document()
+
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self):
 		QtGui.QMainWindow.__init__(self)
@@ -35,11 +37,11 @@ class MainWindow(QtGui.QMainWindow):
 
 		serverSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Server Settings', self)
 		serverSettings.setStatusTip('Read help')
-		self.connect(serverSettings, QtCore.SIGNAL('triggered()'), self.showServerSettingsShild)
+		self.connect(serverSettings, QtCore.SIGNAL('triggered()'), self.showServerSettingsShield)
 
 		clientSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Client Settings', self)
 		clientSettings.setStatusTip('Read help')
-		self.connect(clientSettings, QtCore.SIGNAL('triggered()'), self.showClientSettingsShild)
+		self.connect(clientSettings, QtCore.SIGNAL('triggered()'), self.showClientSettingsShield)
 
 		self.statusBar()
 
@@ -109,17 +111,17 @@ class MainWindow(QtGui.QMainWindow):
 		showHelp = ListingText("MSG: LightMight.help", self)
 		showHelp.exec_()
 
-	def showClientSettingsShild(self):
-		_ClientSettingsShild = ClientSettingsShild()
-		_ClientSettingsShild.exec_()
+	def showClientSettingsShield(self):
+		_ClientSettingsShield = ClientSettingsShield()
+		_ClientSettingsShield.exec_()
 		pass
 
-	def showServerSettingsShild(self):
-		_ServerSettingsShild = ServerSettingsShild()
-		_ServerSettingsShild.exec_()
+	def showServerSettingsShield(self):
+		_ServerSettingsShield = ServerSettingsShield()
+		_ServerSettingsShield.exec_()
 		pass
 
-class ClientSettingsShild(QtGui.QDialog):
+class ClientSettingsShield(QtGui.QDialog):
 	def __init__(self, parent = None):
 		QtGui.QDialog.__init__(self, parent)
 
@@ -129,7 +131,7 @@ class ClientSettingsShild(QtGui.QDialog):
 		form = QtGui.QGridLayout()
 
 		self.listenPort = QtGui.QLabel('Listen Port Diapason :')
-		form.addWidget(self.listenPort, 0, 0)
+		form.addWidget(self.listenPort, 0, 1)
 
 		self.checkMinPortBox = QtGui.QSpinBox()
 		self.checkMinPortBox.setMinimum(0)
@@ -146,7 +148,7 @@ class ClientSettingsShild(QtGui.QDialog):
 		form.addWidget(self.checkMaxPortBox, 1, 2)
 
 		self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
-		form.addWidget(self.useAvahi, 2, 0)
+		form.addWidget(self.useAvahi, 2, 1)
 
 		self.checkUseAvahi = QtGui.QCheckBox()
 		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
@@ -156,22 +158,26 @@ class ClientSettingsShild(QtGui.QDialog):
 		form.addWidget(self.upLoadPathLabel, 3, 0)
 
 		self.upLoadPathString = QtGui.QLineEdit('/tmp/LightMight/DownLoad')
-		form.addWidget(self.upLoadPathString, 4, 0)
+		form.addWidget(self.upLoadPathString, 4, 0, 4, 2)
 
 		self.upLoadPathButton = QtGui.QPushButton('&Path')
 		self.upLoadPathButton.setMaximumWidth(75)
 		self.connect(self.upLoadPathButton, QtCore.SIGNAL('clicked()'), self.getPath)
-		form.addWidget(self.upLoadPathButton, 3, 2)
+		form.addWidget(self.upLoadPathButton, 3, 1)
 
 		self.cancelButton = QtGui.QPushButton('&Cancel')
 		self.cancelButton.setMaximumWidth(75)
 		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-		form.addWidget(self.cancelButton, 4, 1)
+		form.addWidget(self.cancelButton, 4, 2, 4, 2)
 
 		self.okButton = QtGui.QPushButton('&Ok')
 		self.okButton.setMaximumWidth(75)
 		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
-		form.addWidget(self.okButton, 4, 2)
+		form.addWidget(self.okButton, 3, 2)
+
+		nullColumn = QtGui.QLabel('')
+		nullColumn.setMaximumWidth(5)
+		form.addWidget(nullColumn, 4, 3)
 
 		self.setLayout(form)
 
@@ -193,7 +199,7 @@ class ClientSettingsShild(QtGui.QDialog):
 		event.ignore()
 		self.done(0)
 
-class ServerSettingsShild(QtGui.QDialog):
+class ServerSettingsShield(QtGui.QDialog):
 	def __init__(self, parent = None):
 		QtGui.QDialog.__init__(self, parent)
 
@@ -203,7 +209,7 @@ class ServerSettingsShild(QtGui.QDialog):
 		form = QtGui.QGridLayout()
 
 		self.emittPort = QtGui.QLabel('Emitt on Port Diapason :')
-		form.addWidget(self.emittPort, 0, 0)
+		form.addWidget(self.emittPort, 0, 1)
 
 		self.checkMinPortBox = QtGui.QSpinBox()
 		self.checkMinPortBox.setMinimum(0)
@@ -220,7 +226,7 @@ class ServerSettingsShild(QtGui.QDialog):
 		form.addWidget(self.checkMaxPortBox, 1, 2)
 
 		self.pool = QtGui.QLabel('Pool :')
-		form.addWidget(self.pool, 2, 0)
+		form.addWidget(self.pool, 2, 1)
 
 		self.checkPoolBox = QtGui.QSpinBox()
 		self.checkPoolBox.setMinimum(1)
@@ -230,16 +236,23 @@ class ServerSettingsShild(QtGui.QDialog):
 		form.addWidget(self.checkPoolBox, 2, 2)
 
 		self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
-		form.addWidget(self.useAvahi, 3, 0)
+		form.addWidget(self.useAvahi, 3, 1)
 
 		self.checkUseAvahi = QtGui.QCheckBox()
 		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
 		form.addWidget(self.checkUseAvahi, 3, 2)
 
-		self.sharedSource = QtGui.QLabel('Shared Sources :')
-		form.addWidget(self.sharedSource, 4, 0)
+		self.sharedSourceLabel = QtGui.QLabel('Shared Sources :')
+		form.addWidget(self.sharedSourceLabel, 4, 0)
 
+		pathList = ['result1', 'result2', 'result3']
+		self.treeModel = TreeModel(['Name', 'Description'], parent = self)
 		self.sharedTree = QtGui.QTreeView()
+		self.sharedTree.setRootIsDecorated(True)
+		self.treeModel.setupItemData(pathList)
+		self.sharedTree.setToolTip('Shared Source')
+		self.sharedTree.setExpandsOnDoubleClick(True)
+		self.sharedTree.setModel(self.treeModel)
 		form.addWidget(self.sharedTree, 5, 0, 6, 2)
 
 		self.addPathButton = QtGui.QPushButton('&Add')
@@ -274,6 +287,8 @@ class ServerSettingsShild(QtGui.QDialog):
 			showHelp.exec_()
 
 	def ok(self):
+		doc.appendChild(self.treeModel.treeDataToXML(self.treeModel.rootItem))
+		print doc.toprettyxml()
 		pass
 
 	def cancel(self):
@@ -498,6 +513,27 @@ class TreeModel(QtCore.QAbstractItemModel):
 			if name_ == 'dir':
 				self.parseFile(node.childNodes, _newobj, tab + '\t')
 
+	def treeDataToXML(self, obj, tab = '	'):
+		str_ = obj.data(1)
+		name_ = obj.data(0)
+		node = doc.createElement(str_)
+		node.setAttribute('name', name_)
+		for i in xrange(obj.childCount()):
+			item = obj.child(i)
+			str_ = item.data(1)
+			name_ = item.data(0)
+			elem = doc.createElement(str_)
+			elem.setAttribute('name', name_)
+			print tab, name_, str_
+			if item.childCount() > 0 :
+				elem = self.treeDataToXML(item, tab = tab + '	')
+				print tab, 'dir'
+			else :
+				print tab, 'file'
+			node.appendChild(elem)
+
+		return node
+
 	def debugPrintObj(self, some_obj, tab = '	'):
 		return
 		print "obj->%s", tab, some_obj.data(0)
@@ -566,8 +602,8 @@ class TreeModel(QtCore.QAbstractItemModel):
 		if not index_.isValid() :
 			return QtCore.Qt.ItemIsEnabled
 
-		return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | \
-										QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEditable
+		return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable
+		##/ | QtCore.Qt.ItemIsEditable
 
 class Box(QtGui.QWidget):
 	def __init__(self, job_key = None, parent = None):
