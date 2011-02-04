@@ -5,6 +5,8 @@ from PyQt4 import QtGui, QtCore
 from xml.dom.minidom import Document, parse
 
 doc = Document()
+FileNameList = []
+FileNameList2UpLoad = []
 
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self):
@@ -59,7 +61,7 @@ class MainWindow(QtGui.QMainWindow):
 		help_ = menubar.addMenu('&Help')
 		help_.addAction(listHelp)
 
-		self.menuTab = Box()
+		self.menuTab = Box(self)
 		#self.menuTab = BoxLayout(Box)
 		#self.menuTab.setMaximumSize(800, 650)
 		#self.menuTab.clear()
@@ -85,6 +87,21 @@ class MainWindow(QtGui.QMainWindow):
 
 		# toolbar = self.addToolBar('Exit')
 		# toolbar.addAction(exit_)
+
+	def customEvent(self, event):
+		if event.type() == 1010 :
+			global FileNameList
+			global FileNameList2UpLoad
+			FileNameList2UpLoad = []
+			f = open('maskFile', 'wb')
+			self.menuTab.treeModel.getDataMask(self.menuTab.treeModel.rootItem, f)
+			f.close()
+			f = open('maskFile', 'rb')
+			self.menuTab.treeModel.dataMaskToFileNameList(self.menuTab.treeModel.rootItem, f)
+			f.close()
+			print FileNameList2UpLoad
+		elif event.type() == 1011 :
+			pass
 
 	def showBase(self):
 		self.list_ = ListingBase(self)
@@ -250,7 +267,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.sharedTree = QtGui.QTreeView()
 		self.sharedTree.setRootIsDecorated(True)
 		self.treeModel.setupItemData(pathList)
-		self.sharedTree.setToolTip('Shared Source')
+		self.sharedTree.setToolTip("<font color=red><b>Select path<br>for share it !</b></font>")
 		self.sharedTree.setExpandsOnDoubleClick(True)
 		self.sharedTree.setModel(self.treeModel)
 		form.addWidget(self.sharedTree, 5, 0, 6, 2)
@@ -287,9 +304,9 @@ class ServerSettingsShield(QtGui.QDialog):
 			showHelp.exec_()
 
 	def ok(self):
+		doc = Document()
 		doc.appendChild(self.treeModel.treeDataToXML(self.treeModel.rootItem))
-		print doc.toprettyxml()
-		pass
+		#print doc.toprettyxml()
 
 	def cancel(self):
 		self.done(0)
@@ -301,6 +318,8 @@ class ServerSettingsShield(QtGui.QDialog):
 class ButtonPanel(QtGui.QWidget):
 	def __init__(self, Obj_, job_key = None, parent = None):
 		QtGui.QWidget.__init__(self, parent)
+
+		self.Obj = Obj_
 
 		self.layout = QtGui.QVBoxLayout()
 		self.layout.addStretch(1)
@@ -317,12 +336,16 @@ class ButtonPanel(QtGui.QWidget):
 
 		self.upLoadButton = QtGui.QPushButton(QtCore.QString('Up'))
 		self.upLoadButton.setToolTip('UpLoad ItemList\nof Shared Source')
-		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.addItem)
+		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.upLoad)
 		self.layout.addWidget(self.upLoadButton)
 
 		self.setLayout(self.layout)
 
 	def addItem(self):
+		pass
+
+	def upLoad(self):
+		QtGui.QApplication.postEvent(self.Obj, QtCore.QEvent(1010))
 		pass
 
 	pass
@@ -514,25 +537,58 @@ class TreeModel(QtCore.QAbstractItemModel):
 				self.parseFile(node.childNodes, _newobj, tab + '\t')
 
 	def treeDataToXML(self, obj, tab = '	'):
-		str_ = obj.data(1)
-		name_ = obj.data(0)
-		node = doc.createElement(str_)
-		node.setAttribute('name', name_)
+		global FileNameList
+		_str = obj.data(1)
+		_name = obj.data(0)
+		node = doc.createElement(_str)
+		node.setAttribute('name', _name)
 		for i in xrange(obj.childCount()):
 			item = obj.child(i)
 			str_ = item.data(1)
 			name_ = item.data(0)
 			elem = doc.createElement(str_)
 			elem.setAttribute('name', name_)
-			print tab, name_, str_
+			# print tab, name_, str_
 			if item.childCount() > 0 :
 				elem = self.treeDataToXML(item, tab = tab + '	')
-				print tab, 'dir'
-			else :
-				print tab, 'file'
+				#print tab, 'dir'
+			elif str_ == 'file' :
+				#print tab, 'file'
+				if _name == 'Name' :
+					_prefix = ''
+				else :
+					_prefix = _name + '/'
+				FileNameList += [ _prefix + name_ ]
 			node.appendChild(elem)
 
 		return node
+
+	def getDataMask(self, obj, f, tab = '	'):
+		for i in xrange(obj.childCount()):
+			item = obj.child(i)
+			str_ = item.data(1)
+			name_ = item.data(0)
+			# print tab, name_, str_, 'chkSt : ', obj.checkState
+			if str_ == 'file' :
+				if item.checkState == QtCore.Qt.Checked :
+					#f.write(name_ + ' 1\n')
+					f.write('1')
+				else :
+					#f.write(name_ + ' 0\n')
+					f.write('0')
+			elif str_ == 'dir' :
+				self.getDataMask(item, f, tab = tab + '	')
+
+	def dataMaskToFileNameList(self, obj, f, tab = '	'):
+		global FileNameList
+		global FileNameList2UpLoad
+		i = 0
+		fileSize = os.path.getsize(f.name)
+		while i < fileSize :
+			if f.read(1) == '1' :
+				print FileNameList[i], ' selected'
+				FileNameList2UpLoad += [FileNameList[i]]
+			i += 1
 
 	def debugPrintObj(self, some_obj, tab = '	'):
 		return
@@ -606,9 +662,10 @@ class TreeModel(QtCore.QAbstractItemModel):
 		##/ | QtCore.Qt.ItemIsEditable
 
 class Box(QtGui.QWidget):
-	def __init__(self, job_key = None, parent = None):
+	def __init__(self, Obj_, job_key = None, parent = None):
 		QtGui.QWidget.__init__(self, parent)
 
+		self.Obj = Obj_
 		self.layout = QtGui.QGridLayout()
 
 		self.userList = QtGui.QListWidget()
@@ -618,17 +675,17 @@ class Box(QtGui.QWidget):
 		self.layout.addWidget(self.userList, 0, 0)
 
 		pathList = ['result1', 'result2', 'result3']
-		treeModel = TreeModel(['Name', 'Description'], parent = self)
+		self.treeModel = TreeModel(['Name', 'Description'], parent = self)
 		self.sharedTree = QtGui.QTreeView()
 		#self.sharedTree.setRootIndex(treeModel.index(0, 0))
 		self.sharedTree.setRootIsDecorated(True)
-		treeModel.setupItemData(pathList)
+		self.treeModel.setupItemData(pathList)
 		self.sharedTree.setToolTip('Shared Source')
 		self.sharedTree.setExpandsOnDoubleClick(True)
-		self.sharedTree.setModel(treeModel)
+		self.sharedTree.setModel(self.treeModel)
 		self.layout.addWidget(self.sharedTree, 0, 1)
 
-		self.buttunPanel = BoxLayout(ButtonPanel)
+		self.buttunPanel = BoxLayout(ButtonPanel, self.Obj)
 		self.buttunPanel.setMaximumWidth(100)
 		self.layout.addWidget(self.buttunPanel, 0, 2)
 
