@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import os, sys, os.path
+import os, sys, os.path, Parser
 from PyQt4 import QtGui, QtCore
 from xml.dom.minidom import Document, parse
 
 doc = Document()
 FileNameList = []
 FileNameList2UpLoad = []
+
+def createStructure():
+	for nameDir in ['/dev/shm/LightMight', '/dev/shm/LightMight/cache', '/dev/shm/LightMight/structure'] :
+		if not os.path.isdir(nameDir):
+			os.mkdir(nameDir)
 
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self):
@@ -152,14 +157,14 @@ class ClientSettingsShield(QtGui.QDialog):
 
 		self.checkMinPortBox = QtGui.QSpinBox()
 		self.checkMinPortBox.setMinimum(0)
-		self.checkMinPortBox.setMaximum(65000)
+		self.checkMinPortBox.setMaximum(65535)
 		self.checkMinPortBox.setValue(34100)
 		self.checkMinPortBox.setSingleStep(1)
 		form.addWidget(self.checkMinPortBox, 0, 2)
 
 		self.checkMaxPortBox = QtGui.QSpinBox()
 		self.checkMaxPortBox.setMinimum(0)
-		self.checkMaxPortBox.setMaximum(65000)
+		self.checkMaxPortBox.setMaximum(65535)
 		self.checkMaxPortBox.setValue(34200)
 		self.checkMaxPortBox.setSingleStep(1)
 		form.addWidget(self.checkMaxPortBox, 1, 2)
@@ -225,42 +230,49 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		form = QtGui.QGridLayout()
 
+		self.serverNameLabel = QtGui.QLabel('Server Name :')
+		form.addWidget(self.serverNameLabel, 0, 0)
+
+		defaultName = os.getlogin() + ' LightMight Server'
+		self.serverNameString = QtGui.QLineEdit(defaultName)
+		form.addWidget(self.serverNameString, 0, 1, 1, 2)
+
 		self.emittPort = QtGui.QLabel('Emitt on Port Diapason :')
-		form.addWidget(self.emittPort, 0, 1)
+		form.addWidget(self.emittPort, 1, 1)
 
 		self.checkMinPortBox = QtGui.QSpinBox()
 		self.checkMinPortBox.setMinimum(0)
-		self.checkMinPortBox.setMaximum(65000)
+		self.checkMinPortBox.setMaximum(65535)
 		self.checkMinPortBox.setValue(34100)
 		self.checkMinPortBox.setSingleStep(1)
-		form.addWidget(self.checkMinPortBox, 0, 2)
+		form.addWidget(self.checkMinPortBox, 1, 2)
 
 		self.checkMaxPortBox = QtGui.QSpinBox()
 		self.checkMaxPortBox.setMinimum(0)
-		self.checkMaxPortBox.setMaximum(65000)
+		self.checkMaxPortBox.setMaximum(65535)
 		self.checkMaxPortBox.setValue(34200)
 		self.checkMaxPortBox.setSingleStep(1)
-		form.addWidget(self.checkMaxPortBox, 1, 2)
+		form.addWidget(self.checkMaxPortBox, 2, 2)
 
 		self.pool = QtGui.QLabel('Pool :')
-		form.addWidget(self.pool, 2, 1)
+		form.addWidget(self.pool, 3, 1)
 
 		self.checkPoolBox = QtGui.QSpinBox()
 		self.checkPoolBox.setMinimum(1)
 		self.checkPoolBox.setMaximum(300)
 		self.checkPoolBox.setValue(100)
 		self.checkPoolBox.setSingleStep(1)
-		form.addWidget(self.checkPoolBox, 2, 2)
+		form.addWidget(self.checkPoolBox, 3, 2)
 
 		self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
-		form.addWidget(self.useAvahi, 3, 1)
+		form.addWidget(self.useAvahi, 4, 1)
 
 		self.checkUseAvahi = QtGui.QCheckBox()
 		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
-		form.addWidget(self.checkUseAvahi, 3, 2)
+		form.addWidget(self.checkUseAvahi, 4, 2)
 
 		self.sharedSourceLabel = QtGui.QLabel('Shared Sources :')
-		form.addWidget(self.sharedSourceLabel, 4, 0)
+		form.addWidget(self.sharedSourceLabel, 5, 0)
 
 		pathList = ['result1', 'result2', 'result3']
 		self.treeModel = TreeModel(['Name', 'Description'], parent = self)
@@ -270,38 +282,47 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.sharedTree.setToolTip("<font color=red><b>Select path<br>for share it !</b></font>")
 		self.sharedTree.setExpandsOnDoubleClick(True)
 		self.sharedTree.setModel(self.treeModel)
-		form.addWidget(self.sharedTree, 5, 0, 6, 2)
+		form.addWidget(self.sharedTree, 6, 0, 7, 2)
 
 		self.addPathButton = QtGui.QPushButton('&Add')
 		self.addPathButton.setMaximumWidth(75)
 		self.connect(self.addPathButton, QtCore.SIGNAL('clicked()'), self.getPath)
-		form.addWidget(self.addPathButton, 5, 2)
+		form.addWidget(self.addPathButton, 6, 2)
 
 		self.delPathButton = QtGui.QPushButton('&Del')
 		self.delPathButton.setMaximumWidth(75)
-		self.connect(self.delPathButton, QtCore.SIGNAL('clicked()'), self.ok)
-		form.addWidget(self.delPathButton, 6, 2)
+		self.connect(self.delPathButton, QtCore.SIGNAL('clicked()'), self.delPath)
+		form.addWidget(self.delPathButton, 7, 2)
 
 		self.okButton = QtGui.QPushButton('&Ok')
 		self.okButton.setMaximumWidth(75)
 		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
-		form.addWidget(self.okButton, 7, 2)
+		form.addWidget(self.okButton, 8, 2)
 
 		self.cancelButton = QtGui.QPushButton('&Cancel')
 		self.cancelButton.setMaximumWidth(75)
 		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-		form.addWidget(self.cancelButton, 8, 2)
+		form.addWidget(self.cancelButton, 9, 2)
 
 		self.setLayout(form)
 
 	def getPath(self):
 		nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
 		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.W_OK) and os.access(nameDir, os.X_OK) :
-			#self.upLoadPathString.setText(nameDir)
-			pass
+			# print nameDir
+			Parser.listPrepare(nameDir)
+			resultFileName = Parser.getResultFile('_resultXMLFileOfAddSharedSource')
+			if resultFileName is not None :
+					self.treeModel.setupItemData(resultFileName)
+					self.treeModel.reset()
 		else :
 			showHelp = ListingText("MSG: uncorrect Path (access denied)", self)
 			showHelp.exec_()
+
+	def delPath(self):
+		#print self.treeModel.data(1, QtCore.Qt.DisplayRole)
+		#self.treeModel.reset()
+		pass
 
 	def ok(self):
 		doc = Document()
@@ -579,6 +600,18 @@ class TreeModel(QtCore.QAbstractItemModel):
 			elif str_ == 'dir' :
 				self.getDataMask(item, f, tab = tab + '	')
 
+	def setDataMask(self, obj, f, tab = '	'):
+		for i in xrange(obj.childCount()):
+			item = obj.child(i)
+			str_ = item.data(1)
+			name_ = item.data(0)
+			# print tab, name_, str_, 'chkSt : ', obj.checkState
+			if str_ == 'file' :
+				if f.read(1) :
+					item.checkState = QtCore.Qt.Checked
+			elif str_ == 'dir' :
+				self.setDataMask(item, f, tab = tab + '	')
+
 	def dataMaskToFileNameList(self, obj, f, tab = '	'):
 		global FileNameList
 		global FileNameList2UpLoad
@@ -661,6 +694,9 @@ class TreeModel(QtCore.QAbstractItemModel):
 		return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable
 		##/ | QtCore.Qt.ItemIsEditable
 
+	def delSelectItem(self):
+		pass
+
 class Box(QtGui.QWidget):
 	def __init__(self, Obj_, job_key = None, parent = None):
 		QtGui.QWidget.__init__(self, parent)
@@ -695,6 +731,7 @@ class Box(QtGui.QWidget):
 name_ = os.path.basename(sys.argv[0])
 #print sys.argv[0][:-len(name_)]
 os.chdir(sys.argv[0][:-len(name_)])
+createStructure()
 app = QtGui.QApplication(sys.argv)
 main = MainWindow()
 main.show()
