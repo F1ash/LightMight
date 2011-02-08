@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, sys, os.path, Parser
+import os, sys, os.path, Parser, xml.parsers.expat
 from PyQt4 import QtGui, QtCore
 from xml.dom.minidom import Document, parse
 
@@ -274,7 +274,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.sharedSourceLabel = QtGui.QLabel('Shared Sources :')
 		form.addWidget(self.sharedSourceLabel, 5, 0)
 
-		pathList = ['result1', 'result2', 'result3']
+		pathList = []    ## ['result1', 'result2', 'result3']
 		self.treeModel = TreeModel(['Name', 'Description'], parent = self)
 		self.sharedTree = QtGui.QTreeView()
 		self.sharedTree.setRootIsDecorated(True)
@@ -286,7 +286,7 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		self.addPathButton = QtGui.QPushButton('&Add')
 		self.addPathButton.setMaximumWidth(75)
-		self.connect(self.addPathButton, QtCore.SIGNAL('clicked()'), self.getPath)
+		self.connect(self.addPathButton, QtCore.SIGNAL('clicked()'), self.addPath)
 		form.addWidget(self.addPathButton, 6, 2)
 
 		self.delPathButton = QtGui.QPushButton('&Del')
@@ -306,17 +306,20 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		self.setLayout(form)
 
-	def getPath(self):
+	def addPath(self):
 		nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
-		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.W_OK) and os.access(nameDir, os.X_OK) :
+		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.X_OK) :    ## and os.access(nameDir, os.W_OK) :
 			# print nameDir
 			Parser.listPrepare(nameDir)
 			resultFileName = Parser.getResultFile('_resultXMLFileOfAddSharedSource')
 			if resultFileName is not None :
 					self.treeModel.setupItemData([resultFileName])
 					self.treeModel.reset()
+			else :
+				showHelp = ListingText("MSG: Available files not found in " + nameDir, self)
+				showHelp.exec_()
 		else :
-			showHelp = ListingText("MSG: uncorrect Path (access denied)", self)
+			showHelp = ListingText("MSG: uncorrect Path (access denied).", self)
 			showHelp.exec_()
 
 	def delPath(self):
@@ -540,24 +543,38 @@ class TreeModel(QtCore.QAbstractItemModel):
 	def setupItemData(self, pathList):
 		for path in pathList :
 			datasource = open(path)
-			dom2 = parse(datasource)   # parse an open file
-			#print dom2
 
-			self.parseFile(dom2.childNodes, self.rootItem)
+			try :
+				dom2 = parse(datasource)   # parse an open file
+				self.parseFile_(dom2.childNodes, self.rootItem)
+			except xml.parsers.expat.ExpatError , x:
+				#del dom2
+				print x, '\nОшибка в пути к файлу.'
+				showHelp = ListingText("MSG: Наличие некорректного имени каталога\файла.\nПриложение будет завершено.", main)
+				showHelp.exec_()
+				print "App exit."
+				app.exit(0)
+			finally :
+				datasource.close()
 
 		#self.debugPrintObj(self.rootItem)
 
-	def parseFile(self, listNodes, parent_obj, tab = '	'):
+	def parseFile_(self, listNodes, parent_obj, tab = '	'):
 		for i in xrange(listNodes.length):
 			node = listNodes.item(i)
-			name_ = node.localName
+			if node is not None :
+				name_ = node.localName
 
-			#print tab, name_, node.attributes.item(0).value
-			_ddata = [node.attributes.item(0).value, name_]
-			_newobj = TreeItem(_ddata, parent_obj, parent_obj)
-			parent_obj.appendChild(_newobj)
-			if name_ == 'dir':
-				self.parseFile(node.childNodes, _newobj, tab + '\t')
+				if node.attributes.length >= 2 :
+				#	print tab, 'name :', name_, \
+				#			'attr :', node.attributes.item(0).value, node.attributes.item(1).value
+					_ddata = [node.attributes.item(0).value,  node.attributes.item(1).value]   ##name_ + ' , ' +
+				else :
+					_ddata = [node.attributes.item(0).value, name_]
+				_newobj = TreeItem(_ddata, parent_obj, parent_obj)
+				parent_obj.appendChild(_newobj)
+				if name_ == 'dir':
+					self.parseFile_(node.childNodes, _newobj, tab + '\t')
 
 	def treeDataToXML(self, obj, tab = '	'):
 		global FileNameList
