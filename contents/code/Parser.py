@@ -20,7 +20,6 @@ def currentList(path):
 	return Result
 
 def makenode(path, str_ = 'dir'):
-	global doc
 	node = doc.createElement(str_)
 	node.setAttribute('name', path)
 	root, dirs, files = currentList(path)
@@ -50,20 +49,14 @@ def parseFile(listNodes, tab = '	'):
 			lenAttr = node.attributes.length
 			print tab, name_, node.attributes.item(0).value  #, NodeType[node.nodeType]
 
-def listPrepare(_path):
-	global dirList
-	global doc
-	#for node in doc.childNodes :
-	#	doc.removeChild(node)
-	doc = Document()
-	dirList = []
-	# print [str(_path)]
-	for path in [str(_path)] :
-		for root, dirs, files in os.walk(str(path)):
+if __name__ == "__main__" :
+	# Example action
+	for path in [ '/tmp'] :
+		for root, dirs, files in os.walk(path):
 			dirList += [(root, dirs, files)]
 		if dirList == [] :
 			dirList += [(path,[],[])]
-			# print dirList
+			print dirList
 
 	path_ = dirList[0][0]
 	if ( os.path.isdir(path_) and os.access(path_, os.R_OK) and os.access(path_, os.W_OK) and \
@@ -74,29 +67,17 @@ def listPrepare(_path):
 		str_ = 'file'
 		doc.appendChild(makenode(path_, str_))
 
-def getResultFile(resultFileName):
-	global doc
-	# print doc.toprettyxml()
-	fileName = str('/dev/shm/LightMight/cache/' + resultFileName)
-	#os.remove(fileName)
-	f = open(fileName, 'wb')
+	print doc.toprettyxml()
+	f = open('result', 'wb')
 	#f.write(doc.toprettyxml())
 	doc.writexml(f)
 	f.close()
 
-	if os.path.getsize(fileName) > 22 :
-		#datasource = open(fileName)
-		#dom2 = parse(datasource)   # parse an open file
-		#parseFile(dom2.childNodes)
-		#datasource.close()
-		return fileName
+	if os.path.getsize('result') > 22 :
+		datasource = open('result')
+		dom2 = parse(datasource)   # parse an open file
+		parseFile(dom2.childNodes)
+		datasource.close()
 	else :
-		os.remove(fileName)
+		os.remove('result')
 		print 'File was empty and removed'
-		return None
-
-if __name__ == "__main__" :
-	# Example action
-
-	listPrepare('/tmp')
-	print getResultFile('result')
