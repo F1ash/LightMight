@@ -20,15 +20,11 @@ def currentList(path):
 	return Result
 
 def makenode(path, str_ = 'dir'):
-<<<<<<< HEAD
 	global doc
-=======
->>>>>>> 46bff2157961195c7960685f6de9a7766f0d6932
 	node = doc.createElement(str_)
 	node.setAttribute('name', path)
 	root, dirs, files = currentList(path)
 	for dir_ in dirs :
-<<<<<<< HEAD
 		try :
 			_dir = dir_.encode('utf-8')
 			fullname = os.path.join(root, _dir)
@@ -62,19 +58,6 @@ def makenode(path, str_ = 'dir'):
 			pass
 		finally :
 			pass
-=======
-		fullname = os.path.join(root, dir_)
-		if ( os.path.isdir(fullname) and os.access(fullname, os.R_OK) and \
-			os.access(fullname, os.W_OK) and os.access(fullname, os.X_OK) ) :
-			elem = makenode(fullname)
-			node.appendChild(elem)
-	for file_ in files :
-		fullname = os.path.join(root, file_)
-		if os.path.isfile(fullname) and os.access(fullname, os.R_OK) :
-			elem = doc.createElement('file')
-			elem.setAttribute('name', file_)
-			node.appendChild(elem)
->>>>>>> 46bff2157961195c7960685f6de9a7766f0d6932
 	return node
 
 def parseFile(listNodes, tab = '	'):
@@ -89,7 +72,6 @@ def parseFile(listNodes, tab = '	'):
 			lenAttr = node.attributes.length
 			print tab, name_, node.attributes.item(0).value  #, NodeType[node.nodeType]
 
-<<<<<<< HEAD
 def listPrepare(_path):
 	global dirList
 	global doc
@@ -145,37 +127,3 @@ if __name__ == "__main__" :
 
 	listPrepare('/tmp')
 	print getResultFile('result')
-=======
-if __name__ == "__main__" :
-	# Example action
-	for path in [ '/tmp'] :
-		for root, dirs, files in os.walk(path):
-			dirList += [(root, dirs, files)]
-		if dirList == [] :
-			dirList += [(path,[],[])]
-			print dirList
-
-	path_ = dirList[0][0]
-	if ( os.path.isdir(path_) and os.access(path_, os.R_OK) and os.access(path_, os.W_OK) and \
-																			os.access(path_, os.X_OK) ) :
-		str_ = 'dir'
-		doc.appendChild(makenode(path_, str_))
-	elif os.path.isfile(path_) and os.access(path_, os.R_OK) :
-		str_ = 'file'
-		doc.appendChild(makenode(path_, str_))
-
-	print doc.toprettyxml()
-	f = open('result', 'wb')
-	#f.write(doc.toprettyxml())
-	doc.writexml(f)
-	f.close()
-
-	if os.path.getsize('result') > 22 :
-		datasource = open('result')
-		dom2 = parse(datasource)   # parse an open file
-		parseFile(dom2.childNodes)
-		datasource.close()
-	else :
-		os.remove('result')
-		print 'File was empty and removed'
->>>>>>> 46bff2157961195c7960685f6de9a7766f0d6932
