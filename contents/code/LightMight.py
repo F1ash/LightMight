@@ -541,14 +541,19 @@ class TreeModel(QtCore.QAbstractItemModel):
 		return QtCore.QVariant()
 
 	def setupItemData(self, pathList):
+		print 'Создание отображения...'
 		for path in pathList :
-			datasource = open(path)
+			datasource = open(path, 'rb')
 
 			try :
-				dom2 = parse(datasource)   # parse an open file
+				dom2 = parse(datasource)
+				print 'dom2 открыт'   # parse an open file
 				self.parseFile_(dom2.childNodes, self.rootItem)
+				print 'парсинг завершён'   # parse
+				del dom2
+				print 'dom2 -- deleted'
 			except xml.parsers.expat.ExpatError , x:
-				#del dom2
+				#возникает при неправильной кодировке имени файла (временно устранено)
 				print x, '\nОшибка в пути к файлу.'
 				showHelp = ListingText("MSG: Наличие некорректного имени каталога\файла.\nПриложение будет завершено.", main)
 				showHelp.exec_()
@@ -557,10 +562,13 @@ class TreeModel(QtCore.QAbstractItemModel):
 			finally :
 				datasource.close()
 
+		print 'Создание отображения завершено.'
 		#self.debugPrintObj(self.rootItem)
 
 	def parseFile_(self, listNodes, parent_obj, tab = '	'):
-		for i in xrange(listNodes.length):
+		#for i in xrange(listNodes.length):
+		i = 0
+		while i < listNodes.length :
 			node = listNodes.item(i)
 			if node is not None :
 				name_ = node.localName
@@ -570,11 +578,12 @@ class TreeModel(QtCore.QAbstractItemModel):
 				#			'attr :', node.attributes.item(0).value, node.attributes.item(1).value
 					_ddata = [node.attributes.item(0).value,  node.attributes.item(1).value]   ##name_ + ' , ' +
 				else :
-					_ddata = [node.attributes.item(0).value, name_]
+					_ddata = [node.attributes.item(0).value, name_]  ## временно для заполнения дерева в клиенте
 				_newobj = TreeItem(_ddata, parent_obj, parent_obj)
 				parent_obj.appendChild(_newobj)
 				if name_ == 'dir':
 					self.parseFile_(node.childNodes, _newobj, tab + '\t')
+			i += 1
 
 	def treeDataToXML(self, obj, tab = '	'):
 		global FileNameList
@@ -582,7 +591,9 @@ class TreeModel(QtCore.QAbstractItemModel):
 		_name = obj.data(0)
 		node = doc.createElement(_str)
 		node.setAttribute('name', _name)
-		for i in xrange(obj.childCount()):
+		i = 0
+		while i < obj.childCount() :
+		#for i in xrange(obj.childCount()):
 			item = obj.child(i)
 			str_ = item.data(1)
 			name_ = item.data(0)
@@ -600,11 +611,14 @@ class TreeModel(QtCore.QAbstractItemModel):
 					_prefix = _name + '/'
 				FileNameList += [ _prefix + name_ ]
 			node.appendChild(elem)
+		i += 1
 
 		return node
 
 	def getDataMask(self, obj, f, tab = '	'):
-		for i in xrange(obj.childCount()):
+		i = 0
+		while i < obj.childCount() :
+		#for i in xrange(obj.childCount()):
 			item = obj.child(i)
 			str_ = item.data(1)
 			name_ = item.data(0)
@@ -618,9 +632,12 @@ class TreeModel(QtCore.QAbstractItemModel):
 					f.write('0')
 			elif str_ == 'dir' :
 				self.getDataMask(item, f, tab = tab + '	')
+		i += 1
 
 	def setDataMask(self, obj, f, tab = '	'):
-		for i in xrange(obj.childCount()):
+		i = 0
+		while i < obj.childCount() :
+		#for i in xrange(obj.childCount()):
 			item = obj.child(i)
 			str_ = item.data(1)
 			name_ = item.data(0)
@@ -630,6 +647,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 					item.checkState = QtCore.Qt.Checked
 			elif str_ == 'dir' :
 				self.setDataMask(item, f, tab = tab + '	')
+		i += 1
 
 	def dataMaskToFileNameList(self, obj, f, tab = '	'):
 		global FileNameList

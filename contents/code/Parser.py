@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, os.path
+import os, os.path, stat
 from xml.dom.minidom import Document, parse
 
 doc = Document()
@@ -13,10 +13,17 @@ dirList = []
 def currentList(path):
 	global dirList
 	Result = ('','','')
-	for root, dirs, files in dirList :
+	i = 0
+	while i < len(dirList) :
+		root, dirs, files = dirList[i]
 		if path == root :
 			Result = (root, dirs, files)
 			break
+		i += 1
+	#for root, dirs, files in dirList :
+	#	if path == root :
+	#		Result = (root, dirs, files)
+	#		break
 	return Result
 
 def makenode(path, str_ = 'dir'):
@@ -24,12 +31,15 @@ def makenode(path, str_ = 'dir'):
 	node = doc.createElement(str_)
 	node.setAttribute('name', path)
 	root, dirs, files = currentList(path)
-	for dir_ in dirs :
+	i = 0
+	#for dir_ in dirs :
+	while i < len(dirs) :
+		dir_ = dirs[i]
 		try :
 			_dir = dir_.encode('utf-8')
 			fullname = os.path.join(root, _dir)
-			if not os.path.islink(fullname) and os.access(fullname, os.F_OK) and os.access(fullname, os.R_OK) \
-																			and os.access(fullname, os.X_OK) :
+			if not stat.S_ISLNK(os.lstat(fullname).st_mode) and os.access(fullname, os.F_OK) and \
+					os.access(fullname, os.R_OK) and os.access(fullname, os.X_OK) :
 				elem = makenode(fullname)
 				node.appendChild(elem)
 		except UnicodeEncodeError :
@@ -40,12 +50,17 @@ def makenode(path, str_ = 'dir'):
 			pass
 		finally :
 			pass
-	for file_ in files :
+		i += 1
+	j = 0
+	#for file_ in files :
+	while j < len(files) :
+		file_ = files[j]
 		try :
 			#_file = unicode(file_, 'utf-8')
 			_file = file_.encode('utf-8')
 			fullname = os.path.join(root, str(_file))
-			if not os.path.islink(fullname) and os.access(fullname, os.F_OK) and os.access(fullname, os.R_OK) :
+			if not stat.S_ISLNK(os.lstat(fullname).st_mode) and os.access(fullname, os.F_OK) and \
+																		os.access(fullname, os.R_OK) :
 				elem = doc.createElement('file')
 				elem.setAttribute('name', str(_file))
 				elem.setAttribute('size', str(os.path.getsize(fullname)/1024) + ' kByte(s)')
@@ -58,6 +73,7 @@ def makenode(path, str_ = 'dir'):
 			pass
 		finally :
 			pass
+		j += 1
 	return node
 
 def parseFile(listNodes, tab = '	'):
@@ -75,8 +91,6 @@ def parseFile(listNodes, tab = '	'):
 def listPrepare(_path):
 	global dirList
 	global doc
-	#for node in doc.childNodes :
-	#	doc.removeChild(node)
 	doc = Document()
 	dirList = []
 	# print [str(_path)]
@@ -87,29 +101,33 @@ def listPrepare(_path):
 			dirList += [(str(path),[],[])]
 			# print dirList
 
+	print 'Список составлен'
 	path_ = dirList[0][0]
 	if os.access(path_, os.F_OK) and os.access(path_, os.R_OK) and os.access(path_, os.X_OK) :
 		## and os.access(path_, os.W_OK) ) :
 		str_ = 'dir'
 		doc.appendChild(makenode(str(path_), str_))
-	elif os.access(path_, os.F_OK) and os.access(path_, os.R_OK) :
+	elif not stat.S_ISLNK(os.lstat(path_).st_mode) and os.access(path_, os.F_OK) and os.access(path_, os.R_OK) :
 		str_ = 'file'
 		doc.appendChild(makenode(str(path_), str_))
+	print 'Создание node завершено'
+	del dirList
 
 def getResultFile(resultFileName):
 	global doc
 	# print doc.toprettyxml()
 	fileName = str('/dev/shm/LightMight/cache/' + resultFileName)
-	#os.remove(fileName)
 	f = open(fileName, 'wb')
 	try :
-		#f.write(doc.toprettyxml())   ##
+		#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
 		doc.writexml(f, encoding = 'utf-8')
 	except UnicodeError :
 		print 'File not saved'
 		f.close()
+		del doc
 		return None
 	f.close()
+	del doc
 
 	if os.path.getsize(fileName) > 22 :
 		#datasource = open(fileName)
