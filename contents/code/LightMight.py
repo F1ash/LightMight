@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os, sys, os.path, gc, xml.parsers.expat
+import os, sys, os.path, stat, gc, xml.parsers.expat
 from PyQt4 import QtGui, QtCore
 from Parser import Parser
 from TreeProc import TreeItem, TreeModel, TreeProcessing
+from xml.dom.minidom import Document, parse
 
 FileNameList = []
 FileNameList2UpLoad = []
@@ -312,26 +313,15 @@ class ServerSettingsShield(QtGui.QDialog):
 		nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
 		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.X_OK) :    ## and os.access(nameDir, os.W_OK) :
 			# print nameDir
-			#P = Parser()
-			#doc = P.listPrepare(nameDir)
-			#resultFileName = P.getResultFile(resultFileName = '_resultXMLFileOfAddSharedSource', \
-			#																					doc = doc)
-			#doc.unlink(); doc = None
-			#del P; P = None
-			#if resultFileName is not None :
-			#	T = TreeProcessing()
-			#	T.setupItemData([resultFileName], self.treeModel.rootItem)
-			#	del T; T = None
-			#	self.treeModel.reset()
-			#	print gc.collect()
-			#	print gc.get_referrers()
-			#	del gc.garbage[:]
-			#else :
-			#	showHelp = ListingText("MSG: Available files not found in " + nameDir, self)
-			#	showHelp.exec_()
-			global TSThread
-			TSThread = TreeSettingThread(self, nameDir, self.treeModel.rootItem)
-			TSThread.start()
+			P = PathToTree(nameDir, self.treeModel.rootItem)
+			P.__del__(); P = None
+			self.treeModel.reset()
+			print gc.collect()
+			print gc.get_referrers()
+			del gc.garbage[:]
+			#global TSThread
+			#TSThread = TreeSettingThread(self, nameDir, self.treeModel.rootItem)
+			#TSThread.start()
 		else :
 			showHelp = ListingText("MSG: uncorrect Path (access denied).", self)
 			showHelp.exec_()
@@ -465,6 +455,125 @@ class ListingText(QtGui.QDialog):
 		event.ignore()
 		self.done(0)
 
+class PathToTree(QtCore.QObject):
+	def __init__(self, path, rootItem, parent = None):
+		QtCore.QObject.__init__(self, parent)
+		self.path = path
+		self.rootItem = rootItem
+		self.listPrepare()
+
+	def currentList(self, path, dirList):
+		Result = ('','','')
+		i = 0
+		while i < len(dirList) :
+			root, dirs, files = dirList[i]
+			if path == root :
+				Result = (root, dirs, files)
+				break
+			i += 1
+		return Result
+
+	def makenode(self, path, str_, doc = None, dirList = []):
+		node = doc.createElement(str_)
+		node.setAttribute('name', path)
+		root, dirs, files = self.currentList(path, dirList)
+		i = 0
+		#for dir_ in dirs :
+		while i < len(dirs) :
+			dir_ = dirs[i]
+			try :
+				_dir = dir_.encode('utf-8')
+				fullname = os.path.join(root, _dir)
+				if not stat.S_ISLNK(os.lstat(fullname).st_mode) and os.access(fullname, os.F_OK) and \
+						os.access(fullname, os.R_OK) and os.access(fullname, os.X_OK) :
+					elem = self.makenode(fullname, 'dir', doc, dirList)
+					node.appendChild(elem)
+			except UnicodeEncodeError :
+				#print 'UnicodeError_dir'
+				pass
+			except UnicodeDecodeError :
+				#print 'UnicodeError_dir'
+				pass
+			finally :
+				pass
+			i += 1
+		j = 0
+		#for file_ in files :
+		while j < len(files) :
+			file_ = files[j]
+			try :
+				#_file = unicode(file_, 'utf-8')
+				_file = file_.encode('utf-8')
+				fullname = os.path.join(root, str(_file))
+				if not stat.S_ISLNK(os.lstat(fullname).st_mode) and os.access(fullname, os.F_OK) and \
+																			os.access(fullname, os.R_OK) :
+					elem = doc.createElement('file')
+					elem.setAttribute('name', str(_file))
+					elem.setAttribute('size', str(os.path.getsize(fullname)) + ' Byte(s)')
+					node.appendChild(elem)
+			except UnicodeEncodeError :
+				#print 'UnicodeError_file'
+				pass
+			except UnicodeDecodeError :
+				#print 'UnicodeError_file'
+				pass
+			finally :
+				pass
+			j += 1
+		return node
+
+	def listPrepare(self):
+		self.doc = Document()
+		dirList = []
+		for root, dirs, files in os.walk(str(self.path), followlinks = False):
+			dirList += [(root, dirs, files)]
+		if dirList == [] :
+			dirList += [(str(path),[],[])]
+			# print dirList
+
+		print 'Список составлен'
+		path_ = dirList[0][0]
+		if os.access(path_, os.F_OK) and os.access(path_, os.R_OK) and os.access(path_, os.X_OK) :
+			## and os.access(path_, os.W_OK) ) :
+			str_ = 'dir'
+			self.doc.appendChild( self.makenode(str(path_), str_, self.doc, dirList) )
+		elif not stat.S_ISLNK(os.lstat(path_).st_mode) and os.access(path_, os.F_OK) \
+														and os.access(path_, os.R_OK) :
+			str_ = 'file'
+			self.doc.appendChild( self.makenode(str(path_), str_, self.doc, dirList) )
+		print 'Создание node завершено'
+		del dirList[:]
+		dirList = None
+		self.setupTreeData(self.doc.childNodes, self.rootItem)
+
+	def setupTreeData(self, listNodes, parent_obj, tab = '	'):
+		#for i in xrange(listNodes.length):
+		i = 0
+		while i < listNodes.length :
+			node = listNodes.item(i)
+			if node is not None :
+				name_ = node.localName
+
+				if node.attributes.length >= 2 :
+				#	print tab, 'name :', name_, \
+				#			'attr :', node.attributes.item(0).value, node.attributes.item(1).value
+					#_ddata = [node.attributes.item(0).value, node.attributes.item(1).value]  ##name_ + ' , ' +
+					fileName = node.attributes.item(0).value
+					fileSize = node.attributes.item(1).value
+				else :
+					#_ddata = [node.attributes.item(0).value, name_] ## временно для заполнения дерева в клиенте
+					fileName = node.attributes.item(0).value
+					fileSize = name_
+				_newobj = TreeItem(fileName, fileSize, parent_obj, parent_obj)
+				parent_obj.appendChild(_newobj)
+				if name_ == 'dir':
+					self.setupTreeData(node.childNodes, _newobj, tab + '\t')
+			i += 1
+
+	def __del__(self):
+		self.doc.unlink()
+		self.doc = None
+
 class TreeSettingThread(QtCore.QThread):
 	def __init__(self, obj = None, nameDir = None, rootItem = None, parent = None):
 		QtCore.QThread.__init__(self, parent)
@@ -533,7 +642,7 @@ class Box(QtGui.QWidget):
 		self.userList.setToolTip('Users in Web')
 		self.layout.addWidget(self.userList, 0, 0)
 
-		pathList = ['result1', 'result2', 'result3']
+		pathList = []    ##['result1', 'result2', 'result3']
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.sharedTree = QtGui.QTreeView()
 		#self.sharedTree.setRootIndex(treeModel.index(0, 0))
