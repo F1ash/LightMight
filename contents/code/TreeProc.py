@@ -52,10 +52,10 @@ class TreeItem(QtCore.QObject):
 
 class TreeModel(QtCore.QAbstractItemModel):
 	checkStateChanged = QtCore.pyqtSignal()
-	def __init__(self, sectuion1Name, section2Name, parent = None):
+	def __init__(self, section1Name, section2Name, parent = None):
 		QtCore.QAbstractItemModel.__init__(self, parent)
 
-		self.rootItem = TreeItem(sectuion1Name, section2Name, None, self)
+		self.rootItem = TreeItem(section1Name, section2Name, None, self)
 		self.changeMe = True
 
 	def index(self, row, column, prnt = QtCore.QModelIndex()):

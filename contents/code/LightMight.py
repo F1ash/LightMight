@@ -306,6 +306,7 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		self.setLayout(form)
 		self.connect(self, QtCore.SIGNAL('refresh'), self.treeRefresh)
+		self.connect(self, QtCore.SIGNAL('threadError'), self.threadMSG)
 
 	def addPath(self):
 		nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
@@ -331,13 +332,22 @@ class ServerSettingsShield(QtGui.QDialog):
 			global TSThread
 			TSThread = TreeSettingThread(self, nameDir, self.treeModel.rootItem)
 			TSThread.start()
-			gc.collect()
 		else :
 			showHelp = ListingText("MSG: uncorrect Path (access denied).", self)
 			showHelp.exec_()
 
 	def treeRefresh(self):
 		self.treeModel.reset()
+		gc.collect()
+		print gc.get_referrers()
+		del gc.garbage[:]
+
+	def threadMSG(self, str_):
+		showHelp = ListingText("MSG: Available files not found in " + str_, self)
+		showHelp.exec_()
+		gc.collect()
+		print gc.get_referrers()
+		del gc.garbage[:]
 
 	def delPath(self):
 		item = self.sharedTree.selectionModel().currentIndex()
@@ -473,13 +483,14 @@ class TreeSettingThread(QtCore.QThread):
 		try:
 			GeneralLOCK.lock()
 
+			x = ''
 			P = Parser()
 			doc = P.listPrepare(self.nameDir)
 			resultFileName = P.getResultFile(resultFileName = '_resultXMLFileOfAddSharedSource', \
 																								doc = doc)
 			doc.unlink(); doc = None
 			del P; P = None
-			if resultFileName is not None :
+			if resultFileName is None :
 				T = TreeProcessing()
 				T.setupItemData([resultFileName], self.rootItem)
 				del T; T = None
@@ -487,8 +498,7 @@ class TreeSettingThread(QtCore.QThread):
 				print gc.get_referrers()
 				del gc.garbage[:]
 			else :
-				showHelp = ListingText("MSG: Available files not found in " + nameDir, self)
-				showHelp.exec_()
+				self.Parent.emit(QtCore.SIGNAL('threadError'), self.nameDir)
 
 		except x :
 			print x, '  thread'
