@@ -130,7 +130,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 
 			self.emit(QtCore.SIGNAL("checkStateChanged()"))
 			self.emit(QtCore.SIGNAL("dataChanged(const QModelIndex&, const QModelIndex&)"), \
-																	index_.parent(), index_)
+													index_.parent().parent(), index_.parent())
 			return True
 
 		return False

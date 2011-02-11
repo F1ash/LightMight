@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from TreeItem import TreeItem
+from PyQt4 import QtCore
+import os.path
 
 class TreeProcessing:
 	def __init__(self, parent = None):
@@ -104,6 +106,24 @@ class TreeProcessing:
 			elif str_ == 'dir' :
 				self.getDataMask(item, f, tab = tab + '	')
 		i += 1
+
+	def getCheckedItemList(self, obj, prefix = '', tab = '	'):
+		Result = []
+		i = 0
+		while i < obj.childCount() :
+		#for i in xrange(obj.childCount()):
+			item = obj.child(i)
+			str_ = item.data(1)
+			name_ = item.data(0)
+			#print tab, name_, str_, 'chkSt : ', item.checkState
+			if item.checkState == QtCore.Qt.Checked :
+				Result += [os.path.join(prefix, name_)]
+			elif str_ == 'dir' :
+				_result = self.getCheckedItemList(item, os.path.join(prefix, name_), tab = tab + '	')
+				if _result != [] :
+					Result += _result
+			i += 1
+		return Result
 
 	def setDataMask(self, obj, f, tab = '	'):
 		i = 0

@@ -6,10 +6,11 @@ from xml.dom.minidom import Document, parse
 from TreeItem import TreeItem
 
 class PathToTree(QtCore.QObject):
-	def __init__(self, path, rootItem, parent = None):
+	def __init__(self, path, rootItem, typePath = 'file', parent = None):
 		QtCore.QObject.__init__(self, parent)
 		self.path = path
 		self.rootItem = rootItem
+		self.typePath = typePath
 		self.listPrepare()
 
 	def _proceed_dir(self, d, parentItem):
@@ -17,27 +18,34 @@ class PathToTree(QtCore.QObject):
 			not os.access(d, os.R_OK) or
 			not os.access(d, os.X_OK)):
 			return
-		
+
 		for entry_dir in os.listdir(d):
-			fullpath = os.path.join(d, entry_dir)
-			if os.path.islink(fullpath) or 
+			try:
+				fullpath = os.path.join(d, entry_dir)
+			except UnicodeEncodeError :
+				#print 'UnicodeError_file'
+				continue
+			except UnicodeDecodeError :
+				#print 'UnicodeError_file'
+				continue
+			if os.path.islink(fullpath) or \
 				not os.path.isdir(fullpath): #FIXME: remove this line if you have add and files too
 				continue
 
-			entryItem = TreeItem(entry_dir, 0, parentItem)
+			entryItem = TreeItem(entry_dir, self.typePath, parentItem)
 			if os.path.isdir(fullpath):
 				self._proceed_dir(fullpath, entryItem)
-			
+
 			parentItem.appendChild(entryItem)
 
-	def listPrepare (self):
+	def listPrepare(self):
 		str_path = unicode(self.path.toUtf8())
-		entryItem = TreeItem(str_path, 0, self.rootItem)
+		entryItem = TreeItem(str_path, self.typePath, self.rootItem)
 		self.rootItem.appendChild(entryItem)
 		self._proceed_dir(str_path, entryItem)
-			
 
-	""" 
+
+	"""
 	ORIGINAL UGLY CODE
 	def currentList(self, path, dirList):
 		Result = ('','','')
@@ -148,8 +156,56 @@ class PathToTree(QtCore.QObject):
 			if name_ == 'dir':
 				self.setupTreeData(node.childNodes, _newobj, tab + '\t')
 			i += 1
-	
+
 	def __del__(self):
 		self.doc.unlink()
 		self.doc = None
 	"""
+
+class PathListToXMLFile:
+	def __init__(self, pathList = '', fileName = 'resulXML', parent = None):
+		self.pathList = pathList
+		self.fileName = fileName
+		self.doc = Document()
+		self.listPrepare(pathList)
+
+	def _proceed_dir(self, path_, doc):
+		path = str(path_)
+		if not stat.S_ISLNK(os.lstat(path).st_mode) and os.path.isfile(path) and os.access(path, os.F_OK) \
+																			and os.access(path, os.R_OK) :
+			node = doc.createElement('file')
+			node.setAttribute('name', path)
+			node.setAttribute('size', str(os.path.getsize(path)) + ' Byte(s)')
+			return node
+		elif not stat.S_ISLNK(os.lstat(path).st_mode) and os.path.isdir(path) and os.access(path, os.F_OK) and \
+									os.access(path, os.R_OK) and os.access(path, os.X_OK) :
+			node = doc.createElement('dir')
+			node.setAttribute('name', path)
+			node.setAttribute('size', '- - -')
+
+			for path_ in os.listdir(path) :
+				_path = os.path.join(path, path_)
+				elem = self._proceed_dir(_path, doc)
+				node.appendChild(elem)
+			return node
+		else :
+			node = doc.createElement('None')
+			node.setAttribute('name', path)
+			node.setAttribute('size', 'None')
+			return node
+
+	def listPrepare(self, path):
+		self.doc.appendChild(self._proceed_dir(path, self.doc))
+
+		# print doc.toprettyxml()
+		f = open(self.fileName, 'wb')
+		try :
+			#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
+			self.doc.writexml(f, encoding = 'utf-8')
+		except UnicodeError :
+			print 'File not saved'
+			f.close()
+			self.doc.unlink()
+			return None
+		f.close()
+		self.doc.unlink()
