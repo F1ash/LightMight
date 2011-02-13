@@ -19,27 +19,31 @@ class PathToTree(QtCore.QObject):
 			not os.access(d, os.X_OK)):
 			return
 
-		for entry_dir in os.listdir(d):
-			try:
-				fullpath = os.path.join(d, entry_dir)
-			except UnicodeEncodeError :
-				#print 'UnicodeError_file'
-				continue
-			except UnicodeDecodeError :
-				#print 'UnicodeError_file'
-				continue
-			if os.path.islink(fullpath) or \
-				not os.path.isdir(fullpath): #FIXME: remove this line if you have add and files too
-				continue
+		try :
+			for entry_dir in os.listdir(d):
+				try:
+					fullpath = os.path.join(d, entry_dir)
+				except UnicodeEncodeError :
+					#print 'UnicodeError_file'
+					continue
+				except UnicodeDecodeError :
+					#print 'UnicodeError_file'
+					continue
+				if os.path.islink(fullpath) or \
+					not os.path.isdir(fullpath): #FIXME: remove this line if you have add and files too
+					continue
 
-			entryItem = TreeItem(entry_dir, self.typePath, parentItem)
-			if os.path.isdir(fullpath):
-				self._proceed_dir(fullpath, entryItem)
+				entryItem = TreeItem(entry_dir, self.typePath, parentItem)
+				if os.path.isdir(fullpath):
+					self._proceed_dir(fullpath, entryItem)
 
-			parentItem.appendChild(entryItem)
+				parentItem.appendChild(entryItem)
+		except OSError :
+			print 'OSError'
+			pass
 
 	def listPrepare(self):
-		str_path = unicode(self.path.toUtf8())
+		str_path = unicode(self.path.toUtf8())		# *.toUtf8 -- Qt method; need useing standart Python method here
 		entryItem = TreeItem(str_path, self.typePath, self.rootItem)
 		self.rootItem.appendChild(entryItem)
 		self._proceed_dir(str_path, entryItem)
@@ -162,50 +166,88 @@ class PathToTree(QtCore.QObject):
 		self.doc = None
 	"""
 
-class PathListToXMLFile:
-	def __init__(self, pathList = '', fileName = 'resulXML', parent = None):
-		self.pathList = pathList
+
+
+class SharedSourceTree2XMLFile:
+	def __init__(self, fileName = 'resultXML', obj = None, parent = None):
 		self.fileName = fileName
+		self.rootItem = obj
 		self.doc = Document()
-		self.listPrepare(pathList)
+		self.filePrepare()
 
-	def _proceed_dir(self, path_, doc):
-		path = str(path_)
-		if not stat.S_ISLNK(os.lstat(path).st_mode) and os.path.isfile(path) and os.access(path, os.F_OK) \
-																			and os.access(path, os.R_OK) :
-			node = doc.createElement('file')
-			node.setAttribute('name', path)
-			node.setAttribute('size', str(os.path.getsize(path)) + ' Byte(s)')
-			return node
-		elif not stat.S_ISLNK(os.lstat(path).st_mode) and os.path.isdir(path) and os.access(path, os.F_OK) and \
-									os.access(path, os.R_OK) and os.access(path, os.X_OK) :
-			node = doc.createElement('dir')
-			node.setAttribute('name', path)
-			node.setAttribute('size', '- - -')
+	def __del__(self):
+		self.fileName = None
+		self.rootItem = None
+		self.doc = None
 
-			for path_ in os.listdir(path) :
-				_path = os.path.join(path, path_)
-				elem = self._proceed_dir(_path, doc)
-				node.appendChild(elem)
-			return node
-		else :
-			node = doc.createElement('None')
-			node.setAttribute('name', path)
-			node.setAttribute('size', 'None')
-			return node
+	def filePrepare(self):
+		self.doc.appendChild(self.treeSharedDataToXML(self.rootItem))
 
-	def listPrepare(self, path):
-		self.doc.appendChild(self._proceed_dir(path, self.doc))
-
-		# print doc.toprettyxml()
+		print self.doc.toprettyxml()
 		f = open(self.fileName, 'wb')
 		try :
 			#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
 			self.doc.writexml(f, encoding = 'utf-8')
 		except UnicodeError :
 			print 'File not saved'
-			f.close()
-			self.doc.unlink()
-			return None
 		f.close()
 		self.doc.unlink()
+
+	def treeSharedDataToXML(self, obj, prefix = '', tab = '	'):
+		_str = obj.data(1)
+		_name = obj.data(0)
+		#print tab, prefix, _name, 'parent'
+		node = self.doc.createElement(_str)
+		node.setAttribute('name', _name)
+		node.setAttribute('size', '---')
+		i = 0
+		while i < obj.childCount() :
+			item = obj.child(i)
+			str_ = item.data(1)
+			name_ = item.data(0)
+			if item.checkState == QtCore.Qt.Checked :
+				#print tab, str_, prefix + _name, name_, 'check'
+				elem = self.doc.createElement(str_)
+				elem.setAttribute('name', name_)
+				path_ = os.path.join(prefix + _name, name_)
+				#print path_, ' path_'
+				if os.path.isfile(path_) :
+					elem.setAttribute('size', str(os.path.getsize(path_)) + ' Byte(s)')
+					#node.appendChild(elem)
+				elif os.path.isdir(path_) :
+					if _name == 'Name' :
+						prefix_ = ''
+					else :
+						prefix_ = prefix + _name + '/'
+					try:
+						listChild = os.listdir(path_)
+					except OSError :
+						print 'OSerror'
+						pass
+					#print listChild, 'listChild'
+					for _path in listChild :
+						if os.path.isdir(os.path.join(path_,_path)) :
+							str__ = 'dir'
+						else :
+							str__ = 'file'
+						new_item = TreeItem(_path, str__, item)
+						new_item.checkState = QtCore.Qt.Checked
+						item.appendChild(new_item)
+					if len(listChild) > 0 :
+						elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
+				else :
+					elem.setAttribute('size', 'no_regular_file')
+			elif item.childCount() > 0 :
+				if _name == 'Name' :
+					prefix_ = ''
+				else :
+					prefix_ = prefix + _name + '/'
+				#print tab, str_, prefix, name_, 'pref'
+				elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
+			else:
+				i += 1
+				continue
+			node.appendChild(elem)
+			i += 1
+
+		return node

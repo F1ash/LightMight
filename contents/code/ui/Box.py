@@ -18,7 +18,7 @@ class Box(QtGui.QWidget):
 		self.userList.setToolTip('Users in Web')
 		self.layout.addWidget(self.userList, 0, 0)
 
-		pathList = []    ##['result1', 'result2', 'result3']
+		pathList = []   ##['resultXML']    ##['result1', 'result2', 'result3']
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.sharedTree = QtGui.QTreeView()
 		#self.sharedTree.setRootIndex(treeModel.index(0, 0))

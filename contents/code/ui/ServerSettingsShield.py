@@ -3,7 +3,7 @@ from PyQt4 import QtGui, QtCore
 import os, stat
 from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
-from PathToTree import PathToTree, PathListToXMLFile
+from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
 
 class ServerSettingsShield(QtGui.QDialog):
@@ -59,7 +59,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.sharedSourceLabel = QtGui.QLabel('Shared Sources :')
 		form.addWidget(self.sharedSourceLabel, 5, 0)
 
-		pathList = []    ## ['result1', 'result2', 'result3']
+		pathList = []   ##['resultXML']    ## ['result1', 'result2', 'result3']
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.sharedTree = QtGui.QTreeView()
 		self.sharedTree.setRootIsDecorated(True)
@@ -153,11 +153,8 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def ok(self):
 		#global FileNameList
-		checkedPathList = TreeProcessing().getCheckedItemList(self.treeModel.rootItem)
-		print checkedPathList
-		nameSharedFilesXML = 'resultXML'
-		for i in xrange(len(checkedPathList)) :
-			P = PathListToXMLFile(checkedPathList[i], nameSharedFilesXML + '_'+ str(i))
+		S = SharedSourceTree2XMLFile('resultXML', self.treeModel.rootItem)
+		S.__del__(); S = None
 		###print gc.collect()
 		###print gc.get_referrers()
 		###del gc.garbage[:]

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from xml.dom.minidom import Document, parse
 from TreeItem import TreeItem
 from PyQt4 import QtCore
-import os.path
+import os, os.path, xml.parsers.expat
 
 class TreeProcessing:
 	def __init__(self, parent = None):
@@ -16,7 +17,8 @@ class TreeProcessing:
 			try :
 				dom2 = parse(datasource, bufsize = 32768)
 				print 'dom2 открыт'   # parse an open file
-				self.parseFile_(dom2.childNodes, rootItem)
+				## *.childNodes[0].childNodes for ignoring rootItem_node
+				self.parseFile_(dom2.childNodes[0].childNodes, rootItem)
 				print 'парсинг завершён'   # parse
 				dom2.unlink()
 				dom2 = None
@@ -57,36 +59,6 @@ class TreeProcessing:
 				if name_ == 'dir':
 					self.parseFile_(node.childNodes, _newobj, tab + '\t')
 			i += 1
-
-	def treeDataToXML(self, obj, tab = '	'):
-		global FileNameList
-		_str = obj.data(1)
-		_name = obj.data(0)
-		node = doc.createElement(_str)
-		node.setAttribute('name', _name)
-		i = 0
-		while i < obj.childCount() :
-		#for i in xrange(obj.childCount()):
-			item = obj.child(i)
-			str_ = item.data(1)
-			name_ = item.data(0)
-			elem = doc.createElement(str_)
-			elem.setAttribute('name', name_)
-			# print tab, name_, str_
-			if item.childCount() > 0 :
-				elem = self.treeDataToXML(item, tab = tab + '	')
-				#print tab, 'dir'
-			elif str_ == 'file' :
-				#print tab, 'file'
-				if _name == 'Name' :
-					_prefix = ''
-				else :
-					_prefix = _name + '/'
-				FileNameList += [ _prefix + name_ ]
-			node.appendChild(elem)
-		i += 1
-
-		return node
 
 	def getDataMask(self, obj, f, tab = '	'):
 		i = 0
