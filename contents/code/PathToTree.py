@@ -193,7 +193,7 @@ class SharedSourceTree2XMLFile:
 		f.close()
 		self.doc.unlink()
 
-	def treeSharedDataToXML(self, obj, prefix = '', tab = '	'):
+	def treeSharedDataToXML(self, obj, prefix = '', tab = '\t'):
 		_str = obj.data(1)
 		_name = obj.data(0)
 		#print tab, prefix, _name, 'parent'

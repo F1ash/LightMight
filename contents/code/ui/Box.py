@@ -18,12 +18,14 @@ class Box(QtGui.QWidget):
 		self.userList.setToolTip('Users in Web')
 		self.layout.addWidget(self.userList, 0, 0)
 
-		pathList = []   ##['resultXML']    ##['result1', 'result2', 'result3']
+		""" отображение в приложении списка расшаренных ресурсов """
+		pathList = ['resultXML']    ##['result1', 'result2', 'result3']
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.sharedTree = QtGui.QTreeView()
 		#self.sharedTree.setRootIndex(treeModel.index(0, 0))
 		self.sharedTree.setRootIsDecorated(True)
-		TreeProcessing().setupItemData(pathList, self.treeModel.rootItem)
+		self.treeProcessing = TreeProcessing()
+		self.treeProcessing.setupItemData(pathList, self.treeModel.rootItem)
 		self.sharedTree.setToolTip('Shared Source')
 		self.sharedTree.setExpandsOnDoubleClick(True)
 		self.sharedTree.setModel(self.treeModel)

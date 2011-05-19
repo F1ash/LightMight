@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtGui, QtCore
-
-
+import os
+from ListingText import ListingText
 
 class ClientSettingsShield(QtGui.QDialog):
 	def __init__(self, parent = None):

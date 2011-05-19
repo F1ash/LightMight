@@ -67,7 +67,7 @@ class TreeProcessing:
 			item = obj.child(i)
 			str_ = item.data(1)
 			name_ = item.data(0)
-			# print tab, name_, str_, 'chkSt : ', obj.checkState
+			print tab, name_, str_, 'chkSt : ', obj.checkState
 			if str_ == 'file' :
 				if item.checkState == QtCore.Qt.Checked :
 					#f.write(name_ + ' 1\n')
@@ -77,7 +77,7 @@ class TreeProcessing:
 					f.write('0')
 			elif str_ == 'dir' :
 				self.getDataMask(item, f, tab = tab + '	')
-		i += 1
+			i += 1
 
 	def getCheckedItemList(self, obj, prefix = '', tab = '	'):
 		Result = []

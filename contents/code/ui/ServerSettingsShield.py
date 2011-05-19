@@ -153,6 +153,7 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def ok(self):
 		#global FileNameList
+		""" должен сохранить результат как файл в кеш для передачи на запрос клиентов"""
 		S = SharedSourceTree2XMLFile('resultXML', self.treeModel.rootItem)
 		S.__del__(); S = None
 		###print gc.collect()

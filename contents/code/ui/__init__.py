@@ -4,6 +4,7 @@ from Box import Box
 from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
 from ListingText import ListingText
+from AvahiTools import AvahiBrowser, AvahiService
 
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self):
@@ -30,7 +31,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.exit_.setStatusTip('Exit application')
 		self.connect(self.exit_, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
 
-		listHelp = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&About Backupper', self)
+		listHelp = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&About LightMight', self)
 		listHelp.setStatusTip('Read help')
 		self.connect(listHelp,QtCore.SIGNAL('triggered()'), self.showHelp_)
 
@@ -84,6 +85,8 @@ class MainWindow(QtGui.QMainWindow):
 
 		# toolbar = self.addToolBar('Exit')
 		# toolbar.addAction(exit_)
+		self.avahiBrowser = AvahiBrowser(self.menuTab)
+		self.avahiBrowser = AvahiService(self.menuTab)
 
 	def customEvent(self, event):
 		if event.type() == 1010 :
@@ -91,17 +94,19 @@ class MainWindow(QtGui.QMainWindow):
 			global FileNameList2UpLoad
 			FileNameList2UpLoad = []
 			f = open('maskFile', 'wb')
-			self.menuTab.treeModel.getDataMask(self.menuTab.treeModel.rootItem, f)
+			""" считать выбранное в маску """
+			self.menuTab.treeProcessing.getDataMask(self.menuTab.treeModel.rootItem, f)
 			f.close()
 			f = open('maskFile', 'rb')
-			self.menuTab.treeModel.dataMaskToFileNameList(self.menuTab.treeModel.rootItem, f)
+			""" создать из маски список имён файлов для запроса на сервере """
+			self.menuTab.treeProcessing.dataMaskToFileNameList(self.menuTab.treeModel.rootItem, f)
 			f.close()
 			print FileNameList2UpLoad
+			self.menuTab = Box(self)
 		elif event.type() == 1011 :
 			pass
 
-	def showBase(self):
-		self.list_ = ListingBase(self)
+	def showBase(self): pass
 
 	def createStruct(self): pass
 
@@ -134,4 +139,3 @@ class MainWindow(QtGui.QMainWindow):
 		_ServerSettingsShield = ServerSettingsShield()
 		_ServerSettingsShield.exec_()
 		pass
-
