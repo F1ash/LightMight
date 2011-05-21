@@ -7,8 +7,10 @@ from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
 
 class ServerSettingsShield(QtGui.QDialog):
-	def __init__(self, parent = None):
+	def __init__(self, obj = None, parent = None):
 		QtGui.QDialog.__init__(self, parent)
+
+		self.Obj = obj
 
 		self.setWindowTitle('LightMight Server Settings')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
@@ -105,12 +107,6 @@ class ServerSettingsShield(QtGui.QDialog):
 			P = PathToTree(nameDir, self.treeModel.rootItem, 'dir')
 			###P.__del__(); P = None #FIXME: This destruct empty object
 			self.treeModel.reset()
-			###print gc.collect()
-			###print gc.get_referrers()
-			###del gc.garbage[:]
-			#global TSThread
-			#TSThread = TreeSettingThread(self, nameDir, self.treeModel.rootItem)
-			#TSThread.start()
 		else :
 			showHelp = ListingText("MSG: uncorrect Path (access denied).", self)
 			showHelp.exec_()
@@ -127,16 +123,10 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def treeRefresh(self):
 		self.treeModel.reset()
-		###gc.collect()
-		###print gc.get_referrers()
-		###del gc.garbage[:]
 
 	def threadMSG(self, str_):
 		showHelp = ListingText("MSG: Available files not found in " + str_, self)
 		showHelp.exec_()
-		###gc.collect()
-		###print gc.get_referrers()
-		###del gc.garbage[:]
 
 	def delPath(self):
 		item = self.sharedTree.selectionModel().currentIndex()
@@ -147,24 +137,20 @@ class ServerSettingsShield(QtGui.QDialog):
 			self.sharedTree.reset()
 		else :
 			print 'Not select Item'
-		###print gc.collect()
-		###print gc.get_referrers()
-		###del gc.garbage[:]
 
 	def ok(self):
 		#global FileNameList
 		""" должен сохранить результат как файл в кеш для передачи на запрос клиентов"""
 		S = SharedSourceTree2XMLFile('resultXML', self.treeModel.rootItem)
 		S.__del__(); S = None
-		###print gc.collect()
-		###print gc.get_referrers()
-		###del gc.garbage[:]
-		pass #FIXME: this method is empty
+		if 'serverThread' in dir(self.Obj) :
+			self.Obj.serverThread.terminate()
+			self.Obj.serverThread.exit()
+		self.Obj.Settings.sync()
+		self.Obj.initServer()
+		self.done(0)
 
 	def cancel(self):
-		###print gc.collect()
-		###print gc.get_referrers()
-		###del gc.garbage[:]
 		self.done(0)
 
 	def closeEvent(self, event):

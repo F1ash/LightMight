@@ -5,6 +5,10 @@ from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
 from ListingText import ListingText
 from AvahiTools import AvahiBrowser, AvahiService
+from clnt import xr_client
+from serv import ServerDaemon
+from Functions import *
+from ToolsThread import ToolsThread
 
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self):
@@ -85,8 +89,32 @@ class MainWindow(QtGui.QMainWindow):
 
 		# toolbar = self.addToolBar('Exit')
 		# toolbar.addAction(exit_)
+		#self.initClient()
+		self.initServer()
+		self.initAvahiTools()
+
+	def initAvahiTools(self):
 		self.avahiBrowser = AvahiBrowser(self.menuTab)
-		self.avahiBrowser = AvahiService(self.menuTab)
+		self.avahiService = AvahiService(self.menuTab, port = self.server_port)
+
+	def initClient(self):
+		""" run in QThread """
+		client_port = InitConfigValue(self.Settings, 'ClientPort', '34100')
+		self.client = xr_client('http://localhost:'+ client_port)
+		#self.client.run_()
+
+	def initServer(self):
+		address = InitConfigValue(self.Settings, 'Address', '')
+		#server_port = InitConfigValue(self.Settings, 'ServerPort', '34100')
+		#self.server = ServerDaemon( (address, int(server_port)) )
+		#self.server.run()
+		self.server_port = getFreePort()
+		print self.server_port, 'free'
+		self.serverThread = ToolsThread(ServerDaemon( (address, self.server_port) ), self)
+		self.serverThread.start()
+		if 'avahiService' in dir(self) :
+			self.avahiService.__del__(); self.avahiService = None
+			self.avahiService = AvahiService(self.menuTab, port = self.server_port)
 
 	def customEvent(self, event):
 		if event.type() == 1010 :
@@ -131,11 +159,11 @@ class MainWindow(QtGui.QMainWindow):
 		showHelp.exec_()
 
 	def showClientSettingsShield(self):
-		_ClientSettingsShield = ClientSettingsShield()
+		_ClientSettingsShield = ClientSettingsShield(self)
 		_ClientSettingsShield.exec_()
 		pass
 
 	def showServerSettingsShield(self):
-		_ServerSettingsShield = ServerSettingsShield()
+		_ServerSettingsShield = ServerSettingsShield(self)
 		_ServerSettingsShield.exec_()
 		pass

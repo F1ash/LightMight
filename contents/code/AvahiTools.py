@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import dbus, gobject, avahi
+import dbus, gobject, avahi, time
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):
@@ -11,11 +11,10 @@ class AvahiBrowser():
 		TYPE = '_LightMight._tcp'
 
 		loop = DBusGMainLoop()
-
 		bus = dbus.SystemBus(mainloop=loop)
 
 		self.server = dbus.Interface( bus.get_object(avahi.DBUS_NAME, '/'),
-				'org.freedesktop.Avahi.Server')
+									'org.freedesktop.Avahi.Server')
 
 		sbrowser = dbus.Interface(bus.get_object(avahi.DBUS_NAME,
 				self.server.ServiceBrowserNew(avahi.IF_UNSPEC,
@@ -35,12 +34,19 @@ class AvahiBrowser():
 		print 'port:', args[8]
 		print 'service resolved.'
 
-		item = self.obj.userList.findItems(args[2], QtCore.Qt.MatchFlags(QtCore.Qt.MatchContains))
+		""" для различения одинаковых имён служб (но Avahi не регистрирует одинаковые имена)
+		item = self.obj.userList.findItems(args[2], \
+				QtCore.Qt.MatchFlags(QtCore.Qt.MatchStartsWith | QtCore.Qt.MatchCaseSensitive))
 		count = ''
 		if len(item) > 0 :
 			count = "(" + str(len(item)) + ")"
-		self.obj.userList.addItem(args[2] + count)
-		self.USERS[args[2] + count] = (args[2], args[7], args[8])
+		new_item = QtGui.QListWidgetItem(args[2] + count)
+		"""
+		new_item = QtGui.QListWidgetItem(args[2])
+		new_item.setToolTip('name : ' + str(args[2]) + '\naddress : ' + str(args[7]) + '\nport : ' + str(args[8]))
+		self.obj.userList.addItem(new_item)
+		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
+		self.USERS[args[2]] = (args[2], args[7], args[8])
 		#print self.USERS
 
 	def print_error(self, *args):
@@ -49,7 +55,8 @@ class AvahiBrowser():
 
 	def myhandlerRemove(self, interface, protocol, name, stype, domain, flags):
 
-		item = self.obj.userList.findItems(name, QtCore.Qt.MatchFlags(QtCore.Qt.MatchContains))
+		item = self.obj.userList.findItems(name, \
+				QtCore.Qt.MatchFlags(QtCore.Qt.MatchStartsWith | QtCore.Qt.MatchCaseSensitive))
 		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
 		del self.USERS[name]
 		print "Removed service: '%s'" % name
@@ -58,7 +65,7 @@ class AvahiBrowser():
 	def myhandler(self, interface, protocol, name, stype, domain, flags):
 		print "Found service '%s' type '%s' domain '%s' " % (name, stype, domain)
 
-		if flags & avahi.LOOKUP_RESULT_LOCAL:
+		if flags & avahi.LOOKUP_RESULT_LOCAL :
 				# local service, skip
 				pass
 
@@ -72,20 +79,21 @@ class AvahiBrowser():
 		pass
 
 class AvahiService():
-	def __init__(self, obj = None, parent =None):
+	def __init__(self, obj = None, name = 'Own Demo Service', \
+				description = '', port = 34100, parent = None):
 
-		self.serviceName = "Demo Service Own"
+		self.serviceName = name
 		self.serviceType = "_LightMight._tcp" # See http://www.dns-sd.org/ServiceTypes.html
-		self.servicePort = 1234
-		self.serviceTXT = "somethingcrazy" #TXT record for the service
+		self.servicePort = port
+		self.serviceTXT = description #TXT record for the service
 
 		self.domain = "" # Domain to publish on, default to .local
-		self.host = "flashcar.dyndns.org" # Host to publish records for, default to localhost
+		self.host = ""	##"flashcar.dyndns.org" # Host to publish records for, default to localhost
 
 		self.group = None #our entry group
 		self.rename_count = 12 # Counter so we only rename after collisions a sensible number of times
 
-		DBusGMainLoop( set_as_default=True )
+		DBusGMainLoop( set_as_default = True )
 
 		self.main_loop = gobject.MainLoop()
 		self.bus = dbus.SystemBus()
@@ -97,16 +105,16 @@ class AvahiService():
 		self.server.connect_to_signal( "StateChanged", self.server_state_changed )
 		self.server_state_changed( self.server.GetState() )
 
-		"""try:
+		"""try :
 			main_loop.run()
-		except KeyboardInterrupt:
+		except KeyboardInterrupt :
 			pass
 
-		if not group is None:
-			group.Free()"""
+		if not self.group is None :
+			self.group.Free()"""
 
 	def add_service(self):
-		if self.group is None:
+		if self.group is None :
 			self.group = dbus.Interface(
 					self.bus.get_object( avahi.DBUS_NAME, self.server.EntryGroupNew()),
 					avahi.DBUS_INTERFACE_ENTRY_GROUP)
@@ -125,34 +133,39 @@ class AvahiService():
 		self.group.Commit()
 
 	def remove_service(self):
-		if not self.group is None:
+		if not self.group is None :
 			self.group.Reset()
 
 	def server_state_changed(self, state):
-		if state == avahi.SERVER_COLLISION:
+		if state == avahi.SERVER_COLLISION :
 			print "WARNING: Server name collision"
 			self.remove_service()
-		elif state == avahi.SERVER_RUNNING:
+		elif state == avahi.SERVER_RUNNING :
 			self.add_service()
 
 	def entry_group_state_changed(self, state, error):
 		print "state change: %i" % state
 
-		if state == avahi.ENTRY_GROUP_ESTABLISHED:
+		if state == avahi.ENTRY_GROUP_ESTABLISHED :
 			print "Service established."
-		elif state == avahi.ENTRY_GROUP_COLLISION:
+		elif state == avahi.ENTRY_GROUP_COLLISION :
 
 			self.rename_count = self.rename_count - 1
-			if self.rename_count > 0:
-				name = self.server.GetAlternativeServiceName(name)
-				print "WARNING: Service name collision, changing name to '%s' ..." % name
+			if self.rename_count > 0 :
+				self.serviceName = self.server.GetAlternativeServiceName(self.serviceName)
+				print "WARNING: Service name collision, changing name to '%s' ..." % self.serviceName
 				self.remove_service()
 				self.add_service()
 
-			else:
-				print "ERROR: No suitable service name found after %i retries, exiting." % n_rename
-				main_loop.quit()
-		elif state == avahi.ENTRY_GROUP_FAILURE:
+			else :
+				print "ERROR: No suitable service name found after %i retries, exiting." % self.serviceName
+				self.main_loop.quit()
+		elif state == avahi.ENTRY_GROUP_FAILURE :
 			print "Error in group state changed", error
-			main_loop.quit()
+			self.main_loop.quit()
 			return
+
+	def __del__(self):
+		self.remove_service()
+		self.main_loop.quit()
+		time.sleep(3)

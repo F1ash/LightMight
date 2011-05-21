@@ -4,8 +4,10 @@ import os
 from ListingText import ListingText
 
 class ClientSettingsShield(QtGui.QDialog):
-	def __init__(self, parent = None):
+	def __init__(self, obj = None, parent = None):
 		QtGui.QDialog.__init__(self, parent)
+
+		self.Obj = obj
 
 		self.setWindowTitle('LightMight Client Settings')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
@@ -72,7 +74,10 @@ class ClientSettingsShield(QtGui.QDialog):
 			showHelp.exec_()
 
 	def ok(self):
-		pass
+		if 'client' in dir(self.Obj) :
+			self.Obj.client.shutdown()
+		self.Obj.Settings.sync()
+		self.Obj.initClient()
 
 	def cancel(self):
 		self.done(0)

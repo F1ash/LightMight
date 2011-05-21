@@ -2,42 +2,16 @@
 
 from xmlrpclib import ServerProxy
 from threading import Thread
-import os, os.path, tarfile, string, random
-
-def randomString( j = 1):
-	return "".join( [random.choice(string.letters) for i in xrange(j)] )
-
-class DataRendering:
-	def __init__(self):
-		pass
-
-	def fileToList(self, path_ = ''):
-		if os.path.isfile(path_) :
-			f = open(path_, 'rb')
-			l = f.read()
-			f.close()
-			return string.split(l, '\n')
-		else :
-			return []
-
-	def listToFile(self, list_ = [], name_ = ''):
-		if name_ != '' :
-			fileName = str('/dev/shm/' + name_)
-			l = string.join(list_, '\n')
-			f=open(fileName, 'wb')
-			f.write(l)
-			f.close()
-			return fileName
-		else :
-			return ''
+from Functions import *
+import os, os.path, tarfile, string
 
 class xr_client:
-	def __init__(self):
-		pass
+	def __init__(self, servaddr = 'http://localhost:34100'):
+		self.servaddr = servaddr
 
+	""" old variant
 	def _run(self):
-		servaddr = 'http://localhost:35113'
-		s = ServerProxy(servaddr)
+		s = ServerProxy(self.servaddr)
 
 		methods = s.system.listMethods()
 		for m in methods:
@@ -54,10 +28,10 @@ class xr_client:
 			tar.extractall()
 			tar.close()
 			os.remove(str(name + '.my.tar'))
+	"""
 
-	def run_(self):
-		servaddr = 'http://localhost:35113'
-		s = ServerProxy(servaddr)
+	def run(self):
+		s = ServerProxy(self.servaddr)
 
 		methods = s.system.listMethods()
 		# получение ID сессии
@@ -103,6 +77,9 @@ class xr_client:
 			else :
 				print 'Path error'
 
+	def _shutdown(self):
+		self.shutdown()
+
 if __name__ == '__main__':
 	t = xr_client()
-	t.run_()
+	t.run()

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from PyQt4 import QtGui, QtCore
 from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
@@ -15,7 +16,9 @@ class Box(QtGui.QWidget):
 		self.userList = QtGui.QListWidget()
 		self.userList.setMaximumWidth(250)
 		#self.userList.setMinimumSize(100, 75)
+		self.userList.sortItems()
 		self.userList.setToolTip('Users in Web')
+		self.userList.itemDoubleClicked.connect(self.itemSharedSourceQuired)
 		self.layout.addWidget(self.userList, 0, 0)
 
 		""" отображение в приложении списка расшаренных ресурсов """
@@ -37,3 +40,5 @@ class Box(QtGui.QWidget):
 
 		self.setLayout(self.layout)
 
+	def itemSharedSourceQuired(self, item):
+		print item.text() , ' dClicked :', self.Obj.avahiBrowser.USERS[str(item.text())]

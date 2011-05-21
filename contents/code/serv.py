@@ -1,47 +1,20 @@
 # -*- coding: utf-8 -*-
 
-import xmlrpclib, string, tarfile, os, os.path, random
+import xmlrpclib, string, tarfile, os, os.path
 from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
 from SocketServer import ThreadingMixIn, ForkingMixIn
-
-def randomString( j = 1):
-	return "".join( [random.choice(string.letters) for i in xrange(j)] )
+from Functions import *
 
 def sessionID():
 	fileName = str('/dev/shm/' + randomString(24))
-	_id= randomString(24)
+	_id = randomString(24)
 	f = open(fileName, 'wb')
 	f.write(str(fileName + '\n' + _id + '\n'))
 	f.close()
 	with open(fileName, "rb") as handle:
 		return xmlrpclib.Binary(handle.read())
 
-class DataRendering:
-	def __init__(self):
-		pass
-
-	def fileToList(self, path_ = ''):
-		if os.path.isfile(path_) :
-			f = open(path_, 'rb')
-			l = f.read()
-			f.close()
-			return string.split(l, '\n')
-		else :
-			return []
-
-	def listToFile(self, list_ = [], name_ = ''):
-		if name_ != '' :
-			fileName = str('/dev/shm/' + name_)
-			l = string.join(list_, '\n')
-			print l, '---'
-			f=open(fileName, 'wb')
-			f.write(l)
-			f.close()
-			return fileName
-		else :
-			return ''
-
-class ThreadServer(ThreadingMixIn, DocXMLRPCServer):pass
+class ThreadServer(ThreadingMixIn, DocXMLRPCServer): pass
 
 def typePath(name):
 	if os.path.isdir(name) :
@@ -92,10 +65,9 @@ def requestCatalogStruct(name, _id):
 	with open(fileList, "rb") as handle:
 		return xmlrpclib.Binary(handle.read())
 
-class Daemon:
-	def __init__(self):
-		self.serveraddr = ('', 35113)
-		self._srv = ThreadServer(self.serveraddr, DocXMLRPCRequestHandler, allow_none=True)
+class ServerDaemon():
+	def __init__(self, serveraddr = ('', 35113)):
+		self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True)
 		self._srv.set_server_title('PySADAM server')
 		self._srv.set_server_name('Example server') #TODO: need fix it
 		self._srv.set_server_documentation("""Welcome to""")
@@ -113,11 +85,12 @@ class Daemon:
 
 	def _shutdown(self):
 		self._srv.shutdown()
+		print ' server terminated'
 
 if __name__ == '__main__':
 
 	try :
-		d = Daemon()
+		d = ServerDaemon()
 		d.run()
 	except KeyboardInterrupt :
 		d._shutdown()
