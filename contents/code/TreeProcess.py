@@ -12,26 +12,26 @@ class TreeProcessing:
 	def setupItemData(self, pathList, rootItem):
 		print 'Создание отображения...'
 		for path in pathList :
-			datasource = open(path, 'rb')
+			with open(path, 'rb') as datasource :
 
-			try :
-				dom2 = parse(datasource, bufsize = 32768)
-				print 'dom2 открыт'   # parse an open file
-				## *.childNodes[0].childNodes for ignoring rootItem_node
-				self.parseFile_(dom2.childNodes[0].childNodes, rootItem)
-				print 'парсинг завершён'   # parse
-				dom2.unlink()
-				dom2 = None
-				print 'dom2 -- deleted'
-			except xml.parsers.expat.ExpatError , x:
-				#возникает при неправильной кодировке имени файла (временно устранено)
-				print x, '\nОшибка в пути к файлу.'
-				showHelp = ListingText("MSG: Наличие некорректного имени каталога\файла.\nПриложение будет завершено.", main)
-				showHelp.exec_()
-				print "App exit."
-				app.exit(0)
-			finally :
-				datasource.close()
+				try :
+					dom2 = parse(datasource, bufsize = 32768)
+					print 'dom2 открыт'   # parse an open file
+					## *.childNodes[0].childNodes for ignoring rootItem_node
+					self.parseFile_(dom2.childNodes[0].childNodes, rootItem)
+					print 'парсинг завершён'   # parse
+					dom2.unlink()
+					dom2 = None
+					print 'dom2 -- deleted'
+				except xml.parsers.expat.ExpatError , x:
+					#возникает при неправильной кодировке имени файла (временно устранено)
+					print x, '\nОшибка в пути к файлу.'
+					showHelp = ListingText("MSG: Наличие некорректного имени каталога\файла.\nПриложение будет завершено.", main)
+					showHelp.exec_()
+					print "App exit."
+					app.exit(0)
+				finally :
+					datasource.close()
 
 		print 'Создание отображения завершено.'
 		#self.debugPrintObj(rootItem)

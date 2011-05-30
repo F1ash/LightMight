@@ -167,5 +167,5 @@ class AvahiService():
 
 	def __del__(self):
 		self.remove_service()
-		self.main_loop.quit()
-		time.sleep(3)
+		#self.main_loop.quit()
+		time.sleep(3)			## Fix me: replace on d-bus event

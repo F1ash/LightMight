@@ -5,14 +5,18 @@ from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
 from ListingText import ListingText
 from AvahiTools import AvahiBrowser, AvahiService
-from clnt import xr_client
 from serv import ServerDaemon
 from Functions import *
 from ToolsThread import ToolsThread
+from TreeProc import TreeModel
+from PathToTree import SharedSourceTree2XMLFile
+import shutil
 
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self):
 		QtGui.QMainWindow.__init__(self)
+
+		self.serverState = ''
 
 		#self.resize(450, 350)
 		self.setWindowTitle('LightMight')
@@ -33,7 +37,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.exit_ = QtGui.QAction(QtGui.QIcon('../icons/exit.png'), '&Exit', self)
 		self.exit_.setShortcut('Ctrl+Q')
 		self.exit_.setStatusTip('Exit application')
-		self.connect(self.exit_, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
+		self.connect(self.exit_, QtCore.SIGNAL('triggered()'), self._close)
 
 		listHelp = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&About LightMight', self)
 		listHelp.setStatusTip('Read help')
@@ -77,7 +81,7 @@ class MainWindow(QtGui.QMainWindow):
 		help_tray = self.trayIconMenu.addAction(QtGui.QIcon('../icons/help.png'), 'Help')
 		self.connect(help_tray, QtCore.SIGNAL('triggered()'), self.showHelp_)
 		exit_tray = self.trayIconMenu.addAction(QtGui.QIcon('../icons/exit.png'), '&Exit')
-		self.connect(exit_tray, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
+		self.connect(exit_tray, QtCore.SIGNAL('triggered()'), self._close)
 		self.trayIconPixmap = QtGui.QPixmap('../icons/tux_partizan.png') # файл иконки
 		self.trayIcon = QtGui.QSystemTrayIcon(self)
 		self.trayIcon.setToolTip('LightMight')
@@ -89,7 +93,6 @@ class MainWindow(QtGui.QMainWindow):
 
 		# toolbar = self.addToolBar('Exit')
 		# toolbar.addAction(exit_)
-		#self.initClient()
 		self.initServer()
 		self.initAvahiTools()
 
@@ -97,21 +100,20 @@ class MainWindow(QtGui.QMainWindow):
 		self.avahiBrowser = AvahiBrowser(self.menuTab)
 		self.avahiService = AvahiService(self.menuTab, port = self.server_port)
 
-	def initClient(self):
-		""" run in QThread """
-		client_port = InitConfigValue(self.Settings, 'ClientPort', '34100')
-		self.client = xr_client('http://localhost:'+ client_port)
-		#self.client.run_()
-
 	def initServer(self):
-		address = InitConfigValue(self.Settings, 'Address', '')
-		#server_port = InitConfigValue(self.Settings, 'ServerPort', '34100')
-		#self.server = ServerDaemon( (address, int(server_port)) )
-		#self.server.run()
 		self.server_port = getFreePort()
 		print self.server_port, 'free'
-		self.serverThread = ToolsThread(ServerDaemon( (address, self.server_port) ), self)
+		self.serverThread = ToolsThread(ServerDaemon( ('', self.server_port), self ), self)
 		self.serverThread.start()
+		if not os.path.exists('/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
+			treeModel = TreeModel('Name', 'Description')
+			""" должен сохранить результат как файл для передачи на запрос клиентов для первого запуска"""
+			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
+				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
+							'/dev/shm/LightMight/server/sharedSource_' + self.serverState)
+			else :
+				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
+				S.__del__(); S = None
 		if 'avahiService' in dir(self) :
 			self.avahiService.__del__(); self.avahiService = None
 			self.avahiService = AvahiService(self.menuTab, port = self.server_port)
@@ -129,7 +131,7 @@ class MainWindow(QtGui.QMainWindow):
 			""" создать из маски список имён файлов для запроса на сервере """
 			self.menuTab.treeProcessing.dataMaskToFileNameList(self.menuTab.treeModel.rootItem, f)
 			f.close()
-			print FileNameList2UpLoad
+			print FileNameList2UpLoad, " files for upload"
 			self.menuTab = Box(self)
 		elif event.type() == 1011 :
 			pass
@@ -161,9 +163,24 @@ class MainWindow(QtGui.QMainWindow):
 	def showClientSettingsShield(self):
 		_ClientSettingsShield = ClientSettingsShield(self)
 		_ClientSettingsShield.exec_()
-		pass
 
 	def showServerSettingsShield(self):
 		_ServerSettingsShield = ServerSettingsShield(self)
 		_ServerSettingsShield.exec_()
-		pass
+
+	def _close(self):
+		#print '/dev/shm/LightMight/server/sharedSource_' + self.serverState, ' close'
+		if InitConfigValue(self.Settings, 'SaveLastStructure', 'False') == 'True' :
+			#print True
+			if os.path.exists('/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
+				#print 'Exist'
+				shutil.move('/dev/shm/LightMight/server/sharedSource_' + self.serverState, \
+							os.path.expanduser('~/.config/LightMight/lastSharedSource'))
+			else :
+				#print 'not Exist'
+				pass
+		shutil.rmtree('/dev/shm/LightMight', ignore_errors = True)
+		self.close()
+
+	def closeEvent(self, event):
+		self._close()

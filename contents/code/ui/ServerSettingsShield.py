@@ -5,6 +5,7 @@ from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
 from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
+from Functions import InitConfigValue
 
 class ServerSettingsShield(QtGui.QDialog):
 	def __init__(self, obj = None, parent = None):
@@ -20,8 +21,9 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.serverNameLabel = QtGui.QLabel('Server Name :')
 		form.addWidget(self.serverNameLabel, 0, 0)
 
-		defaultName = os.getlogin() + ' LightMight Server'
-		self.serverNameString = QtGui.QLineEdit(defaultName)
+		self.defaultName  = InitConfigValue(self.Obj.Settings, 'ServerName', \
+											os.getlogin() + ' LightMight Server')
+		self.serverNameString = QtGui.QLineEdit(self.defaultName)
 		form.addWidget(self.serverNameString, 0, 1, 1, 2)
 
 		self.emittPort = QtGui.QLabel('Emitt on Port Diapason :')
@@ -47,7 +49,8 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.checkPoolBox = QtGui.QSpinBox()
 		self.checkPoolBox.setMinimum(1)
 		self.checkPoolBox.setMaximum(300)
-		self.checkPoolBox.setValue(100)
+		value = InitConfigValue(self.Obj.Settings, 'Pool', '100' )
+		self.checkPoolBox.setValue(int(value))
 		self.checkPoolBox.setSingleStep(1)
 		form.addWidget(self.checkPoolBox, 3, 2)
 
@@ -58,8 +61,19 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
 		form.addWidget(self.checkUseAvahi, 4, 2)
 
+		self.saveLastStructureLabel = QtGui.QLabel('Save last Share Structure :')
+		form.addWidget(self.saveLastStructureLabel, 5, 1)
+
+		self.saveLastStructureCheck = QtGui.QCheckBox()
+		if InitConfigValue(self.Obj.Settings, 'SaveLastStructure', 'False') == 'True' :
+			value = QtCore.Qt.Checked
+		else:
+			value = QtCore.Qt.Unchecked
+		self.saveLastStructureCheck.setCheckState(value)
+		form.addWidget(self.saveLastStructureCheck, 5, 2)
+
 		self.sharedSourceLabel = QtGui.QLabel('Shared Sources :')
-		form.addWidget(self.sharedSourceLabel, 5, 0)
+		form.addWidget(self.sharedSourceLabel, 6, 0)
 
 		pathList = []   ##['resultXML']    ## ['result1', 'result2', 'result3']
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
@@ -69,32 +83,32 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.sharedTree.setToolTip("<font color=red><b>Select path<br>for share it !</b></font>")
 		self.sharedTree.setExpandsOnDoubleClick(True)
 		self.sharedTree.setModel(self.treeModel)
-		form.addWidget(self.sharedTree, 6, 0, 7, 2)
+		form.addWidget(self.sharedTree, 7, 0, 8, 2)
 
 		self.addDirPathButton = QtGui.QPushButton('&Dir')
 		self.addDirPathButton.setMaximumWidth(75)
 		self.connect(self.addDirPathButton, QtCore.SIGNAL('clicked()'), self.addDirPath)
-		form.addWidget(self.addDirPathButton, 6, 2)
+		form.addWidget(self.addDirPathButton, 7, 2)
 
 		self.addFilePathButton = QtGui.QPushButton('&File')
 		self.addFilePathButton.setMaximumWidth(75)
 		self.connect(self.addFilePathButton, QtCore.SIGNAL('clicked()'), self.addFilePaths)
-		form.addWidget(self.addFilePathButton, 7, 2)
+		form.addWidget(self.addFilePathButton, 8, 2)
 
 		self.delPathButton = QtGui.QPushButton('&Del')
 		self.delPathButton.setMaximumWidth(75)
 		self.connect(self.delPathButton, QtCore.SIGNAL('clicked()'), self.delPath)
-		form.addWidget(self.delPathButton, 8, 2)
+		form.addWidget(self.delPathButton, 9, 2)
 
 		self.okButton = QtGui.QPushButton('&Ok')
 		self.okButton.setMaximumWidth(75)
 		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
-		form.addWidget(self.okButton, 9, 2)
+		form.addWidget(self.okButton, 10, 2)
 
 		self.cancelButton = QtGui.QPushButton('&Cancel')
 		self.cancelButton.setMaximumWidth(75)
 		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-		form.addWidget(self.cancelButton, 10, 2)
+		form.addWidget(self.cancelButton, 11, 2)
 
 		self.setLayout(form)
 		self.connect(self, QtCore.SIGNAL('refresh'), self.treeRefresh)
@@ -139,16 +153,25 @@ class ServerSettingsShield(QtGui.QDialog):
 			print 'Not select Item'
 
 	def ok(self):
-		#global FileNameList
-		""" должен сохранить результат как файл в кеш для передачи на запрос клиентов"""
-		S = SharedSourceTree2XMLFile('resultXML', self.treeModel.rootItem)
-		S.__del__(); S = None
 		if 'serverThread' in dir(self.Obj) :
 			self.Obj.serverThread.terminate()
 			self.Obj.serverThread.exit()
-		self.Obj.Settings.sync()
+		self.saveData()
 		self.Obj.initServer()
+		""" должен сохранить результат как файл в кеш для передачи на запрос клиентов"""
+		S = SharedSourceTree2XMLFile('sharedSource_' + self.Obj.serverState, self.treeModel.rootItem)
+		S.__del__(); S = None
 		self.done(0)
+
+	def saveData(self):
+		self.Obj.Settings.setValue('ServerName', self.serverNameString.text())
+		self.Obj.Settings.setValue('Pool', self.checkPoolBox.value())
+		if self.saveLastStructureCheck.isChecked() :
+			value = 'True'
+		else :
+			value = 'False'
+		self.Obj.Settings.setValue('SaveLastStructure', value)
+		self.Obj.Settings.sync()
 
 	def cancel(self):
 		self.done(0)

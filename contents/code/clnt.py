@@ -31,49 +31,59 @@ class xr_client:
 	"""
 
 	def run(self):
-		s = ServerProxy(self.servaddr)
+		self.s = ServerProxy(self.servaddr)
 
-		methods = s.system.listMethods()
+		self.methods = self.s.system.listMethods()
 		# получение ID сессии
-		randomFileName = str('/dev/shm/' + randomString(24))
-		with open(randomFileName, "wb") as handle:
-			handle.write(s.sessionID().data)
-		listRandomString = DataRendering().fileToList(randomFileName)
-		s.python_clean(listRandomString[0])
-		os.remove(randomFileName)
-		print listRandomString
-		sessionID = listRandomString[1]
+		self.randomFileName = str('/dev/shm/' + randomString(24))
+		with open(self.randomFileName, "wb") as handle:
+			handle.write(self.s.sessionID().data)
+		self.listRandomString = DataRendering().fileToList(self.randomFileName)
+		self.s.python_clean(self.listRandomString[0])
+		os.remove(self.randomFileName)
+		print self.listRandomString, ' list of randomStrings'
+		self.sessionID = self.listRandomString[1]
+		print self.sessionID, ' session ID'
+		self.serverState = self.listRandomString[2]
+		print self.serverState, ' server State'
 
-		os.chdir('/tmp')
+		"""os.chdir('/tmp')
 		fileList = ["python_logo.jpg", 'clnt.py', 'iy']
 		for name in fileList :
 			if s.typePath(name) :
-				# print True
-				# получаем структуру каталога со списком его файлов
-				structFileName = str('/dev/shm/struct_' + sessionID)
-				with open(structFileName, "wb") as handle:
-					handle.write(s.requestCatalogStruct(name, sessionID).data)
-				s.python_clean(str('/dev/shm/_struct_' + sessionID))
+				# print True"""
+
+	def getSharedSourceStructFile(self):
+		# получаем структуру каталога со списком его файлов
+		self.structFileName = str('/dev/shm/LightMight/client/struct_' + self.sessionID)
+		print self.structFileName, ' struct'
+		with open(self.structFileName, "wb") as handle:
+			handle.write(self.s.requestSharedSourceStruct('sharedSource_' + self.serverState).data)
+		##self.s.python_clean(str('/dev/shm/_struct_' + self.sessionID))
+		return self.structFileName
+
+	def someFunc(self):
+			if True :
 				# создаём структуру каталогов
-				tar = tarfile.open(structFileName, 'r')
+				tar = tarfile.open(self.structFileName, 'r')
 				tar.extractall()
 				tar.close()
 				# читаем список файлов
-				listFiles = str(os.getcwd() + '/dev/shm/_listFiles_' + sessionID)
-				catalogFileList = DataRendering().fileToList(listFiles)
-				print catalogFileList
+				listFiles = str(os.getcwd() + '/dev/shm/_listFiles_' + self.sessionID)
+				self.catalogFileList = DataRendering().fileToList(listFiles)
+				print self.catalogFileList, ' catalog'
 				os.remove(listFiles)
-				os.remove(structFileName)
+				os.remove(self.structFileName)
 				# копируем файлы
-				for name in catalogFileList :
+				for name in self.catalogFileList :
 					if name not in ['', ' ', '\n'] :
 						with open(name, "wb") as handle:
-							handle.write(s.python_file(name).data)
+							handle.write(self.s.python_file(name).data)
 					else :
 						print 'Path error'
 			elif name not in ['', ' ', '\n'] :
 				with open(name, "wb") as handle:
-					handle.write(s.python_file(name).data)
+					handle.write(self.s.python_file(name).data)
 			else :
 				print 'Path error'
 

@@ -15,7 +15,9 @@ FileNameList = []
 FileNameList2UpLoad = []
 
 def createStructure():
-	for nameDir in ['/dev/shm/LightMight', '/dev/shm/LightMight/cache', '/dev/shm/LightMight/structure'] :
+	for nameDir in ['/dev/shm/LightMight', '/dev/shm/LightMight/cache', \
+					'/dev/shm/LightMight/structure', '/dev/shm/LightMight/client', \
+					'/dev/shm/LightMight/server'] :
 		if not os.path.isdir(nameDir):
 			os.mkdir(nameDir)
 

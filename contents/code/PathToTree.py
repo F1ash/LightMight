@@ -183,8 +183,8 @@ class SharedSourceTree2XMLFile:
 	def filePrepare(self):
 		self.doc.appendChild(self.treeSharedDataToXML(self.rootItem))
 
-		print self.doc.toprettyxml()
-		f = open(self.fileName, 'wb')
+		#print self.doc.toprettyxml()
+		f = open('/dev/shm/LightMight/server/' + self.fileName, 'wb')
 		try :
 			#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
 			self.doc.writexml(f, encoding = 'utf-8')

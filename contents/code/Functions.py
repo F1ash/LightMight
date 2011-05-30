@@ -2,8 +2,11 @@
 
 import os, os.path, string, random, socket
 
+char_set = string.ascii_letters + string.digits
+
 def randomString( j = 1):
-	return "".join( [random.choice(string.letters) for i in xrange(j)] )
+	#return "".join( [random.choice(string.letters) for i in xrange(j)] )
+	return ''.join(random.sample(char_set, j))
 
 class DataRendering:
 	def __init__(self):
@@ -14,7 +17,10 @@ class DataRendering:
 			f = open(path_, 'rb')
 			l = f.read()
 			f.close()
-			return string.split(l, '\n')
+			s = string.split(l, '\n')
+			for i in xrange(s.count('')) :
+				s.remove('')
+			return s
 		else :
 			return []
 
@@ -31,7 +37,7 @@ class DataRendering:
 
 def InitConfigValue(Settings = None, key = None, default = None):
 	if not Settings is None and Settings.contains(key) :
-		return Settings.valur(key).toString()
+		return Settings.value(key).toString()
 	else :
 		return default
 
