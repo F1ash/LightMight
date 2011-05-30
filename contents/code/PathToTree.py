@@ -39,7 +39,7 @@ class PathToTree(QtCore.QObject):
 
 				parentItem.appendChild(entryItem)
 		except OSError :
-			print 'OSError'
+			#print 'OSError'
 			pass
 
 	def listPrepare(self):
@@ -165,8 +165,6 @@ class PathToTree(QtCore.QObject):
 		self.doc.unlink()
 		self.doc = None
 	"""
-
-
 
 class SharedSourceTree2XMLFile:
 	def __init__(self, fileName = 'resultXML', obj = None, parent = None):

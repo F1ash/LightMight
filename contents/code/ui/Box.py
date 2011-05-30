@@ -48,10 +48,10 @@ class Box(QtGui.QWidget):
 		self.sharedTree.reset()
 
 	def itemSharedSourceQuired(self, item):
-		print item.text() , ' dClicked :', self.Obj.avahiBrowser.USERS[str(item.text())]
+		print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
 		""" run in QThread """
 		self.clientThread = ToolsThread(xr_client('http://' + \
-							str(self.Obj.avahiBrowser.USERS[str(item.text())][1]) + ':' + \
-							str(self.Obj.avahiBrowser.USERS[str(item.text())][2])), self)
+							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]) + ':' + \
+							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2])), self)
 		self.clientThread.start()
 		self.connect( self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources )

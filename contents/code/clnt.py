@@ -34,7 +34,7 @@ class xr_client:
 		self.s = ServerProxy(self.servaddr)
 
 		self.methods = self.s.system.listMethods()
-		# получение ID сессии
+		# get session Id & server State
 		self.randomFileName = str('/dev/shm/' + randomString(24))
 		with open(self.randomFileName, "wb") as handle:
 			handle.write(self.s.sessionID().data)
@@ -47,19 +47,12 @@ class xr_client:
 		self.serverState = self.listRandomString[2]
 		print self.serverState, ' server State'
 
-		"""os.chdir('/tmp')
-		fileList = ["python_logo.jpg", 'clnt.py', 'iy']
-		for name in fileList :
-			if s.typePath(name) :
-				# print True"""
-
 	def getSharedSourceStructFile(self):
-		# получаем структуру каталога со списком его файлов
+		# get Shared Sources Structure
 		self.structFileName = str('/dev/shm/LightMight/client/struct_' + self.sessionID)
 		print self.structFileName, ' struct'
 		with open(self.structFileName, "wb") as handle:
 			handle.write(self.s.requestSharedSourceStruct('sharedSource_' + self.serverState).data)
-		##self.s.python_clean(str('/dev/shm/_struct_' + self.sessionID))
 		return self.structFileName
 
 	def someFunc(self):
@@ -86,6 +79,12 @@ class xr_client:
 					handle.write(self.s.python_file(name).data)
 			else :
 				print 'Path error'
+
+	def getSharedData(self, mask):
+		""" после проверки неизменности статуса сервера отослать запрос на передачу
+			данных маской выбранных ресурсов
+		"""
+		pass
 
 	def _shutdown(self):
 		self.shutdown()

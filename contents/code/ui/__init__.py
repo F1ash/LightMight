@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from PyQt4 import QtGui, QtCore
 from Box import Box
 from ServerSettingsShield import ServerSettingsShield
@@ -10,7 +11,7 @@ from Functions import *
 from ToolsThread import ToolsThread
 from TreeProc import TreeModel
 from PathToTree import SharedSourceTree2XMLFile
-import shutil
+import shutil, os.path
 
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self):
@@ -98,7 +99,8 @@ class MainWindow(QtGui.QMainWindow):
 
 	def initAvahiTools(self):
 		self.avahiBrowser = AvahiBrowser(self.menuTab)
-		self.avahiService = AvahiService(self.menuTab, port = self.server_port)
+		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
+		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
 
 	def initServer(self):
 		self.server_port = getFreePort()
@@ -116,7 +118,8 @@ class MainWindow(QtGui.QMainWindow):
 				S.__del__(); S = None
 		if 'avahiService' in dir(self) :
 			self.avahiService.__del__(); self.avahiService = None
-			self.avahiService = AvahiService(self.menuTab, port = self.server_port)
+			name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
+			self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
 
 	def customEvent(self, event):
 		if event.type() == 1010 :

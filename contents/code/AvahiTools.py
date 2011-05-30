@@ -43,7 +43,7 @@ class AvahiBrowser():
 		new_item = QtGui.QListWidgetItem(args[2] + count)
 		"""
 		new_item = QtGui.QListWidgetItem(args[2])
-		new_item.setToolTip('name : ' + str(args[2]) + '\naddress : ' + str(args[7]) + '\nport : ' + str(args[8]))
+		new_item.setToolTip('name : ' + unicode(args[2]) + '\naddress : ' + str(args[7]) + '\nport : ' + str(args[8]))
 		self.obj.userList.addItem(new_item)
 		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
 		self.USERS[args[2]] = (args[2], args[7], args[8])
@@ -82,7 +82,7 @@ class AvahiService():
 	def __init__(self, obj = None, name = 'Own Demo Service', \
 				description = '', port = 34100, parent = None):
 
-		self.serviceName = name
+		self.serviceName = unicode(name)
 		self.serviceType = "_LightMight._tcp" # See http://www.dns-sd.org/ServiceTypes.html
 		self.servicePort = port
 		self.serviceTXT = description #TXT record for the service
