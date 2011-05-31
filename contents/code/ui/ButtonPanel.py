@@ -33,6 +33,5 @@ class ButtonPanel(QtGui.QWidget):
 
 	def upLoad(self):
 		QtGui.QApplication.postEvent(self.Obj, QtCore.QEvent(1010))
-		pass
 
 

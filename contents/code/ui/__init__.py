@@ -123,18 +123,28 @@ class MainWindow(QtGui.QMainWindow):
 
 	def customEvent(self, event):
 		if event.type() == 1010 :
+			""" запустить клиент для проверки неизменённости
+				статуса сервера и создания цикла передачи файлов
+				по созданному циклу обработки дерева TreeProcess.getDataMask() ;
+				реализовать в отдельном потоке и графическом окне "Задание № NN"
+				c возможностью останова или перезапуска задания (!!!)
+			"""
+			""" громоздкое решение; удалить + лишние модули
 			global FileNameList
 			global FileNameList2UpLoad
 			FileNameList2UpLoad = []
-			f = open('maskFile', 'wb')
-			""" считать выбранное в маску """
+			f = open('/dev/shm/maskFile', 'wb')
+			\""" считать выбранное в маску \"""
 			self.menuTab.treeProcessing.getDataMask(self.menuTab.treeModel.rootItem, f)
 			f.close()
-			f = open('maskFile', 'rb')
-			""" создать из маски список имён файлов для запроса на сервере """
+			FileNameList = DataRendering().fileToList('/dev/shm/maskFile')
+			print FileNameList
+			f = open('/dev/shm/maskFile', 'rb')
+			\""" создать из маски список имён файлов для запроса на сервере\"""
 			self.menuTab.treeProcessing.dataMaskToFileNameList(self.menuTab.treeModel.rootItem, f)
 			f.close()
 			print FileNameList2UpLoad, " files for upload"
+			"""
 			self.menuTab = Box(self)
 		elif event.type() == 1011 :
 			pass

@@ -197,7 +197,7 @@ class SharedSourceTree2XMLFile:
 		#print tab, prefix, _name, 'parent'
 		node = self.doc.createElement(_str)
 		node.setAttribute('name', _name)
-		node.setAttribute('size', '---')
+		node.setAttribute('size', ' dir')
 		i = 0
 		while i < obj.childCount() :
 			item = obj.child(i)
@@ -210,7 +210,7 @@ class SharedSourceTree2XMLFile:
 				path_ = os.path.join(prefix + _name, name_)
 				#print path_, ' path_'
 				if os.path.isfile(path_) :
-					elem.setAttribute('size', str(os.path.getsize(path_)) + ' Byte(s)')
+					elem.setAttribute('size', str(os.path.getsize(path_)) + ' Byte(s)' + ' file')
 					#node.appendChild(elem)
 				elif os.path.isdir(path_) :
 					if _name == 'Name' :
@@ -220,7 +220,7 @@ class SharedSourceTree2XMLFile:
 					try:
 						listChild = os.listdir(path_)
 					except OSError :
-						print 'OSerror'
+						# print 'OSerror'
 						pass
 					#print listChild, 'listChild'
 					for _path in listChild :
@@ -235,7 +235,8 @@ class SharedSourceTree2XMLFile:
 						elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
 				else :
 					elem.setAttribute('size', 'no_regular_file')
-			elif item.childCount() > 0 :
+			elif item.checkState == QtCore.Qt.PartiallyChecked and item.childCount() > 0 :
+				""" for parsing PartiallyChecked directory, not for all """
 				if _name == 'Name' :
 					prefix_ = ''
 				else :

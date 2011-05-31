@@ -29,7 +29,7 @@ class AvahiBrowser():
 		self.USERS = {}
 
 	def service_resolved(self, *args):
-		print 'name:', args[2]
+		print 'name:', unicode(args[2])
 		print 'address:', args[7]
 		print 'port:', args[8]
 		print 'service resolved.'
@@ -42,11 +42,11 @@ class AvahiBrowser():
 			count = "(" + str(len(item)) + ")"
 		new_item = QtGui.QListWidgetItem(args[2] + count)
 		"""
-		new_item = QtGui.QListWidgetItem(args[2])
+		new_item = QtGui.QListWidgetItem(unicode(args[2]))
 		new_item.setToolTip('name : ' + unicode(args[2]) + '\naddress : ' + str(args[7]) + '\nport : ' + str(args[8]))
 		self.obj.userList.addItem(new_item)
 		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
-		self.USERS[args[2]] = (args[2], args[7], args[8])
+		self.USERS[args[2]] = (unicode(args[2]), args[7], args[8])
 		#print self.USERS
 
 	def print_error(self, *args):
@@ -63,13 +63,13 @@ class AvahiBrowser():
 		#print self.USERS
 
 	def myhandler(self, interface, protocol, name, stype, domain, flags):
-		print "Found service '%s' type '%s' domain '%s' " % (name, stype, domain)
+		print "Found service '%s' type '%s' domain '%s' " % (unicode(name), stype, domain)
 
 		if flags & avahi.LOOKUP_RESULT_LOCAL :
 				# local service, skip
 				pass
 
-		self.server.ResolveService(interface, protocol, name, stype,
+		self.server.ResolveService(interface, protocol, unicode(name), stype,
 			domain, avahi.PROTO_UNSPEC, dbus.UInt32(0),
 			reply_handler = self.service_resolved, error_handler = self.print_error)
 

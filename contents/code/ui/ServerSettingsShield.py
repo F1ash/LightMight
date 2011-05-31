@@ -181,4 +181,3 @@ class ServerSettingsShield(QtGui.QDialog):
 		event.ignore()
 		self.done(0)
 
-

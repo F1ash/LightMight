@@ -45,7 +45,7 @@ class Box(QtGui.QWidget):
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.sharedTree.setModel(self.treeModel)
 		self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
-		self.sharedTree.reset()
+		#self.sharedTree.reset()
 
 	def itemSharedSourceQuired(self, item):
 		print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]

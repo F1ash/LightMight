@@ -21,7 +21,7 @@ class ServerDaemon():
 		self._srv.register_function(self.python_clean, 'python_clean')
 		self._srv.register_function(self.typePath, 'typePath')
 		self._srv.register_function(self.python_file, 'python_file')
-		#self._srv.register_function(self.requestCatalogStruct, 'requestCatalogStruct')
+		self._srv.register_function(self.requestCatalogStruct, 'requestCatalogStruct')
 		self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
 		self._srv.register_function(self.sessionID, 'sessionID')
 
@@ -69,7 +69,7 @@ class ServerDaemon():
 		with open(name, "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
-	"""def requestCatalogStruct(self, name, _id):
+	def requestCatalogStruct(self, name, _id):
 		listCatalogFiles = []
 		fileList = str('/dev/shm/_struct_' + _id)
 		f1 = tarfile.open(fileList, 'w|bz2')
@@ -80,7 +80,7 @@ class ServerDaemon():
 		f1.close()
 		os.remove(fileName)
 		with open(fileList, "rb") as handle:
-			return xmlrpclib.Binary(handle.read())"""
+			return xmlrpclib.Binary(handle.read())
 
 	def requestSharedSourceStruct(self, name):
 		with open('/dev/shm/LightMight/server/' + name, "rb") as handle:

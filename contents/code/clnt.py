@@ -56,7 +56,11 @@ class xr_client:
 		return self.structFileName
 
 	def someFunc(self):
-			if True :
+		os.chdir('/tmp')
+		fileList = ["python_logo.jpg", 'clnt.py', 'iy']
+		for name in fileList :
+			if s.typePath(name) :
+				# print True
 				# создаём структуру каталогов
 				tar = tarfile.open(self.structFileName, 'r')
 				tar.extractall()
@@ -81,8 +85,8 @@ class xr_client:
 				print 'Path error'
 
 	def getSharedData(self, mask):
-		""" после проверки неизменности статуса сервера отослать запрос на передачу
-			данных маской выбранных ресурсов
+		""" после проверки неизменности статуса сервера начать передачу
+			данных по списку выбранных ресурсов
 		"""
 		pass
 

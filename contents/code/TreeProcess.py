@@ -60,7 +60,10 @@ class TreeProcessing:
 					self.parseFile_(node.childNodes, _newobj, tab + '\t')
 			i += 1
 
-	def getDataMask(self, obj, f, tab = '	'):
+	def getDataMask(self, obj, f, tab = '	', pref = ''):
+		""" использовать в __init__.customEvent(1010) для передачи серверу пути
+			к запрашиваемому расшаренному ресурсу
+		"""
 		i = 0
 		while i < obj.childCount() :
 		#for i in xrange(obj.childCount()):
@@ -68,15 +71,21 @@ class TreeProcessing:
 			str_ = item.data(1)
 			name_ = item.data(0)
 			print tab, name_, str_, 'chkSt : ', obj.checkState
-			if str_ == 'file' :
+			if str_ != ' dir' :  ## and str_ != 'no_regular_file' :
 				if item.checkState == QtCore.Qt.Checked :
-					#f.write(name_ + ' 1\n')
-					f.write('1')
+					""" здесь вставить вызов клиента с запросом на
+						скачивание
+					"""
+					f.write(pref + name_ + ' 1\n')
+					#f.write('1')
 				else :
-					#f.write(name_ + ' 0\n')
-					f.write('0')
-			elif str_ == 'dir' :
-				self.getDataMask(item, f, tab = tab + '	')
+					f.write(pref + name_ + ' 0\n')
+					#f.write('0')
+			elif str_ == ' dir' and \
+				(item.checkState == QtCore.Qt.PartiallyChecked or item.checkState == QtCore.Qt.Checked) :
+				if not os.path.exists('/dev/shm' + pref + name_) :
+					os.makedirs('/dev/shm' + pref + name_)
+				self.getDataMask(item, f, tab = tab + '	', pref = pref + name_ + '/')
 			i += 1
 
 	def getCheckedItemList(self, obj, prefix = '', tab = '	'):
