@@ -7,9 +7,10 @@ from BoxLayout import BoxLayout
 from ButtonPanel import ButtonPanel
 from clnt import xr_client
 from ToolsThread import ToolsThread
+from simpleJob import SimpleJob
 
 class Box(QtGui.QWidget):
-	def __init__(self, Obj_, job_key = None, parent = None):
+	def __init__(self, Obj_, parent = None):
 		QtGui.QWidget.__init__(self, parent)
 
 		self.Obj = Obj_
@@ -33,9 +34,13 @@ class Box(QtGui.QWidget):
 		self.sharedTree.setModel(self.treeModel)
 		self.layout.addWidget(self.sharedTree, 0, 1)
 
-		self.buttunPanel = BoxLayout(ButtonPanel, self.Obj)
-		self.buttunPanel.setMaximumWidth(100)
-		self.layout.addWidget(self.buttunPanel, 0, 2)
+		self.buttonPanel = BoxLayout(ButtonPanel, self.Obj)
+		self.buttonPanel.setMaximumWidth(65)
+		self.layout.addWidget(self.buttonPanel, 0, 2)
+
+		self.jobPanel = SimpleJob(self.Obj)
+		self.jobPanel.setMinimumWidth(65)
+		self.layout.addWidget(self.jobPanel, 0, 3)
 
 		self.setLayout(self.layout)
 
@@ -48,10 +53,14 @@ class Box(QtGui.QWidget):
 		#self.sharedTree.reset()
 
 	def itemSharedSourceQuired(self, item):
+		""" clean currentServerSharedSourceXMLFile """
+		## cleaning or caching
 		print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
 		""" run in QThread """
-		self.clientThread = ToolsThread(xr_client('http://' + \
-							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]) + ':' + \
-							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2])), self)
+		self.clientThread = ToolsThread(xr_client(\
+							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]), \
+							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2]), \
+							self.Obj, 'getSharedSourceStructFile'), \
+							self)
 		self.clientThread.start()
 		self.connect( self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources )

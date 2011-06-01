@@ -11,13 +11,18 @@ from Functions import *
 from ToolsThread import ToolsThread
 from TreeProc import TreeModel
 from PathToTree import SharedSourceTree2XMLFile
-import shutil, os.path
+from simpleJob import SimpleJob
+import shutil, os.path, time
 
 class MainWindow(QtGui.QMainWindow):
-	def __init__(self):
-		QtGui.QMainWindow.__init__(self)
+	def __init__(self, parent = None):
+		QtGui.QMainWindow.__init__(self, parent)
 
 		self.serverState = ''
+		self.currentRemoteServerState = ''
+		self.currentRemoteServerAddr = ''
+		self.currentRemoteServerPort = ''
+		self.jobCount = 0
 
 		#self.resize(450, 350)
 		self.setWindowTitle('LightMight')
@@ -129,6 +134,14 @@ class MainWindow(QtGui.QMainWindow):
 				реализовать в отдельном потоке и графическом окне "Задание № NN"
 				c возможностью останова или перезапуска задания (!!!)
 			"""
+			self.jobCount += 1
+			job = self.menuTab.jobPanel._addJob(self.jobCount, \
+					self.menuTab.treeModel.rootItem, \
+					self.currentRemoteServerState, \
+					self.currentRemoteServerAddr, \
+					self.currentRemoteServerPort, \
+					self.menuTab.userList.currentItem().toolTip())
+
 			""" громоздкое решение; удалить + лишние модули
 			global FileNameList
 			global FileNameList2UpLoad
@@ -145,7 +158,7 @@ class MainWindow(QtGui.QMainWindow):
 			f.close()
 			print FileNameList2UpLoad, " files for upload"
 			"""
-			self.menuTab = Box(self)
+			#self.menuTab = Box(self)
 		elif event.type() == 1011 :
 			pass
 
