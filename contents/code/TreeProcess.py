@@ -71,20 +71,22 @@ class TreeProcessing:
 			str_ = item.data(1)
 			name_ = item.data(0)
 			print tab, name_, str_, 'chkSt : ', obj.checkState
-			if str_ != ' dir' :  ## and str_ != 'no_regular_file' :
+			if str_ != ' dir' and str_ != 'no_regular_file' :
 				if item.checkState == QtCore.Qt.Checked :
 					""" здесь вставить вызов клиента с запросом на
 						скачивание
 					"""
-					f.write(pref + name_ + ' 1\n')
+					f.getSharedData(pref + name_)
+					#f.write(pref + name_ + ' 1\n')
 					#f.write('1')
 				else :
-					f.write(pref + name_ + ' 0\n')
+					#f.write(pref + name_ + ' 0\n')
 					#f.write('0')
+					pass
 			elif str_ == ' dir' and \
 				(item.checkState == QtCore.Qt.PartiallyChecked or item.checkState == QtCore.Qt.Checked) :
-				if not os.path.exists('/dev/shm' + pref + name_) :
-					os.makedirs('/dev/shm' + pref + name_)
+				if not os.path.exists('/dev/shm/LightMight/structure/' + pref + name_) :
+					os.makedirs('/dev/shm/LightMight/structure/' + pref + name_)
 				self.getDataMask(item, f, tab = tab + '	', pref = pref + name_ + '/')
 			i += 1
 

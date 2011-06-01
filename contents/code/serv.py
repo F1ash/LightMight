@@ -26,11 +26,11 @@ class ServerDaemon():
 		self._srv.register_function(self.sessionID, 'sessionID')
 
 	def sessionID(self):
-		fileName = str('/dev/shm/' + randomString(24))
+		fileName = randomString(24)
 		_id = randomString(24)
-		with open(fileName, 'wb') as f :
-			f.write(str(fileName + '\n' + _id + '\n' + self.serverState + '\n'))
-		with open(fileName, "rb") as handle :
+		with open('/dev/shm/LightMight/' + fileName, 'wb') as f :
+			f.write(fileName + '\n' + _id + '\n' + self.serverState + '\n')
+		with open('/dev/shm/LightMight/' + fileName, "rb") as handle :
 			return xmlrpclib.Binary(handle.read())
 
 	def typePath(self, name):
@@ -50,7 +50,7 @@ class ServerDaemon():
 				listFile += [name_]
 
 	def python_clean(self, name):
-		os.remove(name)
+		os.remove('/dev/shm/LightMight/' + name)
 
 	def python_logo(self, name):
 		#os.chdir('/tmp')

@@ -1,28 +1,24 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtGui, QtCore
-from Box import Box
-from ServerSettingsShield import ServerSettingsShield
-from ClientSettingsShield import ClientSettingsShield
-from ListingText import ListingText
+from ui.Box import Box
+from ui.ServerSettingsShield import ServerSettingsShield
+from ui.ClientSettingsShield import ClientSettingsShield
+from ui.ListingText import ListingText
 from AvahiTools import AvahiBrowser, AvahiService
 from serv import ServerDaemon
 from Functions import *
 from ToolsThread import ToolsThread
 from TreeProc import TreeModel
 from PathToTree import SharedSourceTree2XMLFile
-from simpleJob import SimpleJob
-import shutil, os.path, time
+import shutil, os.path
 
-class MainWindow(QtGui.QMainWindow):
-	def __init__(self, parent = None):
+class SimpleJob(QtGui.QMainWindow):
+	def __init__(self, rootItem = None, number = 0, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
 		self.serverState = ''
-		self.currentRemoteServerState = ''
-		self.currentRemoteServerAddr = ''
-		self.currentRemoteServerPort = ''
-		self.jobCount = 0
+		self.rootItem = rootItem
 
 		#self.resize(450, 350)
 		self.setWindowTitle('LightMight')
@@ -90,77 +86,12 @@ class MainWindow(QtGui.QMainWindow):
 		self.connect(exit_tray, QtCore.SIGNAL('triggered()'), self._close)
 		self.trayIconPixmap = QtGui.QPixmap('../icons/tux_partizan.png') # файл иконки
 		self.trayIcon = QtGui.QSystemTrayIcon(self)
-		self.trayIcon.setToolTip('LightMight')
+		self.trayIcon.setToolTip('LightMight Job ' + str(number))
 		self.trayIcon.setContextMenu(self.trayIconMenu)
 		self.trayIcon.setIcon(QtGui.QIcon(self.trayIconPixmap))
 		self.connect(self.trayIcon, QtCore.SIGNAL("activated(QSystemTrayIcon::ActivationReason)"), \
 																			self.trayIconClicked)
 		self.trayIcon.show()
-
-		# toolbar = self.addToolBar('Exit')
-		# toolbar.addAction(exit_)
-		self.initServer()
-		self.initAvahiTools()
-
-	def initAvahiTools(self):
-		self.avahiBrowser = AvahiBrowser(self.menuTab)
-		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
-		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
-
-	def initServer(self):
-		self.server_port = getFreePort()
-		print self.server_port, 'free'
-		self.serverThread = ToolsThread(ServerDaemon( ('', self.server_port), self ), self)
-		self.serverThread.start()
-		if not os.path.exists('/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
-			treeModel = TreeModel('Name', 'Description')
-			""" должен сохранить результат как файл для передачи на запрос клиентов для первого запуска"""
-			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
-				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
-							'/dev/shm/LightMight/server/sharedSource_' + self.serverState)
-			else :
-				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
-				S.__del__(); S = None
-		if 'avahiService' in dir(self) :
-			self.avahiService.__del__(); self.avahiService = None
-			name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
-			self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
-
-	def customEvent(self, event):
-		if event.type() == 1010 :
-			""" запустить клиент для проверки неизменённости
-				статуса сервера и создания цикла передачи файлов
-				по созданному циклу обработки дерева TreeProcess.getDataMask() ;
-				реализовать в отдельном потоке и графическом окне "Задание № NN"
-				c возможностью останова или перезапуска задания (!!!)
-			"""
-			self.jobCount += 1
-			job = self.menuTab.jobPanel._addJob(self.jobCount, \
-					self.menuTab.treeModel.rootItem, \
-					self.currentRemoteServerState, \
-					self.currentRemoteServerAddr, \
-					self.currentRemoteServerPort, \
-					self.menuTab.userList.currentItem().toolTip())
-
-			""" громоздкое решение; удалить + лишние модули
-			global FileNameList
-			global FileNameList2UpLoad
-			FileNameList2UpLoad = []
-			f = open('/dev/shm/maskFile', 'wb')
-			\""" считать выбранное в маску \"""
-			self.menuTab.treeProcessing.getDataMask(self.menuTab.treeModel.rootItem, f)
-			f.close()
-			FileNameList = DataRendering().fileToList('/dev/shm/maskFile')
-			print FileNameList
-			f = open('/dev/shm/maskFile', 'rb')
-			\""" создать из маски список имён файлов для запроса на сервере\"""
-			self.menuTab.treeProcessing.dataMaskToFileNameList(self.menuTab.treeModel.rootItem, f)
-			f.close()
-			print FileNameList2UpLoad, " files for upload"
-			"""
-			#self.menuTab = Box(self)
-		elif event.type() == 1011 :
-			pass
 
 	def showBase(self): pass
 
@@ -195,17 +126,6 @@ class MainWindow(QtGui.QMainWindow):
 		_ServerSettingsShield.exec_()
 
 	def _close(self):
-		#print '/dev/shm/LightMight/server/sharedSource_' + self.serverState, ' close'
-		if InitConfigValue(self.Settings, 'SaveLastStructure', 'False') == 'True' :
-			#print True
-			if os.path.exists('/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
-				#print 'Exist'
-				shutil.move('/dev/shm/LightMight/server/sharedSource_' + self.serverState, \
-							os.path.expanduser('~/.config/LightMight/lastSharedSource'))
-			else :
-				#print 'not Exist'
-				pass
-		shutil.rmtree('/dev/shm/LightMight', ignore_errors = True)
 		self.close()
 
 	def closeEvent(self, event):

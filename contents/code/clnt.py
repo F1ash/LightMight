@@ -6,8 +6,11 @@ from Functions import *
 import os, os.path, tarfile, string
 
 class xr_client:
-	def __init__(self, servaddr = 'http://localhost:34100'):
-		self.servaddr = servaddr
+	def __init__(self, addr = 'http://localhost', port = '34100', obj = None, command = ''):
+		self.servaddr = 'http://' + addr + ':' + port
+		self.Obj = obj
+		self.Obj.currentRemoteServerAddr = addr
+		self.Obj.currentRemoteServerPort = port
 
 	""" old variant
 	def _run(self):
@@ -35,7 +38,7 @@ class xr_client:
 
 		self.methods = self.s.system.listMethods()
 		# get session Id & server State
-		self.randomFileName = str('/dev/shm/' + randomString(24))
+		self.randomFileName = str('/dev/shm/LightMight/' + randomString(24))
 		with open(self.randomFileName, "wb") as handle:
 			handle.write(self.s.sessionID().data)
 		self.listRandomString = DataRendering().fileToList(self.randomFileName)
@@ -46,16 +49,24 @@ class xr_client:
 		print self.sessionID, ' session ID'
 		self.serverState = self.listRandomString[2]
 		print self.serverState, ' server State'
+		self.Obj.currentRemoteServerState = self.serverState
+		"""if command == 'getSharedSourceStructFile' :
+			self.getSharedSourceStructFile()
+		elif command == 'getSharedData' :
+			self.getSharedData()
+		self._shutdown()"""
 
 	def getSharedSourceStructFile(self):
 		# get Shared Sources Structure
-		self.structFileName = str('/dev/shm/LightMight/client/struct_' + self.sessionID)
+		self.structFileName = str('/dev/shm/LightMight/client/struct_' + self.serverState) ## self.sessionID)
 		print self.structFileName, ' struct'
 		with open(self.structFileName, "wb") as handle:
 			handle.write(self.s.requestSharedSourceStruct('sharedSource_' + self.serverState).data)
 		return self.structFileName
 
 	def someFunc(self):
+		""" ошмётки от прежнего файла
+		"""
 		os.chdir('/tmp')
 		fileList = ["python_logo.jpg", 'clnt.py', 'iy']
 		for name in fileList :
@@ -84,11 +95,13 @@ class xr_client:
 			else :
 				print 'Path error'
 
-	def getSharedData(self, mask):
+	def getSharedData(self, name):
 		""" после проверки неизменности статуса сервера начать передачу
 			данных по списку выбранных ресурсов
 		"""
-		pass
+		with open('/dev/shm/LightMight/structure/' + name, "wb") as handle:
+			handle.write(self.s.python_file(name).data)
+		print name, '  download'
 
 	def _shutdown(self):
 		self.shutdown()

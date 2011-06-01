@@ -9,7 +9,12 @@ class ButtonPanel(QtGui.QWidget):
 		self.Obj = Obj_
 
 		self.layout = QtGui.QVBoxLayout()
-		self.layout.addStretch(1)
+
+		"""self.progressBar = QtGui.QProgressBar()
+		self.progressBar.setOrientation(QtCore.Qt.Vertical)
+		self.progressBar.setAlignment(QtCore.Qt.AlignHCenter)
+		self.progressBar.setRange(0, 100)
+		self.layout.addWidget(self.progressBar)"""
 
 		self.addButton = QtGui.QPushButton(QtCore.QString('Add'))
 		self.addButton.setToolTip('Add Item to ItemList\nof Shared Source')
