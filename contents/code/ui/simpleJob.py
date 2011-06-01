@@ -26,6 +26,12 @@ class SimpleJob(QtGui.QWidget):
 		self.setLayout(self.layout)
 		self.hide()
 
+	def show_n_hide(self):
+		if self.isVisible():
+			self.hide()
+		else:
+			self.show()
+
 	def _addJob(self, j, rootItem, serverState, addr, port, info = ''):
 		"""
 			; добавить прогрессбар (если возможно)
