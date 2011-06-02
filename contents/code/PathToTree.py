@@ -88,11 +88,11 @@ class SharedSourceTree2XMLFile:
 			name_ = item.data(0)
 			if item.checkState == QtCore.Qt.Checked :
 				#print tab, str_, prefix + _name, name_, 'check'
-				elem = self.doc.createElement(str_)
-				elem.setAttribute('name', name_)
 				path_ = os.path.join(prefix + _name, name_)
 				#print path_, ' path_'
 				if os.path.isfile(path_) :
+					elem = self.doc.createElement(str_)
+					elem.setAttribute('name', name_)
 					elem.setAttribute('size', str(os.path.getsize(path_)) + ' Byte(s)' + ' file')
 					#node.appendChild(elem)
 				elif os.path.isdir(path_) :
@@ -107,16 +107,19 @@ class SharedSourceTree2XMLFile:
 						pass
 					#print listChild, 'listChild'
 					for _path in listChild :
-						if os.path.isdir(os.path.join(path_,_path)) :
-							str__ = 'dir'
-						else :
+						if not os.path.isdir(os.path.join(path_,_path)) :
+							""" во избежание дублирования только для не_каталогов,
+								потому что каталоги все и так представлены в дереве
+							"""
 							str__ = 'file'
-						new_item = TreeItem(_path, str__, item)
-						new_item.checkState = QtCore.Qt.Checked
-						item.appendChild(new_item)
+							new_item = TreeItem(_path, str__, item)
+							new_item.checkState = QtCore.Qt.Checked
+							item.appendChild(new_item)
 					if len(listChild) > 0 :
 						elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
 				else :
+					elem = self.doc.createElement(str_)
+					elem.setAttribute('name', name_)
 					elem.setAttribute('size', 'no_regular_file')
 			elif item.checkState == QtCore.Qt.PartiallyChecked and item.childCount() > 0 :
 				""" for parsing PartiallyChecked directory, not for all """
@@ -126,7 +129,7 @@ class SharedSourceTree2XMLFile:
 					prefix_ = prefix + _name + '/'
 				#print tab, str_, prefix, name_, 'pref'
 				elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
-			else:
+			else :
 				i += 1
 				continue
 			node.appendChild(elem)

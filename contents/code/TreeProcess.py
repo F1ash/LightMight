@@ -37,7 +37,6 @@ class TreeProcessing:
 		#self.debugPrintObj(rootItem)
 
 	def parseFile_(self, listNodes, parent_obj, tab = '	'):
-		#for i in xrange(listNodes.length):
 		i = 0
 		while i < listNodes.length :
 			node = listNodes.item(i)
@@ -45,8 +44,8 @@ class TreeProcessing:
 				name_ = node.localName
 
 				if node.attributes.length >= 2 :
-				#	print tab, 'name :', name_, \
-				#			'attr :', node.attributes.item(0).value, node.attributes.item(1).value
+					#print tab, 'name :', name_, \
+					#		'attr :', node.attributes.item(0).value, node.attributes.item(1).value
 					#_ddata = [node.attributes.item(0).value, node.attributes.item(1).value]  ##name_ + ' , ' +
 					fileName = node.attributes.item(0).value
 					fileSize = node.attributes.item(1).value
@@ -54,7 +53,7 @@ class TreeProcessing:
 					#_ddata = [node.attributes.item(0).value, name_] ## временно для заполнения дерева в клиенте
 					fileName = node.attributes.item(0).value
 					fileSize = name_
-				_newobj = TreeItem(fileName, fileSize, parent_obj, parent_obj)
+				_newobj = TreeItem(fileName, fileSize, parent_obj)
 				parent_obj.appendChild(_newobj)
 				if name_ == 'dir':
 					self.parseFile_(node.childNodes, _newobj, tab + '\t')
