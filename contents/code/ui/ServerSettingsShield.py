@@ -91,6 +91,10 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.connect(self.addDirPathButton, QtCore.SIGNAL('clicked()'), self.addDirPath)
 		form.addWidget(self.addDirPathButton, 7, 2)
 
+		""" добавить возможность сохранения расшаренных структур
+			и загрузки по выбору
+		"""
+
 		self.addFilePathButton = QtGui.QPushButton('&File')
 		self.addFilePathButton.setMaximumWidth(75)
 		self.connect(self.addFilePathButton, QtCore.SIGNAL('clicked()'), self.addFilePaths)

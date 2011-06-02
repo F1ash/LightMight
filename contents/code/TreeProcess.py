@@ -60,34 +60,26 @@ class TreeProcessing:
 					self.parseFile_(node.childNodes, _newobj, tab + '\t')
 			i += 1
 
-	def getDataMask(self, obj, f, tab = '	', pref = ''):
-		""" использовать в __init__.customEvent(1010) для передачи серверу пути
-			к запрашиваемому расшаренному ресурсу
-		"""
+	def getSharedData(self, obj, f, tab = '	', pref = '', downLoadPath = '/tmp'):
 		i = 0
 		while i < obj.childCount() :
-		#for i in xrange(obj.childCount()):
 			item = obj.child(i)
 			str_ = item.data(1)
 			name_ = item.data(0)
-			print tab, name_, str_, 'chkSt : ', obj.checkState
+			# print tab, name_, str_, 'chkSt : ', obj.checkState
 			if str_ != ' dir' and str_ != 'no_regular_file' :
 				if item.checkState == QtCore.Qt.Checked :
-					""" здесь вставить вызов клиента с запросом на
-						скачивание
-					"""
+					path = os.path.dirname(pref + name_)
+					if not os.path.isdir(downLoadPath + path) :
+						os.makedirs(downLoadPath + path)
+					""" call downLoad client method """
 					f.getSharedData(pref + name_)
-					#f.write(pref + name_ + ' 1\n')
-					#f.write('1')
-				else :
-					#f.write(pref + name_ + ' 0\n')
-					#f.write('0')
-					pass
 			elif str_ == ' dir' and \
 				(item.checkState == QtCore.Qt.PartiallyChecked or item.checkState == QtCore.Qt.Checked) :
-				if not os.path.exists('/dev/shm/LightMight/structure/' + pref + name_) :
-					os.makedirs('/dev/shm/LightMight/structure/' + pref + name_)
-				self.getDataMask(item, f, tab = tab + '	', pref = pref + name_ + '/')
+				if not os.path.exists(downLoadPath + '/' + pref + name_) :
+					os.makedirs(downLoadPath + '/' + pref + name_)
+				self.getSharedData(item, f, tab = tab + '	', pref = pref + name_ + '/', \
+									downLoadPath = downLoadPath)
 			i += 1
 
 	def getCheckedItemList(self, obj, prefix = '', tab = '	'):

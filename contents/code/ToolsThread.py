@@ -2,6 +2,7 @@
 
 from PyQt4.QtCore import QThread, SIGNAL
 from TreeProcess import TreeProcessing
+from Functions import InitConfigValue
 
 class ToolsThread(QThread):
 	def __init__(self, obj = None, rootItem = None, parent = None):
@@ -20,7 +21,8 @@ class ToolsThread(QThread):
 
 	def getSharedData(self):
 		t = TreeProcessing()
-		t.getDataMask(self.rootItem, self.Obj)
+		t.getSharedData(self.rootItem, self.Obj, \
+			downLoadPath = unicode(InitConfigValue(self.Obj.Obj.Settings, 'DownLoadTo', '/tmp')))
 
 	def terminate(self):
 		self.Obj._shutdown()

@@ -35,7 +35,7 @@ class SimpleJob(QtGui.QWidget):
 		self.menuTab.setTabToolTip(i - 1, 'Job #' + str(j) + ':\n' + info)
 		if i == 1 : self.show()
 		#print serverState, addr, port
-		simpleJob = ToolsThread(xr_client(addr, port, self.Obj, 'getSharedData'), rootItem, self)
+		simpleJob = ToolsThread(xr_client(addr, port, self.Obj), rootItem, self)
 		simpleJob.start()
 		self.connect( simpleJob, QtCore.SIGNAL('threadRunning'), simpleJob.getSharedData )
 

@@ -141,24 +141,6 @@ class MainWindow(QtGui.QMainWindow):
 					self.currentRemoteServerAddr, \
 					self.currentRemoteServerPort, \
 					self.menuTab.userList.currentItem().toolTip())
-
-			""" громоздкое решение; удалить + лишние модули
-			global FileNameList
-			global FileNameList2UpLoad
-			FileNameList2UpLoad = []
-			f = open('/dev/shm/maskFile', 'wb')
-			\""" считать выбранное в маску \"""
-			self.menuTab.treeProcessing.getDataMask(self.menuTab.treeModel.rootItem, f)
-			f.close()
-			FileNameList = DataRendering().fileToList('/dev/shm/maskFile')
-			print FileNameList
-			f = open('/dev/shm/maskFile', 'rb')
-			\""" создать из маски список имён файлов для запроса на сервере\"""
-			self.menuTab.treeProcessing.dataMaskToFileNameList(self.menuTab.treeModel.rootItem, f)
-			f.close()
-			print FileNameList2UpLoad, " files for upload"
-			"""
-			#self.menuTab = Box(self)
 		elif event.type() == 1011 :
 			pass
 

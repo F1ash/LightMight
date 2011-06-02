@@ -75,10 +75,18 @@ class ClientSettingsShield(QtGui.QDialog):
 			showHelp.exec_()
 
 	def ok(self):
-		if 'client' in dir(self.Obj) :
-			self.Obj.client.shutdown()
+		self.saveData()
+		self.done(0)
+
+	def saveData(self):
+		self.Obj.Settings.setValue('DownLoadTo', self.upLoadPathString.text())
+		"""self.Obj.Settings.setValue('Pool', self.checkPoolBox.value())
+		if self.saveLastStructureCheck.isChecked() :
+			value = 'True'
+		else :
+			value = 'False'
+		self.Obj.Settings.setValue('SaveLastStructure', value)"""
 		self.Obj.Settings.sync()
-		self.Obj.initClient()
 
 	def cancel(self):
 		self.done(0)

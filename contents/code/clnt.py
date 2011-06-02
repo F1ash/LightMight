@@ -6,32 +6,12 @@ from Functions import *
 import os, os.path, tarfile, string
 
 class xr_client:
-	def __init__(self, addr = 'http://localhost', port = '34100', obj = None, command = ''):
+	def __init__(self, addr = 'http://localhost', port = '34100', obj = None):
 		self.servaddr = 'http://' + addr + ':' + port
 		self.Obj = obj
 		self.Obj.currentRemoteServerAddr = addr
 		self.Obj.currentRemoteServerPort = port
-
-	""" old variant
-	def _run(self):
-		s = ServerProxy(self.servaddr)
-
-		methods = s.system.listMethods()
-		for m in methods:
-			print(m), s.system.methodSignature(m)
-		fileList = ["python_logo.jpg", 'clnt.py', 'iy']
-		os.chdir('/tmp')
-		for name in fileList :
-			with open(str(name + '.my.tar'), "wb") as handle:
-				handle.write(s.python_logo(name).data)
-			s.python_clean(str(name + '.tar'))
-
-		for name in fileList :
-			tar = tarfile.open(str(name + '.my.tar'), 'r')
-			tar.extractall()
-			tar.close()
-			os.remove(str(name + '.my.tar'))
-	"""
+		self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp'))
 
 	def run(self):
 		self.s = ServerProxy(self.servaddr)
@@ -50,11 +30,6 @@ class xr_client:
 		self.serverState = self.listRandomString[2]
 		print self.serverState, ' server State'
 		self.Obj.currentRemoteServerState = self.serverState
-		"""if command == 'getSharedSourceStructFile' :
-			self.getSharedSourceStructFile()
-		elif command == 'getSharedData' :
-			self.getSharedData()
-		self._shutdown()"""
 
 	def getSharedSourceStructFile(self):
 		# get Shared Sources Structure
@@ -96,12 +71,11 @@ class xr_client:
 				print 'Path error'
 
 	def getSharedData(self, name):
-		""" после проверки неизменности статуса сервера начать передачу
-			данных по списку выбранных ресурсов
+		""" порверить неизменённость статуса сервера
 		"""
-		with open('/dev/shm/LightMight/structure/' + name, "wb") as handle:
+		with open(self.downLoadPath + name, "wb") as handle:
 			handle.write(self.s.python_file(name).data)
-		print name, '  download'
+		print 'Downloaded : ', name
 
 	def _shutdown(self):
 		self.shutdown()
