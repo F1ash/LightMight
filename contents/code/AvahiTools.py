@@ -46,7 +46,7 @@ class AvahiBrowser():
 		new_item.setToolTip('name : ' + unicode(args[2]) + '\naddress : ' + str(args[7]) + '\nport : ' + str(args[8]))
 		self.obj.userList.addItem(new_item)
 		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
-		self.USERS[args[2]] = (unicode(args[2]), args[7], args[8])
+		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8])
 		#print self.USERS
 
 	def print_error(self, *args):
@@ -58,8 +58,8 @@ class AvahiBrowser():
 		item = self.obj.userList.findItems(name, \
 				QtCore.Qt.MatchFlags(QtCore.Qt.MatchStartsWith | QtCore.Qt.MatchCaseSensitive))
 		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
-		del self.USERS[name]
-		print "Removed service: '%s'" % name
+		del self.USERS[unicode(name)]
+		print "Removed service: '%s'" % unicode(name)
 		#print self.USERS
 
 	def myhandler(self, interface, protocol, name, stype, domain, flags):

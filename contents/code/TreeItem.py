@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from PyQt4 import QtGui, QtCore
 
 class TreeItem(QtCore.QObject):
@@ -9,7 +10,7 @@ class TreeItem(QtCore.QObject):
 		self.fileSizeItemData = size_
 		self.childItems = []
 		self.checkState = QtCore.Qt.Unchecked
-	
+
 	def __del__(self):
 		for c in self.childItems:
 			c.__del__()

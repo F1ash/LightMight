@@ -3,9 +3,11 @@
 from xml.dom.minidom import Document, parse
 from TreeItem import TreeItem
 from PyQt4 import QtCore
-import os, os.path, xml.parsers.expat
+import os, os.path, xml.parsers.expat, string
 
 class TreeProcessing:
+	""" my signal """
+	nextfile = QtCore.pyqtSignal(int)
 	def __init__(self, parent = None):
 		pass
 
@@ -59,7 +61,7 @@ class TreeProcessing:
 					self.parseFile_(node.childNodes, _newobj, tab + '\t')
 			i += 1
 
-	def getSharedData(self, obj, f, tab = '	', pref = '', downLoadPath = '/tmp'):
+	def getSharedData(self, obj, f, emitter, jobNumber, downLoadPath, tab = '	', pref = ''):
 		i = 0
 		while i < obj.childCount() :
 			item = obj.child(i)
@@ -73,13 +75,31 @@ class TreeProcessing:
 						os.makedirs(downLoadPath + path)
 					""" call downLoad client method """
 					f.getSharedData(pref + name_)
+					emitter.nextfile.emit(jobNumber)
 			elif str_ == ' dir' and \
 				(item.checkState == QtCore.Qt.PartiallyChecked or item.checkState == QtCore.Qt.Checked) :
 				if not os.path.exists(downLoadPath + '/' + pref + name_) :
 					os.makedirs(downLoadPath + '/' + pref + name_)
-				self.getSharedData(item, f, tab = tab + '	', pref = pref + name_ + '/', \
-									downLoadPath = downLoadPath)
+				self.getSharedData(item, f, emitter, jobNumber, downLoadPath, \
+									tab = tab + '	', pref = pref + name_ + '/')
 			i += 1
+
+	def getCheckedItemDataSumm(self, obj):
+		count = 0; downLoadSize = 0
+		i = 0
+		while i < obj.childCount() :
+			item = obj.child(i)
+			str_ = item.data(1)
+			name_ = item.data(0)
+			if item.checkState == QtCore.Qt.Checked and str_ != ' dir' and str_ != 'no_regular_file' :
+				count += 1
+				downLoadSize += int(string.split(str_, ' ')[0])
+			elif str_ == ' dir' :
+				_count, _downLoadSize = self.getCheckedItemDataSumm(item)
+				count += _count
+				downLoadSize += _downLoadSize
+			i += 1
+		return count, downLoadSize
 
 	def getCheckedItemList(self, obj, prefix = '', tab = '	'):
 		Result = []

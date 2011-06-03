@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtCore import QThread, SIGNAL
+from PyQt4.QtCore import QThread, SIGNAL, pyqtSignal
 from TreeProcess import TreeProcessing
 from Functions import InitConfigValue
 
 class ToolsThread(QThread):
-	def __init__(self, obj = None, rootItem = None, parent = None):
+	""" my signal """
+	nextfile = pyqtSignal(int)
+	def __init__(self, obj = None, rootItem = None, parent = None, jobNumber = 0):
 		QThread.__init__(self, parent)
 
 		self.Obj = obj
 		self.Parent = parent
 		self.rootItem = rootItem
+		self.jobNumber = jobNumber
 
 	def run(self):
 		self.Obj.run()
@@ -21,7 +24,7 @@ class ToolsThread(QThread):
 
 	def getSharedData(self):
 		t = TreeProcessing()
-		t.getSharedData(self.rootItem, self.Obj, \
+		t.getSharedData(self.rootItem, self.Obj, self, self.jobNumber, \
 			downLoadPath = unicode(InitConfigValue(self.Obj.Obj.Settings, 'DownLoadTo', '/tmp')))
 
 	def terminate(self):

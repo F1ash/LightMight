@@ -40,6 +40,7 @@ class Box(QtGui.QWidget):
 
 		self.jobPanel = SimpleJob(self.Obj)
 		self.jobPanel.setMinimumWidth(65)
+		self.jobPanel.setMaximumWidth(150)
 		self.layout.addWidget(self.jobPanel, 0, 3)
 
 		self.setLayout(self.layout)
