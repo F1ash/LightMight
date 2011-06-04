@@ -94,7 +94,6 @@ class SharedSourceTree2XMLFile:
 					elem = self.doc.createElement(str_)
 					elem.setAttribute('name', name_)
 					elem.setAttribute('size', str(os.path.getsize(path_)) + ' Byte(s)' + ' file')
-					#node.appendChild(elem)
 				elif os.path.isdir(path_) :
 					if _name == 'Name' :
 						prefix_ = ''
@@ -117,6 +116,10 @@ class SharedSourceTree2XMLFile:
 							item.appendChild(new_item)
 					if len(listChild) > 0 :
 						elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
+					else :
+						""" not create the node for empty directory """
+						i += 1
+						continue
 				else :
 					elem = self.doc.createElement(str_)
 					elem.setAttribute('name', name_)
