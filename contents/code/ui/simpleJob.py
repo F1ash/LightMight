@@ -27,7 +27,7 @@ class SimpleJob(QtGui.QWidget):
 		self.setLayout(self.layout)
 		self.hide()
 
-	def jobProgressBarChange(self, jobNumber):
+	def jobProgressBarChange(self, jobNumber, volume = 0):
 		#print 'dd', jobNumber
 		number = -1
 		for i in xrange(self.menuTab.count()) :
@@ -37,7 +37,7 @@ class SimpleJob(QtGui.QWidget):
 		#print number , '  number of Tab'
 		if number > -1 :
 			prgBar = self.menuTab.widget(number).progressBar
-			prgBar.setValue(prgBar.value() + 1)
+			prgBar.setValue(prgBar.value() + volume)
 
 	def _addJob(self, j, rootItem, serverState, addr, port, info = ''):
 		"""

@@ -5,8 +5,9 @@ from TreeProcess import TreeProcessing
 from Functions import InitConfigValue
 
 class ToolsThread(QThread):
-	""" my signal """
+	""" custom signals for progressBar """
 	nextfile = pyqtSignal(int)
+	nextfile = pyqtSignal(int, int)
 	def __init__(self, obj = None, rootItem = None, parent = None, jobNumber = 0):
 		QThread.__init__(self, parent)
 

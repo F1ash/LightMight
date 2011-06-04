@@ -6,8 +6,6 @@ from PyQt4 import QtCore
 import os, os.path, xml.parsers.expat, string
 
 class TreeProcessing:
-	""" my signal """
-	nextfile = QtCore.pyqtSignal(int)
 	def __init__(self, parent = None):
 		pass
 
@@ -75,7 +73,8 @@ class TreeProcessing:
 						os.makedirs(downLoadPath + path)
 					""" call downLoad client method """
 					f.getSharedData(pref + name_)
-					emitter.nextfile.emit(jobNumber)
+					#emitter.nextfile.emit(jobNumber)
+					emitter.nextfile.emit(jobNumber, int(string.split(str_, ' ')[0]))
 			elif str_ == ' dir' and \
 				(item.checkState == QtCore.Qt.PartiallyChecked or item.checkState == QtCore.Qt.Checked) :
 				if not os.path.exists(downLoadPath + '/' + pref + name_) :

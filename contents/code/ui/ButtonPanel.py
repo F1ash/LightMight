@@ -16,10 +16,10 @@ class ButtonPanel(QtGui.QWidget):
 		self.progressBar.setOrientation(QtCore.Qt.Vertical)
 		self.progressBar.setAlignment(QtCore.Qt.AlignHCenter)
 		""" to measure the number of files """
-		self.progressBar.setRange(0, count)
+		#self.progressBar.setRange(0, count)
 		self.progressBar.setValue(0)
 		""" to measure the volume of downloads """
-		#self.progressBar.setRange(0, downLoadSize/100)
+		self.progressBar.setRange(0, downLoadSize)
 		self.layout.addWidget(self.progressBar, 0, QtCore.Qt.AlignHCenter)
 
 		self.addButton = QtGui.QPushButton(QtCore.QString('Add'))
