@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtCore import QThread, SIGNAL, pyqtSignal
-from TreeProcess import TreeProcessing
+from PyQt4.QtCore import QThread, SIGNAL, pyqtSignal, QSettings
 from Functions import InitConfigValue
 
 class ToolsThread(QThread):
-	""" custom signals for progressBar """
+	""" custom signal for progressBar """
 	nextfile = pyqtSignal(int)
-	nextfile = pyqtSignal(int, int)
-	def __init__(self, obj = None, rootItem = None, parent = None, jobNumber = 0):
+	def __init__(self, obj = None, maskSet = None, parent = None):
 		QThread.__init__(self, parent)
 
 		self.Obj = obj
 		self.Parent = parent
-		self.rootItem = rootItem
-		self.jobNumber = jobNumber
+		self.maskSet = maskSet
 
 	def run(self):
 		self.Obj.run()
@@ -24,9 +21,10 @@ class ToolsThread(QThread):
 		return self.Obj.getSharedSourceStructFile()
 
 	def getSharedData(self):
-		t = TreeProcessing()
-		t.getSharedData(self.rootItem, self.Obj, self, self.jobNumber, \
-			downLoadPath = unicode(InitConfigValue(self.Obj.Obj.Settings, 'DownLoadTo', '/tmp')))
+		""" проверить неизменённость статуса сервера
+		"""
+		downLoadPath = unicode(InitConfigValue(QSettings('LightMight','LightMight'), 'DownLoadTo', '/tmp'))
+		self.Obj.getSharedData(self.maskSet, downLoadPath, self)
 
 	def terminate(self):
 		self.Obj._shutdown()

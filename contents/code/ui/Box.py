@@ -3,8 +3,8 @@
 from PyQt4 import QtGui, QtCore
 from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
-from BoxLayout import BoxLayout
-from ButtonPanel import ButtonPanel
+#from BoxLayout import BoxLayout
+#from ButtonPanel import ButtonPanel
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from simpleJob import SimpleJob
@@ -17,10 +17,10 @@ class Box(QtGui.QWidget):
 		self.layout = QtGui.QGridLayout()
 
 		self.userList = QtGui.QListWidget()
+		self.userList.setToolTip('Users in Web')
 		self.userList.setMaximumWidth(250)
 		#self.userList.setMinimumSize(100, 75)
 		self.userList.sortItems()
-		self.userList.setToolTip('Users in Web')
 		self.userList.itemDoubleClicked.connect(self.itemSharedSourceQuired)
 		self.layout.addWidget(self.userList, 0, 0)
 
@@ -34,14 +34,20 @@ class Box(QtGui.QWidget):
 		self.sharedTree.setModel(self.treeModel)
 		self.layout.addWidget(self.sharedTree, 0, 1)
 
-		self.buttonPanel = BoxLayout(ButtonPanel, self.Obj)
+		"""self.buttonPanel = BoxLayout(ButtonPanel, self.Obj)
 		self.buttonPanel.setMaximumWidth(65)
 		self.layout.addWidget(self.buttonPanel, 0, 2)
 
 		self.jobPanel = SimpleJob(self.Obj)
 		self.jobPanel.setMinimumWidth(65)
 		self.jobPanel.setMaximumWidth(150)
-		self.layout.addWidget(self.jobPanel, 0, 3)
+		self.layout.addWidget(self.jobPanel, 0, 3)"""
+
+		self.upLoadButton = QtGui.QPushButton(QtCore.QString('Up'))
+		self.upLoadButton.setToolTip('UpLoad ItemList\nof Shared Source')
+		self.upLoadButton.setMaximumWidth(65)
+		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.upLoad)
+		self.layout.addWidget(self.upLoadButton, 0, 2)
 
 		self.setLayout(self.layout)
 
@@ -65,3 +71,6 @@ class Box(QtGui.QWidget):
 							self)
 		self.clientThread.start()
 		self.connect( self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources )
+
+	def upLoad(self):
+		QtGui.QApplication.postEvent(self.Obj, QtCore.QEvent(1010))

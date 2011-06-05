@@ -11,8 +11,8 @@ from Functions import *
 from ToolsThread import ToolsThread
 from TreeProc import TreeModel
 from PathToTree import SharedSourceTree2XMLFile
-from simpleJob import SimpleJob
-import shutil, os.path, time
+from TreeProcess import TreeProcessing
+import shutil, os.path
 
 class MainWindow(QtGui.QMainWindow):
 	def __init__(self, parent = None):
@@ -23,6 +23,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.currentRemoteServerAddr = ''
 		self.currentRemoteServerPort = ''
 		self.jobCount = 0
+		self.commonSetOfSharedSource = {}
 
 		#self.resize(450, 350)
 		self.setWindowTitle('LightMight')
@@ -107,20 +108,43 @@ class MainWindow(QtGui.QMainWindow):
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
 		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
 
-	def initServer(self):
+	def initServer(self, sharedSourceTree = None):
+		if 'serverThread' in dir(self) :
+			treeModel = sharedSourceTree
+			firstRun = False
+		else :
+			treeModel = TreeModel('Name', 'Description')
+			firstRun = True
+
 		self.server_port = getFreePort()
 		print self.server_port, 'free'
-		self.serverThread = ToolsThread(ServerDaemon( ('', self.server_port), self ), self)
-		self.serverThread.start()
-		if not os.path.exists('/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
-			treeModel = TreeModel('Name', 'Description')
-			""" должен сохранить результат как файл для передачи на запрос клиентов для первого запуска"""
+		self.serverThread = ToolsThread(ServerDaemon( ('', self.server_port), \
+										self.commonSetOfSharedSource, self ), self)
+		""" должен сохранить результат как файл для передачи на запрос клиентов """
+		"""if not os.path.exists('/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
+			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
+				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
+							'/dev/shm/LightMight/server/sharedSource_' + self.serverState)
+			else :
+				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
+				S.__del__(); S = None"""
+		if firstRun :
 			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
 				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
 							'/dev/shm/LightMight/server/sharedSource_' + self.serverState)
 			else :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 				S.__del__(); S = None
+		else :
+			S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
+			S.__del__(); S = None
+		""" создать словарь соответствия {number : fileName}
+		"""
+		TreeProcessing().setupItemData(['/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
+										treeModel.rootItem)
+		TreeProcessing().getCommonSetOfSharedSource(treeModel.rootItem, self.commonSetOfSharedSource)
+
+		self.serverThread.start()
 		if 'avahiService' in dir(self) :
 			self.avahiService.__del__(); self.avahiService = None
 			name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
@@ -135,12 +159,26 @@ class MainWindow(QtGui.QMainWindow):
 				c возможностью останова или перезапуска задания (!!!)
 			"""
 			self.jobCount += 1
-			job = self.menuTab.jobPanel._addJob(self.jobCount, \
-					self.menuTab.treeModel.rootItem, \
-					self.currentRemoteServerState, \
-					self.currentRemoteServerAddr, \
-					self.currentRemoteServerPort, \
-					self.menuTab.userList.currentItem().toolTip())
+			job = QtCore.QProcess()
+			if self.menuTab.userList.currentItem() is None :
+				info = 'Empty Job'
+			else :
+				info = self.menuTab.userList.currentItem().toolTip()
+			""" снять маску, посчитать объём загрузок """
+			nameMaskFile = randomString(24)
+			with open('/dev/shm/LightMight/client/' + nameMaskFile, 'a') as f :
+				downLoadSize = TreeProcessing().getCheckedItemDataSumm(self.menuTab.treeModel.rootItem, f)
+			print self.currentRemoteServerState, self.currentRemoteServerAddr, self.currentRemoteServerPort
+			pid, start = job.startDetached('/usr/bin/python', \
+						 (QtCore.QStringList()	<< './DownLoadClient.py' \
+												<< nameMaskFile \
+												<< str(downLoadSize) \
+												<< str(self.jobCount) \
+												<< self.currentRemoteServerState \
+												<< self.currentRemoteServerAddr \
+												<< str(self.currentRemoteServerPort) \
+												<< info), \
+						 os.getcwd())
 		elif event.type() == 1011 :
 			pass
 
@@ -165,7 +203,7 @@ class MainWindow(QtGui.QMainWindow):
 			self.show_n_hide()
 
 	def showHelp_(self):
-		showHelp = ListingText("MSG: LightMight.help", self)
+		showHelp = ListingText( "MSG: LightMight.help", self )
 		showHelp.exec_()
 
 	def showClientSettingsShield(self):

@@ -162,10 +162,10 @@ class ServerSettingsShield(QtGui.QDialog):
 			self.Obj.serverThread.terminate()
 			self.Obj.serverThread.exit()
 		self.saveData()
-		self.Obj.initServer()
-		""" должен сохранить результат как файл в кеш для передачи на запрос клиентов"""
+		self.Obj.initServer(self.treeModel)
+		""" должен сохранить результат как файл в кеш для передачи на запрос клиентов
 		S = SharedSourceTree2XMLFile('sharedSource_' + self.Obj.serverState, self.treeModel.rootItem)
-		S.__del__(); S = None
+		S.__del__(); S = None"""
 		self.done(0)
 
 	def saveData(self):

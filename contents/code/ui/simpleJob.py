@@ -40,8 +40,10 @@ class SimpleJob(QtGui.QWidget):
 			prgBar.setValue(prgBar.value() + volume)
 
 	def _addJob(self, j, rootItem, serverState, addr, port, info = ''):
-		"""
-			; добавить прогрессбар (если возможно)
+		""" пропарсить дерево, записать в файл список выбранных файлов,
+			посчитав попутно общий объём; имя файла и объём передать параметрами
+			в downLoadClient-приложение (чтоб приложение с сервером не грузить ),
+			которое запустить через QProcess()
 		"""
 		count, downLoadSize = TreeProcessing().getCheckedItemDataSumm(rootItem)
 		#print serverState, addr, port, count, downLoadSize, j

@@ -8,10 +8,12 @@ import os, os.path, tarfile, string
 class xr_client:
 	def __init__(self, addr = 'http://localhost', port = '34100', obj = None):
 		self.servaddr = 'http://' + addr + ':' + port
-		self.Obj = obj
-		self.Obj.currentRemoteServerAddr = addr
-		self.Obj.currentRemoteServerPort = port
-		self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp'))
+		print self.servaddr
+		if obj is not None :
+			self.Obj = obj
+			self.Obj.currentRemoteServerAddr = addr
+			self.Obj.currentRemoteServerPort = port
+			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp'))
 
 	def run(self):
 		self.s = ServerProxy(self.servaddr)
@@ -29,7 +31,8 @@ class xr_client:
 		print self.sessionID, ' session ID'
 		self.serverState = self.listRandomString[2]
 		print self.serverState, ' server State'
-		self.Obj.currentRemoteServerState = self.serverState
+		if 'Obj' in dir(self) :
+			self.Obj.currentRemoteServerState = self.serverState
 
 	def getSharedSourceStructFile(self):
 		# get Shared Sources Structure
@@ -70,12 +73,19 @@ class xr_client:
 			else :
 				print 'Path error'
 
-	def getSharedData(self, name):
-		""" порверить неизменённость статуса сервера
-		"""
-		with open(self.downLoadPath + name, "wb") as handle:
-			handle.write(self.s.python_file(name).data)
-		print 'Downloaded : ', name
+	def getSharedData(self, maskSet, downLoadPath, emitter):
+		i = 0
+		while i < len(maskSet) :
+			if maskSet[i][0] == '1' :
+				path = os.path.dirname(downLoadPath + maskSet[i][1])
+				#print path, i
+				if not os.path.exists(path) :
+					os.makedirs(path)
+				with open(downLoadPath + maskSet[i][1], "wb") as handle:
+					handle.write(self.s.python_file(str(i)).data)
+				#print 'Downloaded : ', name
+				emitter.nextfile.emit(int(maskSet[i][2]))
+			i += 1
 
 	def _shutdown(self):
 		self.shutdown()

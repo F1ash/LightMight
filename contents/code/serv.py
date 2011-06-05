@@ -8,9 +8,10 @@ from Functions import *
 class ThreadServer(ThreadingMixIn, DocXMLRPCServer): pass
 
 class ServerDaemon():
-	def __init__(self, serveraddr = ('', 35113), parent = None):
+	def __init__(self, serveraddr = ('', 35113), commonSetOfSharedSource =  None, parent = None):
 		self.serverState = randomString(24)
 		parent.serverState = self.serverState
+		self.commonSetOfSharedSource = commonSetOfSharedSource
 		self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True)
 		self._srv.set_server_title('PySADAM server')
 		self._srv.set_server_name('Example server') #TODO: need fix it
@@ -60,14 +61,16 @@ class ServerDaemon():
 		with open(str(name + '.tar'), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
-	def python_file(self, name):
-		#os.chdir('/tmp')
+	def python_file(self, id_):
+		"""#os.chdir('/tmp')
 		if not os.path.isfile(name) :
 			f =  open(name, 'wb')
 			f.write(str('File ' + name + ' not found in server.\n'))
-			f.close()
-		with open(name, "rb") as handle:
-			return xmlrpclib.Binary(handle.read())
+			f.close()"""
+		#print id_, self.commonSetOfSharedSourse[int(id_)]
+		if int(id_) in self.commonSetOfSharedSource :
+			with open(self.commonSetOfSharedSource[int(id_)], "rb") as handle:
+				return xmlrpclib.Binary(handle.read())
 
 	def requestCatalogStruct(self, name, _id):
 		listCatalogFiles = []
