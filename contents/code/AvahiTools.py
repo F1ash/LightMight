@@ -75,7 +75,7 @@ class AvahiBrowser():
 
 	def __del__(self):
 		#gobject.MainLoop().close()
-		del self.USERS
+		self.USERS.clear()
 		pass
 
 class AvahiService():

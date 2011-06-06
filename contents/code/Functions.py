@@ -41,9 +41,9 @@ def InitConfigValue(Settings = None, key = None, default = None):
 	else :
 		return default
 
-def getFreePort(minValue):
+def getFreePort(minValue, maxValue):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	for i in xrange(100) :
+	for i in xrange(maxValue - minValue) :
 		try :
 			s.bind(('127.0.0.1', minValue + i))
 		except socket.error, x :

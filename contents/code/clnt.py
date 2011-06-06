@@ -16,7 +16,6 @@ class xr_client:
 			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp'))
 
 	def run(self):
-		x = ''
 		try :
 			self.s = ServerProxy(self.servaddr)
 
@@ -63,7 +62,7 @@ class xr_client:
 					os.makedirs(path)
 				with open(downLoadPath + maskSet[i][1], "wb") as handle:
 					handle.write(self.s.python_file(str(i)).data)
-					print 'Downloaded : ', maskSet[i][1]
+					#print 'Downloaded : ', maskSet[i][1]
 				size_ = int(maskSet[i][2])
 				if size_ == 0 : size_ = 1
 				emitter.nextfile.emit(size_)

@@ -41,9 +41,9 @@ class Box(QtGui.QWidget):
 		self.buttonLayout.addWidget(self.upLoadButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.refreshButton = QtGui.QPushButton(QtCore.QString('&R'))
-		self.refreshButton.setToolTip('Refresh Avahi Browser')
+		self.refreshButton.setToolTip('Refresh own Avahi service')
 		self.refreshButton.setMaximumWidth(65)
-		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.Obj.initAvahiBrowser)
+		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.Obj.initAvahiService)
 		self.buttonLayout.addWidget(self.refreshButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.layout.addItem(self.buttonLayout, 0, 2)

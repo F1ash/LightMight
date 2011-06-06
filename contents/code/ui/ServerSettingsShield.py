@@ -27,21 +27,25 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.serverNameString = QtGui.QLineEdit(self.defaultName)
 		form.addWidget(self.serverNameString, 0, 1, 1, 2)
 
-		self.emittPort = QtGui.QLabel('Emitt on Port Diapason :')
+		self.emittPort = QtGui.QLabel('Port Diapason :')
 		form.addWidget(self.emittPort, 1, 1)
 
 		self.checkMinPortBox = QtGui.QSpinBox()
 		self.checkMinPortBox.setMinimum(0)
 		self.checkMinPortBox.setMaximum(65535)
-		self.checkMinPortBox.setValue(34100)
+		value = InitConfigValue(self.Obj.Settings, 'MinPort', '34000' )
+		self.checkMinPortBox.setValue(int(value))
 		self.checkMinPortBox.setSingleStep(1)
+		self.checkMinPortBox.setToolTip('Minimal Port')
 		form.addWidget(self.checkMinPortBox, 1, 2)
 
 		self.checkMaxPortBox = QtGui.QSpinBox()
 		self.checkMaxPortBox.setMinimum(0)
 		self.checkMaxPortBox.setMaximum(65535)
-		self.checkMaxPortBox.setValue(34200)
+		value = InitConfigValue(self.Obj.Settings, 'MaxPort', '34100' )
+		self.checkMaxPortBox.setValue(int(value))
 		self.checkMaxPortBox.setSingleStep(1)
+		self.checkMaxPortBox.setToolTip('Maximal Port')
 		form.addWidget(self.checkMaxPortBox, 2, 2)
 
 		self.pool = QtGui.QLabel('Pool :')
@@ -55,12 +59,13 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.checkPoolBox.setSingleStep(1)
 		form.addWidget(self.checkPoolBox, 3, 2)
 
-		self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
+		"""self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
 		form.addWidget(self.useAvahi, 4, 1)
 
 		self.checkUseAvahi = QtGui.QCheckBox()
 		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
 		form.addWidget(self.checkUseAvahi, 4, 2)
+		"""
 
 		self.saveLastStructureLabel = QtGui.QLabel('Save last Share Structure :')
 		form.addWidget(self.saveLastStructureLabel, 5, 1)
@@ -167,6 +172,8 @@ class ServerSettingsShield(QtGui.QDialog):
 	def saveData(self):
 		self.Obj.Settings.setValue('ServerName', self.serverNameString.text())
 		self.Obj.Settings.setValue('Pool', self.checkPoolBox.value())
+		self.Obj.Settings.setValue('MinPort', self.checkMinPortBox.value())
+		self.Obj.Settings.setValue('MaxPort', self.checkMaxPortBox.value())
 		if self.saveLastStructureCheck.isChecked() :
 			value = 'True'
 		else :

@@ -59,7 +59,7 @@ class TreeProcessing:
 					self.parseFile_(node.childNodes, _newobj, tab + '\t')
 			i += 1
 
-	def getSharedData(self, obj, f, emitter, jobNumber, downLoadPath, tab = '	', pref = ''):
+	"""def getSharedData(self, obj, f, emitter, jobNumber, downLoadPath, tab = '	', pref = ''):
 		i = 0
 		while i < obj.childCount() :
 			item = obj.child(i)
@@ -71,7 +71,7 @@ class TreeProcessing:
 					path = os.path.dirname(pref + name_)
 					if not os.path.isdir(downLoadPath + path) :
 						os.makedirs(downLoadPath + path)
-					""" call downLoad client method """
+					\""" call downLoad client method \"""
 					f.getSharedData(pref + name_)
 					#emitter.nextfile.emit(jobNumber)
 					emitter.nextfile.emit(jobNumber, int(string.split(str_, ' ')[0]))
@@ -102,6 +102,7 @@ class TreeProcessing:
 			f.write('0<||>' + pref + name_ + '<||>\n')
 			i += 1
 		return downLoadSize
+		"""
 
 	def getCommonSetOfSharedSource(self, obj, commonSet, pref = '', \
 									j = 0, tab = '	', checkItem = False, f = None):
@@ -136,7 +137,7 @@ class TreeProcessing:
 			i += 1
 		return j, downLoadSize
 
-	def getCheckedItemList(self, obj, prefix = '', tab = '	'):
+	"""def getCheckedItemList(self, obj, prefix = '', tab = '	'):
 		Result = []
 		i = 0
 		while i < obj.childCount() :
@@ -179,6 +180,7 @@ class TreeProcessing:
 				print FileNameList[i], ' selected'
 				FileNameList2UpLoad += [FileNameList[i]]
 			i += 1
+			"""
 
 	def debugPrintObj(self, some_obj, tab = '	'):
 		return

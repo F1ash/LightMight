@@ -15,7 +15,7 @@ class ClientSettingsShield(QtGui.QDialog):
 
 		form = QtGui.QGridLayout()
 
-		self.listenPort = QtGui.QLabel('Listen Port Diapason :')
+		"""self.listenPort = QtGui.QLabel('Listen Port Diapason :')
 		form.addWidget(self.listenPort, 0, 1)
 
 		self.checkMinPortBox = QtGui.QSpinBox()
@@ -38,6 +38,7 @@ class ClientSettingsShield(QtGui.QDialog):
 		self.checkUseAvahi = QtGui.QCheckBox()
 		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
 		form.addWidget(self.checkUseAvahi, 2, 2)
+		"""
 
 		self.upLoadPathLabel = QtGui.QLabel('DownLoad Path :')
 		form.addWidget(self.upLoadPathLabel, 3, 0)
