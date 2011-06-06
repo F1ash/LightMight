@@ -41,9 +41,14 @@ def InitConfigValue(Settings = None, key = None, default = None):
 	else :
 		return default
 
-def getFreePort():
+def getFreePort(minValue):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind(('127.0.0.1', 0))
+	for i in xrange(100) :
+		try :
+			s.bind(('127.0.0.1', minValue + i))
+		except socket.error, x :
+			#print x
+			continue
+		break
 	addr, port = s.getsockname()
-	#print addr, port
 	return port

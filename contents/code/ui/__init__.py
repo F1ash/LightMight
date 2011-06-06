@@ -116,7 +116,7 @@ class MainWindow(QtGui.QMainWindow):
 			treeModel = TreeModel('Name', 'Description')
 			firstRun = True
 
-		self.server_port = getFreePort()
+		self.server_port = getFreePort(34000)
 		print self.server_port, 'free'
 		self.serverThread = ToolsThread(ServerDaemon( ('', self.server_port), \
 										self.commonSetOfSharedSource, self ), self)
