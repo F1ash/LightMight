@@ -104,7 +104,18 @@ class MainWindow(QtGui.QMainWindow):
 		self.initAvahiTools()
 
 	def initAvahiTools(self):
+		self.initAvahiBrowser()
+		self.initAvahiService()
+
+	def initAvahiBrowser(self):
+		if 'avahiBrowser' in dir(self) :
+			self.avahiBrowser.__del__(); self.avahiBrowser = None
+			#self.menuTab.userList.clear()
 		self.avahiBrowser = AvahiBrowser(self.menuTab)
+
+	def initAvahiService(self):
+		if 'avahiService' in dir(self) :
+			self.avahiService.__del__(); self.avahiService = None
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
 		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
 
@@ -112,6 +123,7 @@ class MainWindow(QtGui.QMainWindow):
 		if 'serverThread' in dir(self) :
 			treeModel = sharedSourceTree
 			firstRun = False
+			self.serverThread = None
 		else :
 			treeModel = TreeModel('Name', 'Description')
 			firstRun = True
@@ -119,15 +131,9 @@ class MainWindow(QtGui.QMainWindow):
 		self.server_port = getFreePort(34000)
 		print self.server_port, 'free'
 		self.serverThread = ToolsThread(ServerDaemon( ('', self.server_port), \
-										self.commonSetOfSharedSource, self ), self)
+										self.commonSetOfSharedSource, self ), parent = self)
+
 		""" должен сохранить результат как файл для передачи на запрос клиентов """
-		"""if not os.path.exists('/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
-			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
-				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
-							'/dev/shm/LightMight/server/sharedSource_' + self.serverState)
-			else :
-				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
-				S.__del__(); S = None"""
 		if firstRun :
 			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
 				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
@@ -140,6 +146,7 @@ class MainWindow(QtGui.QMainWindow):
 			S.__del__(); S = None
 		""" создать словарь соответствия {number : fileName}
 		"""
+		treeModel = TreeModel('Name', 'Description')		## cleaned treeModel.rootItem
 		TreeProcessing().setupItemData(['/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
 										treeModel.rootItem)
 		TreeProcessing().getCommonSetOfSharedSource(treeModel.rootItem, self.commonSetOfSharedSource)
@@ -147,28 +154,29 @@ class MainWindow(QtGui.QMainWindow):
 		self.serverThread.start()
 		if 'avahiService' in dir(self) :
 			self.avahiService.__del__(); self.avahiService = None
-			name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
-			self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
+		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
+		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
 
 	def customEvent(self, event):
 		if event.type() == 1010 :
-			""" запустить клиент для проверки неизменённости
-				статуса сервера и создания цикла передачи файлов
-				по созданному циклу обработки дерева TreeProcess.getDataMask() ;
-				реализовать в отдельном потоке и графическом окне "Задание № NN"
-				c возможностью останова или перезапуска задания (!!!)
-			"""
 			self.jobCount += 1
 			job = QtCore.QProcess()
 			if self.menuTab.userList.currentItem() is None :
 				info = 'Empty Job'
 			else :
 				info = self.menuTab.userList.currentItem().toolTip()
-			""" снять маску, посчитать объём загрузок """
+			""" посчитать объём загрузок, создать файл с данными соответствия путей
+				и ключей в self.commonSetOfSharedSource сервера
+			"""
 			nameMaskFile = randomString(24)
-			with open('/dev/shm/LightMight/client/' + nameMaskFile, 'a') as f :
-				downLoadSize = TreeProcessing().getCheckedItemDataSumm(self.menuTab.treeModel.rootItem, f)
+			with open('/dev/shm/LightMight/client/' + nameMaskFile, 'a') as handler :
+				downLoadSize = \
+					TreeProcessing().getCommonSetOfSharedSource(self.menuTab.treeModel.rootItem, \
+																None, \
+																checkItem = True, \
+																f = handler)[1]
 			print self.currentRemoteServerState, self.currentRemoteServerAddr, self.currentRemoteServerPort
+			""" запуск клиента """
 			pid, start = job.startDetached('/usr/bin/python', \
 						 (QtCore.QStringList()	<< './DownLoadClient.py' \
 												<< nameMaskFile \

@@ -31,11 +31,22 @@ class Box(QtGui.QWidget):
 		self.sharedTree.setModel(self.treeModel)
 		self.layout.addWidget(self.sharedTree, 0, 1)
 
-		self.upLoadButton = QtGui.QPushButton(QtCore.QString('Up'))
-		self.upLoadButton.setToolTip('UpLoad ItemList\nof Shared Source')
+		self.buttonLayout = QtGui.QVBoxLayout()
+		self.buttonLayout.addStretch(0)
+
+		self.upLoadButton = QtGui.QPushButton(QtCore.QString('&Up'))
+		self.upLoadButton.setToolTip('UpLoad checked files\nof Shared Source')
 		self.upLoadButton.setMaximumWidth(65)
 		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.upLoad)
-		self.layout.addWidget(self.upLoadButton, 0, 2)
+		self.buttonLayout.addWidget(self.upLoadButton, 0, QtCore.Qt.AlignHCenter)
+
+		self.refreshButton = QtGui.QPushButton(QtCore.QString('&R'))
+		self.refreshButton.setToolTip('Refresh Avahi Browser')
+		self.refreshButton.setMaximumWidth(65)
+		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.Obj.initAvahiBrowser)
+		self.buttonLayout.addWidget(self.refreshButton, 0, QtCore.Qt.AlignHCenter)
+
+		self.layout.addItem(self.buttonLayout, 0, 2)
 
 		self.setLayout(self.layout)
 
@@ -48,6 +59,9 @@ class Box(QtGui.QWidget):
 		#self.sharedTree.reset()
 
 	def itemSharedSourceQuired(self, item):
+		if 'clientThread' in dir(self) :
+			self.disconnect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
+			self.clientThread = None
 		""" clean currentServerSharedSourceXMLFile """
 		## cleaning or caching
 		print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
@@ -57,8 +71,9 @@ class Box(QtGui.QWidget):
 							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2]), \
 							self.Obj), \
 							self)
+
+		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
 		self.clientThread.start()
-		self.connect( self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources )
 
 	def upLoad(self):
 		QtGui.QApplication.postEvent(self.Obj, QtCore.QEvent(1010))

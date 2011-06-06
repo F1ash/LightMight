@@ -8,7 +8,7 @@ from Functions import *
 class ThreadServer(ThreadingMixIn, DocXMLRPCServer): pass
 
 class ServerDaemon():
-	def __init__(self, serveraddr = ('', 35113), commonSetOfSharedSource =  None, parent = None):
+	def __init__(self, serveraddr = ('', 35113), commonSetOfSharedSource = None, parent = None):
 		self.serverState = randomString(24)
 		parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
@@ -63,10 +63,11 @@ class ServerDaemon():
 
 	def python_file(self, id_):
 		""" добавить обработчик ошибок соединения и существования файлов """
-		#print id_, self.commonSetOfSharedSourse[int(id_)]
+		print id_, self.commonSetOfSharedSource[int(id_)], '  serv'
+
 		if int(id_) in self.commonSetOfSharedSource :
-			with open(self.commonSetOfSharedSource[int(id_)], "rb") as handle:
-				return xmlrpclib.Binary(handle.read())
+				with open(self.commonSetOfSharedSource[int(id_)], "rb") as handle :
+					return xmlrpclib.Binary(handle.read())
 
 	def requestCatalogStruct(self, name, _id):
 		listCatalogFiles = []

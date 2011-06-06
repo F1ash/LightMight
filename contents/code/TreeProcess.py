@@ -103,7 +103,9 @@ class TreeProcessing:
 			i += 1
 		return downLoadSize
 
-	def getCommonSetOfSharedSource(self, obj, commonSet, pref = '', j = 0, tab = '	'):
+	def getCommonSetOfSharedSource(self, obj, commonSet, pref = '', \
+									j = 0, tab = '	', checkItem = False, f = None):
+		downLoadSize = 0
 		i = 0
 		while i < obj.childCount() :
 			item = obj.child(i)
@@ -111,18 +113,28 @@ class TreeProcessing:
 			name_ = item.data(0)
 			#print tab, pref + name_
 			if str_ != ' dir' and str_ != 'no_regular_file' :
-				commonSet[j] = pref + name_
+				if not checkItem :
+					commonSet[j] = pref + name_
+					#print commonSet
+				if checkItem and item.checkState == QtCore.Qt.Checked :
+					size_ = string.split(str_, ' ')[0]
+					downLoadSize += int(size_)
+					f.write('1<||>' + pref + name_ + '<||>' + size_ + '<||>' + str(j) + '\n')
 				j += 1
 				i += 1
-				#print commonSet
 				continue
 			elif str_ == ' dir' :
-				j = self.getCommonSetOfSharedSource(item, commonSet, pref + name_ + '/', j, tab + '	')
-			commonSet[j] = pref + name_
+				j, _downLoadSize = self.getCommonSetOfSharedSource(\
+										item, commonSet, pref + name_ + '/', \
+										j, tab + '	', checkItem, f)
+				downLoadSize += _downLoadSize
+			if not checkItem :
+				commonSet[j] = pref + name_
+				#print commonSet
+			if checkItem : f.write('0<||><||><||>\n')
 			j += 1
-			#print commonSet
 			i += 1
-		return j
+		return j, downLoadSize
 
 	def getCheckedItemList(self, obj, prefix = '', tab = '	'):
 		Result = []

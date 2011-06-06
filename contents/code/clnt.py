@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from xmlrpclib import ServerProxy
+from xmlrpclib import ServerProxy, ProtocolError
+from httplib import HTTPException
 from Functions import *
-import os, os.path, string
+import os, os.path, string, socket
 
 class xr_client:
 	def __init__(self, addr = 'http://localhost', port = '34100', obj = None):
@@ -15,23 +16,35 @@ class xr_client:
 			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp'))
 
 	def run(self):
-		self.s = ServerProxy(self.servaddr)
+		x = ''
+		try :
+			self.s = ServerProxy(self.servaddr)
 
-		self.methods = self.s.system.listMethods()
-		# get session Id & server State
-		self.randomFileName = str('/dev/shm/LightMight/' + randomString(24))
-		with open(self.randomFileName, "wb") as handle:
-			handle.write(self.s.sessionID().data)
-		self.listRandomString = DataRendering().fileToList(self.randomFileName)
-		self.s.python_clean(self.listRandomString[0])
-		os.remove(self.randomFileName)
-		print self.listRandomString, ' list of randomStrings'
-		self.sessionID = self.listRandomString[1]
-		print self.sessionID, ' session ID'
-		self.serverState = self.listRandomString[2]
-		print self.serverState, ' server State'
-		if 'Obj' in dir(self) :
-			self.Obj.currentRemoteServerState = self.serverState
+			self.methods = self.s.system.listMethods()
+			# get session Id & server State
+			self.randomFileName = str('/dev/shm/LightMight/' + randomString(24))
+			with open(self.randomFileName, "wb") as handle:
+				handle.write(self.s.sessionID().data)
+			self.listRandomString = DataRendering().fileToList(self.randomFileName)
+			self.s.python_clean(self.listRandomString[0])
+			os.remove(self.randomFileName)
+			print self.listRandomString, ' list of randomStrings'
+			self.sessionID = self.listRandomString[1]
+			print self.sessionID, ' session ID'
+			self.serverState = self.listRandomString[2]
+			print self.serverState, ' server State'
+			if 'Obj' in dir(self) :
+				self.Obj.currentRemoteServerState = self.serverState
+		except ProtocolError, err :
+			print "A protocol error occurred"
+			print "URL: %s" % err.url
+			print "HTTP/HTTPS headers: %s" % err.headers
+			print "Error code: %d" % err.errcode
+			print "Error message: %s" % err.errmsg
+		except HTTPException, err :
+			print 'HTTPLibError : ', err
+		except socket.error, err :
+			print 'SocetError : ', err
 
 	def getSharedSourceStructFile(self):
 		# get Shared Sources Structure
@@ -42,18 +55,18 @@ class xr_client:
 		return self.structFileName
 
 	def getSharedData(self, maskSet, downLoadPath, emitter):
-		i = 0
-		while i < len(maskSet) :
+		for i in maskSet.iterkeys() :
 			if maskSet[i][0] == '1' :
 				path = os.path.dirname(downLoadPath + maskSet[i][1])
-				#print path, i
+				print downLoadPath + maskSet[i][1], i, ' clnt'
 				if not os.path.exists(path) :
 					os.makedirs(path)
 				with open(downLoadPath + maskSet[i][1], "wb") as handle:
 					handle.write(self.s.python_file(str(i)).data)
-				#print 'Downloaded : ', name
-				emitter.nextfile.emit(int(maskSet[i][2]))
-			i += 1
+					print 'Downloaded : ', maskSet[i][1]
+				size_ = int(maskSet[i][2])
+				if size_ == 0 : size_ = 1
+				emitter.nextfile.emit(size_)
 
 	def _shutdown(self):
 		#self.shutdown()		# method not exist

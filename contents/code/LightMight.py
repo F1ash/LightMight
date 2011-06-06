@@ -12,9 +12,9 @@ def createStructure():
 			os.mkdir(nameDir)
 
 #os.system('cd $HOME && xauth merge /dev/shm/dsa && rm /dev/shm/dsa')
-#name_ = os.path.basename(sys.argv[0])
+name_ = os.path.basename(sys.argv[0])
 #print sys.argv[0][:-len(name_)]
-#os.chdir(sys.argv[0][:-len(name_)])
+os.chdir(sys.argv[0][:-len(name_)])
 createStructure()
 app = QtGui.QApplication(sys.argv)
 main = MainWindow()

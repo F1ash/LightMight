@@ -32,16 +32,18 @@ class ButtonPanel(QtGui.QWidget):
 		#self.progressBar.setRange(0, count)
 		self.progressBar.setValue(0)
 		""" to measure the volume of downloads """
-		self.progressBar.setRange(0, int(downLoadSize))
+		range_ = int(downLoadSize)
+		if range_ == 0 : range_ = 1
+		self.progressBar.setRange(0, range_)
 		self.layout.addWidget(self.progressBar, 0, QtCore.Qt.AlignHCenter)
 
-		self.startButton = QtGui.QPushButton(QtCore.QString('Restart'))
+		self.startButton = QtGui.QPushButton(QtCore.QString('Start'))
 		self.startButton.setToolTip('Restart DownLoad')
-		self.connect(self.startButton, QtCore.SIGNAL('clicked()'), self.restartJob)
+		self.connect(self.startButton, QtCore.SIGNAL('clicked()'), self.startJob)
 		self.layout.addWidget(self.startButton, 0,  QtCore.Qt.AlignHCenter)
 
 		self.stopButton = QtGui.QPushButton(QtCore.QString('Stop'))
-		self.stopButton.setToolTip('Stop DownLoad')
+		self.stopButton.setToolTip('Close DownloadClient')
 		self.connect(self.stopButton, QtCore.SIGNAL('clicked()'), self.stopJob)
 		self.layout.addWidget(self.stopButton, 0,  QtCore.Qt.AlignHCenter)
 
@@ -51,17 +53,16 @@ class ButtonPanel(QtGui.QWidget):
 
 	def setMaskSet(self):
 		with open('/dev/shm/LightMight/client/' + self.nameMaskFile) as f :
-			i = 0
 			for line in f :
 				s = string.split(line, '<||>')
-				#print i, s
-				self.maskSet[i] = (s[0], s[1], s[2])
-				i += 1
+				#print s
+				if s[0] == '1' :
+					self.maskSet[int(s[3])] = (s[0], s[1], s[2], s[3])
+
 		os.remove('/dev/shm/LightMight/client/' + self.nameMaskFile)
 
-	def restartJob(self):
-		if 'job' in dir(self) :
-			self.stopJob()
+	def startJob(self):
+		self.startButton.hide()
 		self.job = ToolsThread(xr_client(self.address, self.port), self.maskSet, self)
 		self.job.start()
 		self.connect( self.job, QtCore.SIGNAL('threadRunning'), self.job.getSharedData )
@@ -70,6 +71,7 @@ class ButtonPanel(QtGui.QWidget):
 	def stopJob(self):
 		if 'job' in dir(self) :
 			self.job.terminate()
+		self.close()
 
 	def jobProgressBarChangeVolume(self, volume = 0):
 		self.progressBar.setValue(self.progressBar.value() + volume)
