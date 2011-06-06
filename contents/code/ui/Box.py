@@ -3,11 +3,8 @@
 from PyQt4 import QtGui, QtCore
 from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
-#from BoxLayout import BoxLayout
-#from ButtonPanel import ButtonPanel
 from clnt import xr_client
 from ToolsThread import ToolsThread
-from simpleJob import SimpleJob
 
 class Box(QtGui.QWidget):
 	def __init__(self, Obj_, parent = None):
@@ -33,15 +30,6 @@ class Box(QtGui.QWidget):
 		self.sharedTree.setExpandsOnDoubleClick(True)
 		self.sharedTree.setModel(self.treeModel)
 		self.layout.addWidget(self.sharedTree, 0, 1)
-
-		"""self.buttonPanel = BoxLayout(ButtonPanel, self.Obj)
-		self.buttonPanel.setMaximumWidth(65)
-		self.layout.addWidget(self.buttonPanel, 0, 2)
-
-		self.jobPanel = SimpleJob(self.Obj)
-		self.jobPanel.setMinimumWidth(65)
-		self.jobPanel.setMaximumWidth(150)
-		self.layout.addWidget(self.jobPanel, 0, 3)"""
 
 		self.upLoadButton = QtGui.QPushButton(QtCore.QString('Up'))
 		self.upLoadButton.setToolTip('UpLoad ItemList\nof Shared Source')

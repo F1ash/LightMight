@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os, sys, os.path, gc, xml.parsers.expat
-from xml.dom.minidom import Document, parse
 from PyQt4 import QtGui, QtCore
 from TreeItem import TreeItem
 

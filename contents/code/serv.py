@@ -2,7 +2,7 @@
 
 import xmlrpclib, string, tarfile, os, os.path
 from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
-from SocketServer import ThreadingMixIn, ForkingMixIn
+from SocketServer import ThreadingMixIn		##, ForkingMixIn
 from Functions import *
 
 class ThreadServer(ThreadingMixIn, DocXMLRPCServer): pass
@@ -62,11 +62,7 @@ class ServerDaemon():
 			return xmlrpclib.Binary(handle.read())
 
 	def python_file(self, id_):
-		"""#os.chdir('/tmp')
-		if not os.path.isfile(name) :
-			f =  open(name, 'wb')
-			f.write(str('File ' + name + ' not found in server.\n'))
-			f.close()"""
+		""" добавить обработчик ошибок соединения и существования файлов """
 		#print id_, self.commonSetOfSharedSourse[int(id_)]
 		if int(id_) in self.commonSetOfSharedSource :
 			with open(self.commonSetOfSharedSource[int(id_)], "rb") as handle:

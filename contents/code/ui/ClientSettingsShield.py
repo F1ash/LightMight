@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtGui, QtCore
-import os
 from ListingText import ListingText
+import os
 
 class ClientSettingsShield(QtGui.QDialog):
 	def __init__(self, obj = None, parent = None):
@@ -80,12 +80,6 @@ class ClientSettingsShield(QtGui.QDialog):
 
 	def saveData(self):
 		self.Obj.Settings.setValue('DownLoadTo', self.upLoadPathString.text())
-		"""self.Obj.Settings.setValue('Pool', self.checkPoolBox.value())
-		if self.saveLastStructureCheck.isChecked() :
-			value = 'True'
-		else :
-			value = 'False'
-		self.Obj.Settings.setValue('SaveLastStructure', value)"""
 		self.Obj.Settings.sync()
 
 	def cancel(self):

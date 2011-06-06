@@ -2,7 +2,6 @@
 
 from PyQt4 import QtGui, QtCore
 from ToolsThread import ToolsThread
-from TreeProcess import TreeProcessing
 from clnt import xr_client
 import os, string
 

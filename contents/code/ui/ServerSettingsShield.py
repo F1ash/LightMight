@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtGui, QtCore
-import os, stat
 from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
-from PathToTree import PathToTree, SharedSourceTree2XMLFile
+from PathToTree import PathToTree
 from ListingText import ListingText
 from Functions import InitConfigValue
+import os, stat
 
 class ServerSettingsShield(QtGui.QDialog):
 	def __init__(self, obj = None, parent = None):
@@ -76,11 +76,10 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.sharedSourceLabel = QtGui.QLabel('Shared Sources :')
 		form.addWidget(self.sharedSourceLabel, 6, 0)
 
-		pathList = []   ##['resultXML']    ## ['result1', 'result2', 'result3']
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.sharedTree = QtGui.QTreeView()
 		self.sharedTree.setRootIsDecorated(True)
-		TreeProcessing().setupItemData(pathList, self.treeModel.rootItem)
+		TreeProcessing().setupItemData([], self.treeModel.rootItem)
 		self.sharedTree.setToolTip("<font color=red><b>Select path<br>for share it !</b></font>")
 		self.sharedTree.setExpandsOnDoubleClick(True)
 		self.sharedTree.setModel(self.treeModel)
@@ -163,9 +162,6 @@ class ServerSettingsShield(QtGui.QDialog):
 			self.Obj.serverThread.exit()
 		self.saveData()
 		self.Obj.initServer(self.treeModel)
-		""" должен сохранить результат как файл в кеш для передачи на запрос клиентов
-		S = SharedSourceTree2XMLFile('sharedSource_' + self.Obj.serverState, self.treeModel.rootItem)
-		S.__del__(); S = None"""
 		self.done(0)
 
 	def saveData(self):
