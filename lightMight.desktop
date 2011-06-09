@@ -1,0 +1,15 @@
+[Desktop Entry]
+Encoding=UTF-8
+GenericName=LightMight Transmitter for local network
+Exec=/usr/bin/LightMight
+GenericName[ru]=Публикация файловых ресурсов и файлообмен для локальных сетей
+Icon=LightMight
+Name=LightMight
+NoDisplay=false
+Type=Application
+Categories=Network;
+StartupNotify=true
+Terminal=0
+TerminalOptions=
+X-KDE-SubstituteUID=false
+X-KDE-Username=

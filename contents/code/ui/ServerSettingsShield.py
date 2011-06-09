@@ -48,7 +48,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.checkMaxPortBox.setToolTip('Maximal Port')
 		form.addWidget(self.checkMaxPortBox, 2, 2)
 
-		self.pool = QtGui.QLabel('Pool :')
+		"""self.pool = QtGui.QLabel('Pool :')
 		form.addWidget(self.pool, 3, 1)
 
 		self.checkPoolBox = QtGui.QSpinBox()
@@ -59,7 +59,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.checkPoolBox.setSingleStep(1)
 		form.addWidget(self.checkPoolBox, 3, 2)
 
-		"""self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
+		self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
 		form.addWidget(self.useAvahi, 4, 1)
 
 		self.checkUseAvahi = QtGui.QCheckBox()
@@ -171,7 +171,7 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def saveData(self):
 		self.Obj.Settings.setValue('ServerName', self.serverNameString.text())
-		self.Obj.Settings.setValue('Pool', self.checkPoolBox.value())
+		#self.Obj.Settings.setValue('Pool', self.checkPoolBox.value())
 		self.Obj.Settings.setValue('MinPort', self.checkMinPortBox.value())
 		self.Obj.Settings.setValue('MaxPort', self.checkMaxPortBox.value())
 		if self.saveLastStructureCheck.isChecked() :

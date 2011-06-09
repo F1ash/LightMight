@@ -31,7 +31,7 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.Settings = QtCore.QSettings('LightMight','LightMight')
 
-		self.create_struct = QtGui.QAction(QtGui.QIcon('../icons/crst.png'),'&Create of Structure', self)
+		"""self.create_struct = QtGui.QAction(QtGui.QIcon('../icons/crst.png'),'&Create of Structure', self)
 		self.create_struct.setShortcut('Ctrl+D')
 		self.create_struct.setStatusTip('Create new structure for Backup')
 		self.connect(self.create_struct, QtCore.SIGNAL('triggered()'), self.createStruct)
@@ -40,6 +40,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.base_.setShortcut('Ctrl+B')
 		self.base_.setStatusTip('List of backupping Path(s)')
 		self.connect(self.base_, QtCore.SIGNAL('triggered()'), self.showBase)
+		"""
 
 		self.exit_ = QtGui.QAction(QtGui.QIcon('../icons/exit.png'), '&Exit', self)
 		self.exit_.setShortcut('Ctrl+Q')

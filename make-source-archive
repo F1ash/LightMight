@@ -1,0 +1,17 @@
+#!/bin/bash
+
+APP_NAME=LightMight
+APP_VERSION=`cat ./VERSION`
+
+cd ..
+cp -f -r ./$APP_NAME ./$APP_NAME-$APP_VERSION
+rm -rf ./$APP_NAME-$APP_VERSION/.git
+rm -rf ./$APP_NAME-$APP_VERSION/.gitignore
+tar cfj $APP_NAME-$APP_VERSION.tar.bz2 ./$APP_NAME-$APP_VERSION
+rm -rf ./$APP_NAME-$APP_VERSION
+
+RPMBUILD_ROOT=$(cat ~/.rpmmacros | grep "%_topdir" | awk '{print $3}' | sed s/\$HOME\)/\./)
+cp -f $APP_NAME-$APP_VERSION.tar.bz2 $RPMBUILD_ROOT/SOURCES
+cp -f ~/$APP_NAME/$APP_NAME.spec $RPMBUILD_ROOT/SPECS
+cd $RPMBUILD_ROOT/SPECS
+/usr/bin/rpmbuild -ba $APP_NAME.spec
