@@ -64,8 +64,9 @@ class MainWindow(QtGui.QMainWindow):
 		menubar = self.menuBar()
 
 		file_ = menubar.addMenu('&File')
-		file_.addAction(self.base_)
+		"""file_.addAction(self.base_)
 		file_.addAction(self.create_struct)
+		"""
 		file_.addAction(self.exit_)
 
 		set_ = menubar.addMenu('&Settings')
