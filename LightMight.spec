@@ -1,6 +1,6 @@
 Name: LightMight
 Version: 0.1.0
-Release: 1%{?dist}
+Release: %(date +%Y%m%d_%H%M)%{?dist}
 Summary: Programm for file`s resource publication and transmittion in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
 Group: Applications/Network

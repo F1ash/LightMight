@@ -6,6 +6,7 @@ from Functions import InitConfigValue
 class ToolsThread(QThread):
 	""" custom signal for progressBar """
 	nextfile = pyqtSignal(int)
+	complete = pyqtSignal()
 	def __init__(self, obj = None, maskSet = None, parent = None):
 		QThread.__init__(self, parent)
 

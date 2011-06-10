@@ -37,15 +37,16 @@ class ButtonPanel(QtGui.QWidget):
 		self.progressBar.setRange(0, range_)
 		self.layout.addWidget(self.progressBar, 0, QtCore.Qt.AlignHCenter)
 
-		self.startButton = QtGui.QPushButton(QtCore.QString('Start'))
+		self.startButton = QtGui.QPushButton(QtCore.QString('&Start'))
 		self.startButton.setToolTip('Restart DownLoad')
 		self.connect(self.startButton, QtCore.SIGNAL('clicked()'), self.startJob)
 		self.layout.addWidget(self.startButton, 0,  QtCore.Qt.AlignHCenter)
 
-		self.stopButton = QtGui.QPushButton(QtCore.QString('Stop'))
-		self.stopButton.setToolTip('Close DownloadClient')
-		self.connect(self.stopButton, QtCore.SIGNAL('clicked()'), self.stopJob)
-		self.layout.addWidget(self.stopButton, 0,  QtCore.Qt.AlignHCenter)
+		self.closeButton = QtGui.QPushButton(QtCore.QString('&Close'))
+		self.closeButton.setToolTip('Close DownloadClient')
+		self.closeButton.hide()
+		self.connect(self.closeButton, QtCore.SIGNAL('clicked()'), self.stopJob)
+		self.layout.addWidget(self.closeButton, 0,  QtCore.Qt.AlignHCenter)
 
 		self.setLayout(self.layout)
 		#print self.progressBar.value(), ' init value'
@@ -67,6 +68,11 @@ class ButtonPanel(QtGui.QWidget):
 		self.job.start()
 		self.connect( self.job, QtCore.SIGNAL('threadRunning'), self.job.getSharedData )
 		self.job.nextfile.connect(self.jobProgressBarChangeVolume)
+		self.job.complete.connect(self.showCloseButton)
+
+	def showCloseButton(self):
+		self.closeButton.show()
+		self.setToolTip("<font color=red>Job is complete</font>" + '\n' + self.toolTip())
 
 	def stopJob(self):
 		if 'job' in dir(self) :
