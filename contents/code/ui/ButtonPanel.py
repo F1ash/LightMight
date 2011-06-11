@@ -2,10 +2,13 @@
 
 from PyQt4 import QtGui, QtCore
 from ToolsThread import ToolsThread
+from ListingText import ListingText
 from clnt import xr_client
 import os, string
 
 class ButtonPanel(QtGui.QWidget):
+	# custom signal
+	errorString = QtCore.pyqtSignal(str)
 	def __init__(self, name_ = '', downLoadSize = 0, jobNumber = -1, \
 					serverState = '', addr = '', port = '', info = '', parent = None):
 		QtGui.QWidget.__init__(self, parent)
@@ -14,9 +17,9 @@ class ButtonPanel(QtGui.QWidget):
 		self.jobNumber = jobNumber
 		self.address = addr
 		self.port = port
-		self.serverState = serverState
+		self.currentRemoteServerState = serverState
 		self.maskSet = {}
-		print name_, downLoadSize, jobNumber, serverState, addr, port, info
+		print name_, downLoadSize, jobNumber, serverState, addr, port, '\nclnt args :\n', info
 
 		self.setWindowTitle('LightMight Job')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
@@ -46,13 +49,16 @@ class ButtonPanel(QtGui.QWidget):
 		self.closeButton.setToolTip('Close DownloadClient')
 		self.closeButton.hide()
 		self.connect(self.closeButton, QtCore.SIGNAL('clicked()'), self.stopJob)
-		self.layout.addWidget(self.closeButton, 0,  QtCore.Qt.AlignHCenter)
+		self.layout.addWidget(self.closeButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.setLayout(self.layout)
 		#print self.progressBar.value(), ' init value'
 		self.setMaskSet()
 
 	def setMaskSet(self):
+		if not os.path.isfile('/dev/shm/LightMight/client/' + self.nameMaskFile) :
+			print '  file not exist'
+			return None
 		with open('/dev/shm/LightMight/client/' + self.nameMaskFile) as f :
 			for line in f :
 				s = string.split(line, '<||>')
@@ -64,15 +70,16 @@ class ButtonPanel(QtGui.QWidget):
 
 	def startJob(self):
 		self.startButton.hide()
-		self.job = ToolsThread(xr_client(self.address, self.port), self.maskSet, self)
+		self.job = ToolsThread(xr_client(self.address, self.port, parent = self), self.maskSet, self)
 		self.job.start()
 		self.connect( self.job, QtCore.SIGNAL('threadRunning'), self.job.getSharedData )
 		self.job.nextfile.connect(self.jobProgressBarChangeVolume)
 		self.job.complete.connect(self.showCloseButton)
+		self.errorString.connect(self.showErrorMSG)
 
 	def showCloseButton(self):
 		self.closeButton.show()
-		self.setToolTip("<font color=red>Job is complete</font>" + '\n' + self.toolTip())
+		self.setToolTip("<font color=red>Job is complete</font><br>" + self.toolTip())
 
 	def stopJob(self):
 		if 'job' in dir(self) :
@@ -81,5 +88,10 @@ class ButtonPanel(QtGui.QWidget):
 
 	def jobProgressBarChangeVolume(self, volume = 0):
 		self.progressBar.setValue(self.progressBar.value() + volume)
+
+	def showErrorMSG(self, str_):
+		print 'Message : ', str(str_)
+		showHelp = ListingText("MSG: " + str(str_), self)
+		showHelp.exec_()
 
 

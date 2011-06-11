@@ -15,6 +15,8 @@ from TreeProcess import TreeProcessing
 import shutil, os.path
 
 class MainWindow(QtGui.QMainWindow):
+	# custom signal
+	errorString = QtCore.pyqtSignal(str)
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -49,7 +51,7 @@ class MainWindow(QtGui.QMainWindow):
 
 		listHelp = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&About LightMight', self)
 		listHelp.setStatusTip('Read help')
-		self.connect(listHelp,QtCore.SIGNAL('triggered()'), self.showHelp_)
+		self.connect(listHelp,QtCore.SIGNAL('triggered()'), self.showMSG)
 
 		serverSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Server Settings', self)
 		serverSettings.setStatusTip('Read help')
@@ -88,7 +90,7 @@ class MainWindow(QtGui.QMainWindow):
 		show_hide = self.trayIconMenu.addAction(QtGui.QIcon('../icons/tux_partizan.png'), 'Hide / Show')
 		self.connect(show_hide, QtCore.SIGNAL('triggered()'), self.show_n_hide)
 		help_tray = self.trayIconMenu.addAction(QtGui.QIcon('../icons/help.png'), 'Help')
-		self.connect(help_tray, QtCore.SIGNAL('triggered()'), self.showHelp_)
+		self.connect(help_tray, QtCore.SIGNAL('triggered()'), self.showMSG)
 		exit_tray = self.trayIconMenu.addAction(QtGui.QIcon('../icons/exit.png'), '&Exit')
 		self.connect(exit_tray, QtCore.SIGNAL('triggered()'), self._close)
 		self.trayIconPixmap = QtGui.QPixmap('../icons/tux_partizan.png') # файл иконки
@@ -104,6 +106,7 @@ class MainWindow(QtGui.QMainWindow):
 		# toolbar.addAction(exit_)
 		self.initServer()
 		self.initAvahiTools()
+		self.errorString.connect(self.showMSG)
 
 	def initAvahiTools(self):
 		self.initAvahiBrowser()
@@ -165,7 +168,8 @@ class MainWindow(QtGui.QMainWindow):
 			self.jobCount += 1
 			job = QtCore.QProcess()
 			if self.menuTab.userList.currentItem() is None :
-				info = 'Empty Job'
+				self.showMSG('Empty Job')
+				return None
 			else :
 				info = self.menuTab.userList.currentItem().toolTip()
 			""" посчитать объём загрузок, создать файл с данными соответствия путей
@@ -213,8 +217,9 @@ class MainWindow(QtGui.QMainWindow):
 		if reason == QtGui.QSystemTrayIcon.DoubleClick :
 			self.show_n_hide()
 
-	def showHelp_(self):
-		showHelp = ListingText( "MSG: LightMight.help", self )
+	def showMSG(self, str_ = "LightMight.help"):
+		#print 'Message : ', str(str_)
+		showHelp = ListingText("MSG: " + str(str_), self)
 		showHelp.exec_()
 
 	def showClientSettingsShield(self):

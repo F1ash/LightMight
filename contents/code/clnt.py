@@ -3,13 +3,14 @@
 from xmlrpclib import ServerProxy, ProtocolError, Fault
 from httplib import HTTPException
 from Functions import *
-from ui.ListingText import ListingText
 import os, os.path, string, socket
 
 class xr_client:
-	def __init__(self, addr = 'http://localhost', port = '34100', obj = None):
+	def __init__(self, addr = 'http://localhost', port = '34100', obj = None, parent = None):
 		self.servaddr = 'http://' + addr + ':' + port
-		print self.servaddr
+		self.serverState = ''
+		self.Parent = parent
+		print self.servaddr, ' clnt '
 		if obj is not None :
 			self.Obj = obj
 			self.Obj.currentRemoteServerAddr = addr
@@ -35,24 +36,37 @@ class xr_client:
 			print self.serverState, ' server State'
 			if 'Obj' in dir(self) :
 				self.Obj.currentRemoteServerState = self.serverState
+				print "Handshake succeeded."
 		except ProtocolError, err :
 			print "A protocol error occurred"
 			print "URL: %s" % err.url
 			print "HTTP/HTTPS headers: %s" % err.headers
 			print "Error code: %d" % err.errcode
 			print "Error message: %s" % err.errmsg
-			self.showMSG(err)
+			if 'Obj' in dir(self) and parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.errorString.emit(str(err))
 		except Fault, err:
 			"""print "A fault occurred"
 			print "Fault code: %d" % err.faultCode
 			print "Fault string: %s" % err.faultString"""
-			self.showMSG(err)
+			if 'Obj' in dir(self) and parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.errorString.emit(str(err))
 		except HTTPException, err :
 			print 'HTTPLibError : ', err
-			self.showMSG(err)
+			if 'Obj' in dir(self) and parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.errorString.emit(str(err))
 		except socket.error, err :
 			print 'SocetError : ', err
-			self.showMSG(err)
+			if 'Obj' in dir(self) and parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.errorString.emit(str(err))
 		finally :
 			pass
 
@@ -64,7 +78,18 @@ class xr_client:
 			handle.write(self.s.requestSharedSourceStruct('sharedSource_' + self.serverState).data)
 		return self.structFileName
 
-	def getSharedData(self, maskSet, downLoadPath, emitter):
+	def getSharedData(self, maskSet, downLoadPath, emitter, previousRemoteServerState = 'NOTHING'):
+		""" check remote server state """
+		print previousRemoteServerState, ' <state> ', self.serverState
+		if previousRemoteServerState != self.serverState or previousRemoteServerState == '' :
+			str_ = 'Status of the remote server has changed or not defined.\nUpdate his. Upload canceled.'
+			self.Parent.errorString.emit(str_)
+			emitter.complete.emit()
+			return None
+		if len(maskSet) == 0 :
+			self.Parent.errorString.emit('Empty job. Upload canceled.')
+			emitter.complete.emit()
+			return None
 		for i in maskSet.iterkeys() :
 			if maskSet[i][0] == '1' :
 				path = os.path.dirname(downLoadPath + maskSet[i][1])
@@ -84,19 +109,15 @@ class xr_client:
 					print "HTTP/HTTPS headers: %s" % err.headers
 					print "Error code: %d" % err.errcode
 					print "Error message: %s" % err.errmsg"""
-					self.showMSG(err)
+					self.Parent.errorString.emit(str(err))
 				except Fault, err:
 					"""print "A fault occurred"
 					print "Fault code: %d" % err.faultCode
 					print "Fault string: %s" % err.faultString"""
-					self.showMSG(err)
+					self.Parent.errorString.emit(str(err))
 				finally :
 					pass
 		emitter.complete.emit()
-
-	def showMSG(self, str_):
-		showHelp = ListingText("MSG: " + str(str_))
-		showHelp.exec_()
 
 	def _shutdown(self):
 		#self.shutdown()		# method not exist

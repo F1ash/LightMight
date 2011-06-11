@@ -8,7 +8,7 @@ from Functions import *
 class ThreadServer(ThreadingMixIn, DocXMLRPCServer): pass
 
 class ServerDaemon():
-	def __init__(self, serveraddr = ('', 35113), commonSetOfSharedSource = None, parent = None):
+	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, parent = None):
 		self.serverState = randomString(24)
 		parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
@@ -51,7 +51,8 @@ class ServerDaemon():
 				listFile += [name_]
 
 	def python_clean(self, name):
-		os.remove('/dev/shm/LightMight/' + name)
+		if os.path.isfile('/dev/shm/LightMight/' + name) :
+			os.remove('/dev/shm/LightMight/' + name)
 
 	def python_logo(self, name):
 		#os.chdir('/tmp')

@@ -4,7 +4,7 @@ from PyQt4.QtCore import QThread, SIGNAL, pyqtSignal, QSettings
 from Functions import InitConfigValue
 
 class ToolsThread(QThread):
-	""" custom signal for progressBar """
+	""" custom signals for DownLoadClient """
 	nextfile = pyqtSignal(int)
 	complete = pyqtSignal()
 	def __init__(self, obj = None, maskSet = None, parent = None):
@@ -22,10 +22,9 @@ class ToolsThread(QThread):
 		return self.Obj.getSharedSourceStructFile()
 
 	def getSharedData(self):
-		""" проверить неизменённость статуса сервера
-		"""
-		downLoadPath = unicode(InitConfigValue(QSettings('LightMight','LightMight'), 'DownLoadTo', '/tmp'))
-		self.Obj.getSharedData(self.maskSet, downLoadPath, self)
+		downLoadPath = unicode(InitConfigValue(QSettings('LightMight','LightMight'), \
+											'DownLoadTo', '/tmp/LightMight/DownLoad'))
+		self.Obj.getSharedData(self.maskSet, downLoadPath, self, self.Parent.currentRemoteServerState)
 
 	def terminate(self):
 		self.Obj._shutdown()
