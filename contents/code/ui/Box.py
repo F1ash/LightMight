@@ -64,7 +64,7 @@ class Box(QtGui.QWidget):
 			self.clientThread = None
 		""" clean currentServerSharedSourceXMLFile """
 		## cleaning or caching
-		print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
+		## print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
 		""" run in QThread """
 		self.clientThread = ToolsThread(xr_client(\
 							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]), \

@@ -29,10 +29,11 @@ class AvahiBrowser():
 		self.USERS = {}
 
 	def service_resolved(self, *args):
-		print 'name:', unicode(args[2])
+		"""print 'name:', unicode(args[2])
 		print 'address:', args[7]
 		print 'port:', args[8]
 		print 'service resolved.'
+		"""
 
 		""" для различения одинаковых имён служб (но Avahi не регистрирует одинаковые имена)
 		item = self.obj.userList.findItems(args[2], \
@@ -59,11 +60,11 @@ class AvahiBrowser():
 				QtCore.Qt.MatchFlags(QtCore.Qt.MatchStartsWith | QtCore.Qt.MatchCaseSensitive))
 		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
 		del self.USERS[unicode(name)]
-		print "Removed service: '%s'" % unicode(name)
+		#print "Removed service: '%s'" % unicode(name)
 		#print self.USERS
 
 	def myhandler(self, interface, protocol, name, stype, domain, flags):
-		print "Found service '%s' type '%s' domain '%s' " % (unicode(name), stype, domain)
+		#print "Found service '%s' type '%s' domain '%s' " % (unicode(name), stype, domain)
 
 		if flags & avahi.LOOKUP_RESULT_LOCAL :
 				# local service, skip
@@ -120,7 +121,7 @@ class AvahiService():
 					avahi.DBUS_INTERFACE_ENTRY_GROUP)
 			self.group.connect_to_signal('StateChanged', self.entry_group_state_changed)
 
-		print "Adding service '%s' of type '%s' ..." % (self.serviceName, self.serviceType)
+		print "Adding service '%s' of type '%s' ..." % (QtCore.QString(self.serviceName).toUtf8(), self.serviceType)
 
 		self.group.AddService(
 				avahi.IF_UNSPEC,	#interface
@@ -153,12 +154,12 @@ class AvahiService():
 			self.rename_count = self.rename_count - 1
 			if self.rename_count > 0 :
 				self.serviceName = self.server.GetAlternativeServiceName(self.serviceName)
-				print "WARNING: Service name collision, changing name to '%s' ..." % self.serviceName
+				print "WARNING: Service name collision, changing name to '%s' ..." % QtCore.QString(self.serviceName).toUtf8()
 				self.remove_service()
 				self.add_service()
 
 			else :
-				print "ERROR: No suitable service name found after %i retries, exiting." % self.serviceName
+				print "ERROR: No suitable service name found after %i retries, exiting." % QtCore.QString(self.serviceName).toUtf8()
 				self.main_loop.quit()
 		elif state == avahi.ENTRY_GROUP_FAILURE :
 			print "Error in group state changed", error

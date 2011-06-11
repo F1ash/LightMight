@@ -23,7 +23,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		form.addWidget(self.serverNameLabel, 0, 0)
 
 		self.defaultName  = InitConfigValue(self.Obj.Settings, 'ServerName', \
-											os.getlogin() + ' LightMight Server')
+											os.getenv('USER') + ' LightMight Server')
 		self.serverNameString = QtGui.QLineEdit(self.defaultName)
 		form.addWidget(self.serverNameString, 0, 1, 1, 2)
 
