@@ -1,0 +1,22 @@
+# LANG=en_US.UTF-8
+
+Dependencies :
+	python >= 2.6
+	PyQt4 >= 4.7
+	dbus-python
+	avahi
+	avahi-ui-tools
+
+Paths and files:
+	Configuration file: $HOME/.config/LightMight/LihgtMight.conf
+	Temporary directory : /dev/shm/LightMight
+	Last shared files structure save in : $HOME/.config/LightMight/
+
+Description:
+	Simple FileTransmitter for publication and download users
+file resources in local network. To use, you must open port 5353 (mDNS)
+and 34000-34100 by default.
+
+Tested on :
+	Fedora 14/15
+	Kubuntu 11.04
