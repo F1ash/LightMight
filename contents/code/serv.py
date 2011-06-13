@@ -64,7 +64,7 @@ class ServerDaemon():
 
 	def python_file(self, id_):
 		""" добавить обработчик ошибок соединения и существования файлов """
-		print id_, self.commonSetOfSharedSource[int(id_)], '  serv'
+		#print id_, self.commonSetOfSharedSource[int(id_)], '  serv'
 
 		if int(id_) in self.commonSetOfSharedSource :
 				with open(self.commonSetOfSharedSource[int(id_)], "rb") as handle :

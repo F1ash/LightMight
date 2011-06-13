@@ -91,32 +91,33 @@ class xr_client:
 			emitter.complete.emit()
 			return None
 		for i in maskSet.iterkeys() :
-			if maskSet[i][0] == '1' :
-				path = os.path.dirname(downLoadPath + maskSet[i][1])
-				print downLoadPath + maskSet[i][1], i, ' clnt'
+			if maskSet[i][0] == 1 :
+				_path = downLoadPath + maskSet[i][1]
+				path = os.path.dirname(_path)
+				#print _path, i, ' clnt'
 				if not os.path.exists(path) :
 					os.makedirs(path)
-				try :
-					with open(downLoadPath + maskSet[i][1], "wb") as handle:
+				with open(_path, "wb") as handle:
+					try :
 						handle.write(self.s.python_file(str(i)).data)
 						#print 'Downloaded : ', maskSet[i][1]
-						size_ = int(maskSet[i][2])
-						if size_ == 0 : size_ = 1
-						emitter.nextfile.emit(size_)
-				except ProtocolError, err :
-					"""print "A protocol error occurred"
-					print "URL: %s" % err.url
-					print "HTTP/HTTPS headers: %s" % err.headers
-					print "Error code: %d" % err.errcode
-					print "Error message: %s" % err.errmsg"""
-					self.Parent.errorString.emit(str(err))
-				except Fault, err:
-					"""print "A fault occurred"
-					print "Fault code: %d" % err.faultCode
-					print "Fault string: %s" % err.faultString"""
-					self.Parent.errorString.emit(str(err))
-				finally :
-					pass
+					except ProtocolError, err :
+						"""print "A protocol error occurred"
+						print "URL: %s" % err.url
+						print "HTTP/HTTPS headers: %s" % err.headers
+						print "Error code: %d" % err.errcode
+						print "Error message: %s" % err.errmsg"""
+						self.Parent.errorString.emit(str(err))
+					except Fault, err:
+						"""print "A fault occurred"
+						print "Fault code: %d" % err.faultCode
+						print "Fault string: %s" % err.faultString"""
+						self.Parent.errorString.emit(str(err))
+					finally :
+						pass
+					size_ = maskSet[i][2]
+					if size_ == 0 : size_ = 1
+					emitter.nextfile.emit(size_)
 		emitter.complete.emit()
 
 	def _shutdown(self):

@@ -124,21 +124,22 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.connect(self, QtCore.SIGNAL('threadError'), self.threadMSG)
 
 	def addDirPath(self):
-		nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
+		_nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
+		nameDir = QtCore.QString(_nameDir).toUtf8().data()
 		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.X_OK) :    ## and os.access(nameDir, os.W_OK) :
 			# print nameDir
-			P = PathToTree(nameDir, self.treeModel.rootItem, 'dir')
-			###P.__del__(); P = None #FIXME: This destruct empty object
+			P = PathToTree(_nameDir, self.treeModel.rootItem, 'dir')
 			self.treeModel.reset()
 		else :
-			showHelp = ListingText("MSG: uncorrect Path (access denied).", self)
+			showHelp = ListingText("MSG: uncorrect Path (or access denied): " + nameDir, self)
 			showHelp.exec_()
 
 	def addFilePaths(self):
 		fileNames = QtGui.QFileDialog.getOpenFileNames(self, 'Path_to_', '~')
-		for name_ in fileNames :
+		for _name in fileNames :
+			name_ = QtCore.QString(_name).toUtf8().data()
 			if not stat.S_ISLNK(os.lstat(name_).st_mode) and os.access(name_, os.R_OK) :
-				P = PathToTree(name_, self.treeModel.rootItem, 'file')
+				P = PathToTree(_name, self.treeModel.rootItem, 'file')
 				self.treeModel.reset()
 			else :
 				showHelp = ListingText("MSG: uncorrect Path\n(access denied) or symLink : " + name_, self)

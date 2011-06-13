@@ -2,6 +2,7 @@
 
 from PyQt4 import QtGui, QtCore
 from ListingText import ListingText
+from Functions import InitConfigValue
 import os
 
 class ClientSettingsShield(QtGui.QDialog):
@@ -43,7 +44,8 @@ class ClientSettingsShield(QtGui.QDialog):
 		self.upLoadPathLabel = QtGui.QLabel('DownLoad Path :')
 		form.addWidget(self.upLoadPathLabel, 3, 0)
 
-		self.upLoadPathString = QtGui.QLineEdit('/tmp/LightMight/DownLoad')
+		path_ = InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp/LightMight/DownLoad')
+		self.upLoadPathString = QtGui.QLineEdit(path_)
 		form.addWidget(self.upLoadPathString, 4, 0, 4, 2)
 
 		self.upLoadPathButton = QtGui.QPushButton('&Path')
@@ -68,11 +70,12 @@ class ClientSettingsShield(QtGui.QDialog):
 		self.setLayout(form)
 
 	def getPath(self):
-		nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
+		_nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
+		nameDir = QtCore.QString(_nameDir).toUtf8().data()
 		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.W_OK) and os.access(nameDir, os.X_OK) :
-			self.upLoadPathString.setText(nameDir)
+			self.upLoadPathString.setText(_nameDir)
 		else :
-			showHelp = ListingText("MSG: uncorrect Path (access denied)", self)
+			showHelp = ListingText("MSG: uncorrect Path (or access denied) : " + nameDir, self)
 			showHelp.exec_()
 
 	def ok(self):

@@ -14,6 +14,7 @@ class PathToTree(QtCore.QObject):
 		self.listPrepare()
 
 	def _proceed_dir(self, d, parentItem):
+		#d = QtCore.QString(_d).toUtf8().data()
 		if (not os.access(d, os.F_OK) or
 			not os.access(d, os.R_OK) or
 			not os.access(d, os.X_OK)):
@@ -22,28 +23,32 @@ class PathToTree(QtCore.QObject):
 		try :
 			for entry_dir in os.listdir(d):
 				try:
-					fullpath = os.path.join(d, entry_dir)
+					#print entry_dir, ':', d, QtCore.QString().fromUtf8(d), \
+					#						QtCore.QString().fromUtf8(entry_dir)
+					#fullpath = os.path.join(d, entry_dir)
+					fullpath = QtCore.QString().fromUtf8(d) + '/' + \
+											QtCore.QString().fromUtf8(entry_dir)
 				except UnicodeEncodeError :
 					#print 'UnicodeError_file'
 					continue
 				except UnicodeDecodeError :
 					#print 'UnicodeError_file'
 					continue
-				if os.path.islink(fullpath) or \
-					not os.path.isdir(fullpath): #FIXME: remove this line if you have add and files too
+				if os.path.islink(unicode(fullpath)) or \
+					not os.path.isdir(unicode(fullpath)): #FIXME: remove this line if you have add and files too
 					continue
 
-				entryItem = TreeItem(entry_dir, self.typePath, parentItem)
-				if os.path.isdir(fullpath):
+				entryItem = TreeItem(QtCore.QString().fromUtf8(entry_dir), self.typePath, parentItem)
+				if os.path.isdir(unicode(fullpath)):
 					self._proceed_dir(fullpath, entryItem)
 
 				parentItem.appendChild(entryItem)
 		except OSError :
-			#print 'OSError'
+			print 'OSError'
 			pass
 
 	def listPrepare(self):
-		str_path = unicode(self.path.toUtf8())		# *.toUtf8 -- Qt method; need useing standart Python method here
+		str_path = self.path
 		entryItem = TreeItem(str_path, self.typePath, self.rootItem)
 		self.rootItem.appendChild(entryItem)
 		self._proceed_dir(str_path, entryItem)
@@ -70,16 +75,16 @@ class SharedSourceTree2XMLFile:
 			#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
 			self.doc.writexml(f, encoding = 'utf-8')
 		except UnicodeError :
-			print 'File not saved'
+			print 'SharedSourceTree2XMLFile.filePrepare : File not saved'
 		f.close()
 		self.doc.unlink()
 
 	def treeSharedDataToXML(self, obj, prefix = '', tab = '\t'):
 		_str = obj.data(1)
 		_name = obj.data(0)
-		#print tab, prefix, _name, 'parent'
+		#print tab, prefix, unicode(_name), 'parent'
 		node = self.doc.createElement(_str)
-		node.setAttribute('name', _name)
+		node.setAttribute('name', QtCore.QString(_name).toUtf8().data())
 		node.setAttribute('size', ' dir')
 		i = 0
 		while i < obj.childCount() :
@@ -87,22 +92,25 @@ class SharedSourceTree2XMLFile:
 			str_ = item.data(1)
 			name_ = item.data(0)
 			if item.checkState == QtCore.Qt.Checked :
-				#print tab, str_, prefix + _name, name_, 'check'
-				path_ = os.path.join(prefix + _name, name_)
-				#print path_, ' path_'
+				#print tab, str_, prefix + unicode(_name), unicode(name_), 'check'
+				path_ = os.path.join(unicode(prefix) + unicode(_name), unicode(name_))
+				#print QtCore.QString(path_).toUtf8().data(), ' path_'
 				if os.path.isfile(path_) :
+					#print 'path exist & file'
 					elem = self.doc.createElement(str_)
-					elem.setAttribute('name', name_)
+					elem.setAttribute('name', QtCore.QString(name_).toUtf8().data())
 					elem.setAttribute('size', str(os.path.getsize(path_)) + ' Byte(s)' + ' file')
 				elif os.path.isdir(path_) :
+					#print 'path exist & dir'
 					if _name == 'Name' :
 						prefix_ = ''
 					else :
 						prefix_ = prefix + _name + '/'
+					listChild = []
 					try:
 						listChild = os.listdir(path_)
 					except OSError :
-						# print 'OSerror'
+						print 'OSerror_1'
 						pass
 					#print listChild, 'listChild'
 					for _path in listChild :
@@ -121,8 +129,9 @@ class SharedSourceTree2XMLFile:
 						i += 1
 						continue
 				else :
+					#print 'path exist & no regular'
 					elem = self.doc.createElement(str_)
-					elem.setAttribute('name', name_)
+					elem.setAttribute('name', QtCore.QString(name_).toUtf8().data())
 					elem.setAttribute('size', 'no_regular_file')
 			elif item.checkState == QtCore.Qt.PartiallyChecked and item.childCount() > 0 :
 				""" for parsing PartiallyChecked directory, not for all """

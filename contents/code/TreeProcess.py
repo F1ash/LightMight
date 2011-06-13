@@ -3,7 +3,7 @@
 from xml.dom.minidom import Document, parse
 from TreeItem import TreeItem
 from PyQt4 import QtCore
-import os, os.path, xml.parsers.expat, string
+import os, os.path, string, xml.parsers.expat, xml.sax._exceptions
 
 class TreeProcessing:
 	def __init__(self, parent = None):
@@ -15,7 +15,7 @@ class TreeProcessing:
 			with open(path, 'rb') as datasource :
 
 				try :
-					dom2 = parse(datasource, bufsize = 32768)
+					dom2 = parse(datasource, bufsize = 65536)
 					print 'dom2 открыт'   # parse an open file
 					## *.childNodes[0].childNodes for ignoring rootItem_node
 					self.parseFile_(dom2.childNodes[0].childNodes, rootItem)
@@ -30,6 +30,9 @@ class TreeProcessing:
 					showHelp.exec_()
 					print "App exit."
 					app.exit(0)
+				except xml.sax._exceptions.SAXParseException, err :
+					##
+					print 'SAXParseException :', str(err)
 				finally :
 					datasource.close()
 
@@ -116,11 +119,11 @@ class TreeProcessing:
 			if str_ != ' dir' and str_ != 'no_regular_file' :
 				if not checkItem :
 					commonSet[j] = pref + name_
-					#print commonSet
+					#print commonSet[j]
 				if checkItem and item.checkState == QtCore.Qt.Checked :
 					size_ = string.split(str_, ' ')[0]
 					downLoadSize += int(size_)
-					f.write('1<||>' + pref + name_ + '<||>' + size_ + '<||>' + str(j) + '\n')
+					f.write(('1<||>' + pref + name_ + '<||>' + size_ + '<||>' + str(j) + '\n').encode('UTF-8'))
 				j += 1
 				i += 1
 				continue
@@ -131,7 +134,7 @@ class TreeProcessing:
 				downLoadSize += _downLoadSize
 			if not checkItem :
 				commonSet[j] = pref + name_
-				#print commonSet
+				#print commonSet[j]
 			if checkItem : f.write('0<||><||><||>\n')
 			j += 1
 			i += 1

@@ -62,9 +62,13 @@ class ButtonPanel(QtGui.QWidget):
 		with open('/dev/shm/LightMight/client/' + self.nameMaskFile) as f :
 			for line in f :
 				s = string.split(line, '<||>')
-				#print s
 				if s[0] == '1' :
-					self.maskSet[int(s[3])] = (s[0], s[1], s[2], s[3])
+					self.maskSet[int(unicode(str(s[3].decode('utf-8')).replace('\n', '')))] = \
+												(int(unicode(str(s[0].decode('utf-8')).replace('\n', ''))), \
+												s[1].decode('utf-8'), \
+												int(unicode(str(s[2].decode('utf-8')).replace('\n', ''))), \
+												int(unicode(str(s[3].decode('utf-8')).replace('\n', ''))))
+					print self.maskSet[int(unicode(str(s[3].decode('utf-8')).replace('\n', '')))]
 
 		os.remove('/dev/shm/LightMight/client/' + self.nameMaskFile)
 

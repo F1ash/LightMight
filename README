@@ -5,7 +5,7 @@ Dependencies :
 	PyQt4 >= 4.7
 	dbus-python
 	avahi
-	avahi-ui-tools
+	avahi-ui-tools (python-avahi in Ubuntu)
 
 Paths and files:
 	Configuration file: $HOME/.config/LightMight/LihgtMight.conf
