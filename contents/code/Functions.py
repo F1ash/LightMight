@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, os.path, string, random, socket
+import os, os.path, string, random, socket, ssl
 
 char_set = string.ascii_letters + string.digits
 
@@ -51,4 +51,37 @@ def getFreePort(minValue, maxValue):
 			continue
 		break
 	addr, port = s.getsockname()
-	return port
+	s.close()
+	return addr, port
+
+def encryptData(data, (addr, port)):
+	try :
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.bind((addr, port))
+		sock.listen(5)
+		print sock.getsockname()
+		newsocket, fromaddr = sock.accept()
+		print newsocket, fromaddr
+		ssl_sock = ssl.wrap_socket(newsocket, \
+							server_side = True, \
+							ssl_version = ssl.PROTOCOL_TLSv1)
+		#ssl_sock.connect(('127.0.0.1', 56000))
+		ssl_sock.write(data)
+		ssl_sock.close()
+	except socket.error, err: print err
+	finally :
+		sock.close()
+
+def decryptData((addr, port), (listenAddr, listenPort)):
+	try :
+		sock = socket.socket()   #socket.AF_INET, socket.SOCK_STREAM)
+		sock.bind((addr, port))
+		ssl_sock = ssl.wrap_socket(sock, \
+							ssl_version = ssl.PROTOCOL_TLSv1)
+		self.ssl_sock.connect((listenAddr, listenPort))
+		str_ = ssl_sock.read()
+		print str_
+		ssl_sock.close()
+	except socket.error, err: print err
+	finally :
+		sock.close()

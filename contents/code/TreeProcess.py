@@ -11,6 +11,7 @@ class TreeProcessing:
 
 	def setupItemData(self, pathList, rootItem):
 		print 'Создание отображения...'
+		count = 0; downLoads = 0
 		for path in pathList :
 			with open(path, 'rb') as datasource :
 
@@ -18,7 +19,7 @@ class TreeProcessing:
 					dom2 = parse(datasource, bufsize = 65536)
 					print 'dom2 открыт'   # parse an open file
 					## *.childNodes[0].childNodes for ignoring rootItem_node
-					self.parseFile_(dom2.childNodes[0].childNodes, rootItem)
+					count, downLoads = self.parseFile_(dom2.childNodes[0].childNodes, rootItem)
 					print 'парсинг завершён'   # parse
 					dom2.unlink()
 					dom2 = None
@@ -38,9 +39,10 @@ class TreeProcessing:
 
 		print 'Создание отображения завершено.'
 		#self.debugPrintObj(rootItem)
+		return count, downLoads
 
 	def parseFile_(self, listNodes, parent_obj, tab = '	'):
-		i = 0
+		i = 0; count = 0; downLoads = 0
 		while i < listNodes.length :
 			node = listNodes.item(i)
 			if node is not None :
@@ -52,6 +54,9 @@ class TreeProcessing:
 					#_ddata = [node.attributes.item(0).value, node.attributes.item(1).value]  ##name_ + ' , ' +
 					fileName = node.attributes.item(0).value
 					fileSize = node.attributes.item(1).value
+					if name_ == 'file' :
+						count += 1
+						downLoads += int(string.split(fileSize, ' ')[0])
 				else :
 					#_ddata = [node.attributes.item(0).value, name_] ## временно для заполнения дерева в клиенте
 					fileName = node.attributes.item(0).value
@@ -59,8 +64,11 @@ class TreeProcessing:
 				_newobj = TreeItem(fileName, fileSize, parent_obj)
 				parent_obj.appendChild(_newobj)
 				if name_ == 'dir':
-					self.parseFile_(node.childNodes, _newobj, tab + '\t')
+					_count, _downLoads = self.parseFile_(node.childNodes, _newobj, tab + '\t')
+					count += _count
+					downLoads += _downLoads
 			i += 1
+		return count, downLoads
 
 	"""def getSharedData(self, obj, f, emitter, jobNumber, downLoadPath, tab = '	', pref = ''):
 		i = 0

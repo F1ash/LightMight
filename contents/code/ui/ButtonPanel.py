@@ -68,7 +68,7 @@ class ButtonPanel(QtGui.QWidget):
 												s[1].decode('utf-8'), \
 												int(unicode(str(s[2].decode('utf-8')).replace('\n', ''))), \
 												int(unicode(str(s[3].decode('utf-8')).replace('\n', ''))))
-					print self.maskSet[int(unicode(str(s[3].decode('utf-8')).replace('\n', '')))]
+					#print self.maskSet[int(unicode(str(s[3].decode('utf-8')).replace('\n', '')))]
 
 		os.remove('/dev/shm/LightMight/client/' + self.nameMaskFile)
 

@@ -26,6 +26,11 @@ class ServerDaemon():
 		self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
 		self._srv.register_function(self.sessionID, 'sessionID')
 
+		"""addr, port = getFreePort(34000, 34100)
+		encryptData("data_ljksrlkngklrng", (addr, port))
+		decryptData(getFreePort(34000, 34100), (addr, port))
+		"""
+
 	def sessionID(self):
 		fileName = randomString(24)
 		_id = randomString(24)
@@ -64,10 +69,10 @@ class ServerDaemon():
 
 	def python_file(self, id_):
 		""" добавить обработчик ошибок соединения и существования файлов """
-		#print id_, self.commonSetOfSharedSource[int(id_)], '  serv'
+		#print id_, type(id_), str(self.commonSetOfSharedSource[int(id_)]), '  serv'
 
 		if int(id_) in self.commonSetOfSharedSource :
-				with open(self.commonSetOfSharedSource[int(id_)], "rb") as handle :
+				with open(str(self.commonSetOfSharedSource[int(id_)]), "rb") as handle :
 					return xmlrpclib.Binary(handle.read())
 
 	def requestCatalogStruct(self, name, _id):

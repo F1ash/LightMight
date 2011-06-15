@@ -2,11 +2,15 @@
 
 from PyQt4 import QtGui, QtCore
 from TreeProc import TreeModel
+from TreeItem import TreeItem
 from TreeProcess import TreeProcessing
 from clnt import xr_client
 from ToolsThread import ToolsThread
+from Wait import SetupTree
 
 class Box(QtGui.QWidget):
+	complete = QtCore.pyqtSignal()
+	tree = QtCore.pyqtSignal(TreeItem, int, int)
 	def __init__(self, Obj_, parent = None):
 		QtGui.QWidget.__init__(self, parent)
 
@@ -34,6 +38,13 @@ class Box(QtGui.QWidget):
 		self.buttonLayout = QtGui.QVBoxLayout()
 		self.buttonLayout.addStretch(0)
 
+		self.progressBar = QtGui.QProgressBar()
+		self.progressBar.setOrientation(QtCore.Qt.Vertical)
+		self.progressBar.setAlignment(QtCore.Qt.AlignHCenter)
+		self.progressBar.setRange(0, 0)
+		self.progressBar.hide()
+		self.buttonLayout.addWidget(self.progressBar, 0, QtCore.Qt.AlignHCenter)
+
 		self.upLoadButton = QtGui.QPushButton(QtCore.QString('&Up'))
 		self.upLoadButton.setToolTip('UpLoad checked files\nof Shared Source')
 		self.upLoadButton.setMaximumWidth(65)
@@ -49,14 +60,27 @@ class Box(QtGui.QWidget):
 		self.layout.addItem(self.buttonLayout, 0, 2)
 
 		self.setLayout(self.layout)
+		self.complete.connect(self.hideProgressBar)
+		self.tree.connect(self.showTree)
 
 	def showSharedSources(self):
+		self.progressBar.show()
 		path = self.clientThread.getSharedSourceStructFile()
 		print path, ' representation structure file'
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
+		self.threadSetupTree = SetupTree(self.treeProcessing, [path], self.treeModel.rootItem, self, False, self)
+		#self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
+		self.threadSetupTree.start()
+
+	def hideProgressBar(self):
+		self.progressBar.hide()
+
+	def showTree(self, rootItem, c = None, d = None):
+		self.treeModel.rootItem = rootItem
 		self.sharedTree.setModel(self.treeModel)
-		self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
 		#self.sharedTree.reset()
+		self.sharedTree.setToolTip('Shared Source :\n' + \
+								str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).')
 
 	def itemSharedSourceQuired(self, item):
 		if 'clientThread' in dir(self) :

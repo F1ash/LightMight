@@ -2,6 +2,7 @@
 
 from PyQt4 import QtGui, QtCore
 from Box import Box
+from Wait import SetupTree
 from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
 from ListingText import ListingText
@@ -15,8 +16,9 @@ from TreeProcess import TreeProcessing
 import shutil, os.path
 
 class MainWindow(QtGui.QMainWindow):
-	# custom signal
+	# custom signals
 	errorString = QtCore.pyqtSignal(str)
+	commonSet = QtCore.pyqtSignal(dict)
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -104,9 +106,16 @@ class MainWindow(QtGui.QMainWindow):
 
 		# toolbar = self.addToolBar('Exit')
 		# toolbar.addAction(exit_)
+		self.errorString.connect(self.showMSG)
+		self.commonSet.connect(self.preProcessingComplete)
+		self.timer = QtCore.QTimer()
+		self.timer.setSingleShot(True)
+		self.timer.timeout.connect(self.initServices)
+		self.timer.start(1000)
+
+	def initServices(self):
 		self.initServer()
 		self.initAvahiTools()
-		self.errorString.connect(self.showMSG)
 
 	def initAvahiTools(self):
 		self.initAvahiBrowser()
@@ -125,6 +134,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
 
 	def initServer(self, sharedSourceTree = None):
+		self.menuTab.progressBar.show()
 		if 'serverThread' in dir(self) :
 			treeModel = sharedSourceTree
 			firstRun = False
@@ -134,7 +144,7 @@ class MainWindow(QtGui.QMainWindow):
 			firstRun = True
 
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
-										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))
+										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
 		print self.server_port, 'free'
 		self.serverThread = ToolsThread(ServerDaemon( ('', self.server_port), \
 										self.commonSetOfSharedSource, self ), parent = self)
@@ -153,15 +163,30 @@ class MainWindow(QtGui.QMainWindow):
 		""" создать словарь соответствия {number : fileName}
 		"""
 		treeModel = TreeModel('Name', 'Description')		## cleaned treeModel.rootItem
-		TreeProcessing().setupItemData(['/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
-										treeModel.rootItem)
-		TreeProcessing().getCommonSetOfSharedSource(treeModel.rootItem, self.commonSetOfSharedSource)
 
+		"""TreeProcessing().setupItemData(['/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
+										treeModel.rootItem)
+		TreeProcessing().getCommonSetOfSharedSource(treeModel.rootItem, self.commonSetOfSharedSource)"""
+
+		self.threadSetupTree = SetupTree(TreeProcessing(), \
+										['/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
+										treeModel.rootItem, \
+										self, \
+										True, \
+										self)
+		self.threadSetupTree.start()
+
+	def preProcessingComplete(self, commonSet = {}):
+		self.commonSetOfSharedSource = commonSet
+		#print len(self.commonSetOfSharedSource), ' commonSet.count '
+		""" this for server commonSet """
+		self.serverThread.Obj.commonSetOfSharedSource = commonSet
 		self.serverThread.start()
 		if 'avahiService' in dir(self) :
 			self.avahiService.__del__(); self.avahiService = None
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
 		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
+		self.menuTab.progressBar.hide()
 
 	def customEvent(self, event):
 		if event.type() == 1010 :
