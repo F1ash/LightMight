@@ -3,37 +3,57 @@
 from xmlrpclib import ServerProxy, ProtocolError, Fault
 from httplib import HTTPException
 from Functions import *
-import os, os.path, string, socket
+import os, os.path, string, socket, ssl
+
+class MyServerProxy(ServerProxy):
+	def __init__(self, _servaddr, TLS = False):
+		if TLS :
+			servaddr = 'https://' + _servaddr
+		else :
+			servaddr = 'http://' + _servaddr
+		ServerProxy.__init__(self, servaddr)
+
+		if TLS :
+			self.socket = ssl.wrap_socket(\
+							socket.socket(socket.AF_INET, socket.SOCK_STREAM), \
+							ca_certs = "/etc/ssl/ca_bundle.trust.crt", \
+							ssl_version = ssl.PROTOCOL_TLSv1)
+			print '   TLS used on client ...'
+		else :
+			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 class xr_client:
-	def __init__(self, addr = 'http://localhost', port = '34100', obj = None, parent = None):
-		self.servaddr = 'http://' + addr + ':' + port
+	def __init__(self, addr = 'http://localhost', port = '34100', obj = None, parent = None, TLS = False):
+		self.servaddr = addr + ':' + port
 		self.serverState = ''
 		self.Parent = parent
-		print self.servaddr, ' clnt '
+		self.TLS = TLS
+		#print self.servaddr, ' clnt '
 		if obj is not None :
 			self.Obj = obj
 			self.Obj.currentRemoteServerAddr = addr
 			self.Obj.currentRemoteServerPort = port
 			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp'))
+			#print '	run for get structure only '
 
 	def run(self):
 		try :
-			self.s = ServerProxy(self.servaddr)
+			self.s = MyServerProxy(self.servaddr, self.TLS)
 
 			# self.methods = self.s.system.listMethods()
 			# get session Id & server State
 			self.randomFileName = str('/dev/shm/LightMight/' + randomString(24))
+			#print self.randomFileName, '   clnt random string'
 			with open(self.randomFileName, "wb") as handle:
 				handle.write(self.s.sessionID().data)
 			self.listRandomString = DataRendering().fileToList(self.randomFileName)
+			#print self.listRandomString, ' list of randomStrings'
 			self.s.python_clean(self.listRandomString[0])
 			os.remove(self.randomFileName)
-			print self.listRandomString, ' list of randomStrings'
 			self.sessionID = self.listRandomString[1]
-			print self.sessionID, ' session ID'
+			#print self.sessionID, ' session ID'
 			self.serverState = self.listRandomString[2]
-			print self.serverState, ' server State'
+			#print self.serverState, ' server State'
 			if 'Obj' in dir(self) :
 				self.Obj.currentRemoteServerState = self.serverState
 				print "Handshake succeeded."
@@ -43,44 +63,62 @@ class xr_client:
 			print "HTTP/HTTPS headers: %s" % err.headers
 			print "Error code: %d" % err.errcode
 			print "Error message: %s" % err.errmsg
-			if 'Obj' in dir(self) and parent is None :
+			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.errorString.emit(str(err))
+				self.Parent.Obj.errorString.emit(str(err))
 		except Fault, err:
 			"""print "A fault occurred"
 			print "Fault code: %d" % err.faultCode
 			print "Fault string: %s" % err.faultString"""
-			if 'Obj' in dir(self) and parent is None :
+			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.errorString.emit(str(err))
+				self.Parent.Obj.errorString.emit(str(err))
 		except HTTPException, err :
 			print 'HTTPLibError : ', err
-			if 'Obj' in dir(self) and parent is None :
+			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.errorString.emit(str(err))
+				self.Parent.Obj.errorString.emit(str(err))
 		except socket.error, err :
 			print 'SocetError : ', err
-			if 'Obj' in dir(self) and parent is None :
+			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.errorString.emit(str(err))
+				self.Parent.Obj.errorString.emit(str(err))
 		finally :
 			pass
 
 	def getSharedSourceStructFile(self):
 		# get Shared Sources Structure
 		self.structFileName = str('/dev/shm/LightMight/client/struct_' + self.serverState) ## self.sessionID)
-		print self.structFileName, ' struct'
+		#print self.structFileName, ' struct'
 		with open(self.structFileName, "wb") as handle:
-			handle.write(self.s.requestSharedSourceStruct('sharedSource_' + self.serverState).data)
+					try :
+						handle.write(self.s.requestSharedSourceStruct('sharedSource_' + self.serverState).data)
+					except ProtocolError, err :
+						"""print "A protocol error occurred"
+						print "URL: %s" % err.url
+						print "HTTP/HTTPS headers: %s" % err.headers
+						print "Error code: %d" % err.errcode
+						print "Error message: %s" % err.errmsg"""
+						self.Parent.Obj.errorString.emit(str(err))
+					except Fault, err:
+						"""print "A fault occurred"
+						print "Fault code: %d" % err.faultCode
+						print "Fault string: %s" % err.faultString"""
+						self.Parent.Obj.errorString.emit(str(err))
+					except socket.error, err :
+						#print 'SocetError : ', err
+						self.Parent.Obj.errorString.emit(str(err))
+					finally :
+						pass
 		return self.structFileName
 
 	def getSharedData(self, maskSet, downLoadPath, emitter, previousRemoteServerState = 'NOTHING'):
 		""" check remote server state """
-		print previousRemoteServerState, ' <state> ', self.serverState
+		#print previousRemoteServerState, ' <state> ', self.serverState
 		if previousRemoteServerState != self.serverState or previousRemoteServerState == '' :
 			str_ = 'Status of the remote server has changed or not defined.\nUpdate his. Upload canceled.'
 			self.Parent.errorString.emit(str_)

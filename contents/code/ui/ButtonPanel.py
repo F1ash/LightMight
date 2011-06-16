@@ -10,7 +10,7 @@ class ButtonPanel(QtGui.QWidget):
 	# custom signal
 	errorString = QtCore.pyqtSignal(str)
 	def __init__(self, name_ = '', downLoadSize = 0, jobNumber = -1, \
-					serverState = '', addr = '', port = '', info = '', parent = None):
+					serverState = '', addr = '', port = '', info = '', TLS = 'False', parent = None):
 		QtGui.QWidget.__init__(self, parent)
 
 		self.nameMaskFile = name_
@@ -19,12 +19,17 @@ class ButtonPanel(QtGui.QWidget):
 		self.port = port
 		self.currentRemoteServerState = serverState
 		self.maskSet = {}
-		print name_, downLoadSize, jobNumber, serverState, addr, port, '\nclnt args :\n', info
+		if 'True' == TLS :
+			self.TLS = True
+		else :
+			self.TLS = False
+		print name_, downLoadSize, jobNumber, serverState, addr, port, \
+							'\nclnt args :\n', info, '\nEncrypt : ', TLS
 
 		self.setWindowTitle('LightMight Job')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
 		self.setToolTip('Job #' + str(jobNumber) + ':\n' + QtCore.QString().fromUtf8(info) + \
-						'\nDownload : ' + downLoadSize + ' Byte(s)')
+						'\nEncrypt : ' + TLS + '\nDownload : ' + downLoadSize + ' Byte(s)')
 
 		self.layout = QtGui.QVBoxLayout()
 
@@ -74,7 +79,12 @@ class ButtonPanel(QtGui.QWidget):
 
 	def startJob(self):
 		self.startButton.hide()
-		self.job = ToolsThread(xr_client(self.address, self.port, parent = self), self.maskSet, self)
+		self.job = ToolsThread(xr_client(self.address, \
+										self.port, \
+										parent = self, \
+										TLS = self.TLS), \
+								self.maskSet, \
+								self)
 		self.job.start()
 		self.connect( self.job, QtCore.SIGNAL('threadRunning'), self.job.getSharedData )
 		self.job.nextfile.connect(self.jobProgressBarChangeVolume)

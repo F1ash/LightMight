@@ -93,7 +93,7 @@ class Box(QtGui.QWidget):
 		self.clientThread = ToolsThread(xr_client(\
 							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]), \
 							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2]), \
-							self.Obj, self), \
+							self.Obj, self, self.Obj.TLS), \
 							self)
 
 		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)

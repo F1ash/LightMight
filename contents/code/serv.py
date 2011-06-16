@@ -1,21 +1,43 @@
 # -*- coding: utf-8 -*-
 
-import xmlrpclib, string, tarfile, os, os.path
+import xmlrpclib, string, tarfile, os, os.path, ssl, socket
+#from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
-from SocketServer import ThreadingMixIn		##, ForkingMixIn
+from SocketServer import ThreadingMixIn
 from Functions import *
 
-class ThreadServer(ThreadingMixIn, DocXMLRPCServer): pass
+class ThreadServer(ThreadingMixIn, DocXMLRPCServer):
+	#ThreadingMixIn.daemon_threads = True
+	def __init__(self, serveraddr, RequestHandlerClass, allow_none = False, TLS = False):
+		DocXMLRPCServer.__init__(self, serveraddr, RequestHandlerClass)
+
+		if TLS :
+			self.socket = ssl.wrap_socket(\
+							socket.socket(socket.AF_INET, socket.SOCK_STREAM), \
+							ca_certs = "/etc/ssl/ca_bundle.trust.crt", \
+							server_side = True, \
+							certfile = os.path.expanduser("~/cert.pem"),
+							keyfile = os.path.expanduser("~/cert.pem"),
+							ssl_version = ssl.PROTOCOL_TLSv1)
+			print '   TLS used on server...'
+		else :
+			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+		#self.funcs = {}
+		self.logRequests = False		## disable logging """
+		self.allow_none = allow_none
+		self.server_bind()
+		self.server_activate()
 
 class ServerDaemon():
-	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, parent = None):
+	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, parent = None, TLS = False):
 		self.serverState = randomString(24)
 		parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
-		self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True)
-		self._srv.set_server_title('PySADAM server')
-		self._srv.set_server_name('Example server') #TODO: need fix it
-		self._srv.set_server_documentation("""Welcome to""")
+		self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True, TLS = TLS)
+		#self._srv.set_server_title('PySADAM server')
+		#self._srv.set_server_name('Example server') #TODO: need fix it
+		#self._srv.set_server_documentation("""Welcome to""")
 		#self._srv.register_instance(MainInterface(), allow_dotted_names=True)
 		self._srv.register_introspection_functions()
 		#self._srv.register_function(self.python_logo, 'python_logo')
@@ -26,14 +48,10 @@ class ServerDaemon():
 		self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
 		self._srv.register_function(self.sessionID, 'sessionID')
 
-		"""addr, port = getFreePort(34000, 34100)
-		encryptData("data_ljksrlkngklrng", (addr, port))
-		decryptData(getFreePort(34000, 34100), (addr, port))
-		"""
-
 	def sessionID(self):
 		fileName = randomString(24)
 		_id = randomString(24)
+		#print '/dev/shm/LightMight/' + fileName, '  temporary file in sessionId'
 		with open('/dev/shm/LightMight/' + fileName, 'wb') as f :
 			f.write(fileName + '\n' + _id + '\n' + self.serverState + '\n')
 		with open('/dev/shm/LightMight/' + fileName, "rb") as handle :
@@ -89,6 +107,7 @@ class ServerDaemon():
 			return xmlrpclib.Binary(handle.read())
 
 	def requestSharedSourceStruct(self, name):
+		#print '/dev/shm/LightMight/server/' + name, ' in requestSharedSourceStruct'
 		with open('/dev/shm/LightMight/server/' + name, "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 

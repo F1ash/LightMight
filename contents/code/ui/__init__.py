@@ -146,8 +146,17 @@ class MainWindow(QtGui.QMainWindow):
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
 		print self.server_port, 'free'
-		self.serverThread = ToolsThread(ServerDaemon( ('', self.server_port), \
-										self.commonSetOfSharedSource, self ), parent = self)
+		if 'True' == InitConfigValue(self.Settings, 'UseTLS', 'False') :
+			self.TLS = True
+		else :
+			self.TLS = False
+		print self.TLS, '  <--- using TLS'
+		self.serverThread = ToolsThread(\
+										ServerDaemon( ('', self.server_port), \
+													self.commonSetOfSharedSource, \
+													self, \
+													TLS = self.TLS ), \
+										parent = self)
 
 		""" должен сохранить результат как файл для передачи на запрос клиентов """
 		if firstRun :
@@ -217,7 +226,8 @@ class MainWindow(QtGui.QMainWindow):
 												<< self.currentRemoteServerState \
 												<< self.currentRemoteServerAddr \
 												<< str(self.currentRemoteServerPort) \
-												<< info), \
+												<< info \
+												<< str(self.TLS)), \
 						 os.getcwd())
 		elif event.type() == 1011 :
 			pass
@@ -244,7 +254,7 @@ class MainWindow(QtGui.QMainWindow):
 
 	def showMSG(self, str_ = "LightMight.help"):
 		#print 'Message : ', str(str_)
-		showHelp = ListingText("MSG: " + str(str_), self)
+		showHelp = ListingText("MSG: " + str_, self)
 		showHelp.exec_()
 
 	def showClientSettingsShield(self):

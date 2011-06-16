@@ -67,6 +67,17 @@ class ServerSettingsShield(QtGui.QDialog):
 		form.addWidget(self.checkUseAvahi, 4, 2)
 		"""
 
+		self.useTLSLabel = QtGui.QLabel('Use encrypt (TLSv1):')
+		form.addWidget(self.useTLSLabel, 4, 1)
+
+		self.useTLSCheck = QtGui.QCheckBox()
+		if InitConfigValue(self.Obj.Settings, 'UseTLS', 'False') == 'True' :
+			value = QtCore.Qt.Checked
+		else:
+			value = QtCore.Qt.Unchecked
+		self.useTLSCheck.setCheckState(value)
+		form.addWidget(self.useTLSCheck, 4, 2)
+
 		self.saveLastStructureLabel = QtGui.QLabel('Save last Share Structure :')
 		form.addWidget(self.saveLastStructureLabel, 5, 1)
 
@@ -180,6 +191,11 @@ class ServerSettingsShield(QtGui.QDialog):
 		else :
 			value = 'False'
 		self.Obj.Settings.setValue('SaveLastStructure', value)
+		if self.useTLSCheck.isChecked() :
+			value = 'True'
+		else :
+			value = 'False'
+		self.Obj.Settings.setValue('UseTLS', value)
 		self.Obj.Settings.sync()
 
 	def cancel(self):
