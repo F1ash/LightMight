@@ -6,16 +6,21 @@ Dependencies :
 	dbus-python
 	avahi
 	avahi-ui-tools (python-avahi in Ubuntu)
+	openssl
 
 Paths and files:
 	Configuration file: $HOME/.config/LightMight/LihgtMight.conf
 	Temporary directory : /dev/shm/LightMight
 	Last shared files structure save in : $HOME/.config/LightMight/
+	SSL certificate and key in one and the same file : $HOME/cert.pem
+	Trusted certificates (ca_cert) in : /etc/ssl/ca_bundle.trust.crt
 
 Description:
 	Simple FileTransmitter for publication and download users
 file resources in local network. To use, you must open port 5353 (mDNS)
 and 34000-34100 by default.
+	For using SSL encripted connection you must generate SSL Cerificate
+and Key in $HOME/cert.pem .
 
 Tested on :
 	Fedora 14/15
