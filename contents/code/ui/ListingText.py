@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtGui, QtCore
+import os, string
 
 class ListingText(QtGui.QDialog):
 	def __init__(self, path_, parent = None):

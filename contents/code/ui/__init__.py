@@ -270,9 +270,12 @@ class MainWindow(QtGui.QMainWindow):
 		if reason == QtGui.QSystemTrayIcon.DoubleClick :
 			self.show_n_hide()
 
-	def showMSG(self, str_ = "LightMight.help"):
-		#print 'Message : ', str(str_)
-		showHelp = ListingText("MSG: " + str_, self)
+	def showMSG(self, str_ = "README"):
+		if str_ == "README" :
+			STR_ = '../../README'
+		else :
+			STR_ = "MSG: " + str_
+		showHelp = ListingText(STR_, self)
 		showHelp.exec_()
 
 	def showClientSettingsShield(self):
