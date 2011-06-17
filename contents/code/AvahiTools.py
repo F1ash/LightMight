@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import dbus, gobject, avahi, time
+import dbus, gobject, avahi, time, string
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt4 import QtCore, QtGui
@@ -29,9 +29,13 @@ class AvahiBrowser():
 		self.USERS = {}
 
 	def service_resolved(self, *args):
+		str_ = ''; list_ = avahi.txt_array_to_string_array(args[9])
+		for i in xrange(len(list_)) :
+			str_ += list_[len(list_) - 1 - i]
 		"""print 'name:', unicode(args[2])
 		print 'address:', args[7]
 		print 'port:', args[8]
+		print str_
 		print 'service resolved.'
 		"""
 
@@ -44,10 +48,13 @@ class AvahiBrowser():
 		new_item = QtGui.QListWidgetItem(args[2] + count)
 		"""
 		new_item = QtGui.QListWidgetItem(unicode(args[2]))
-		new_item.setToolTip('name : ' + unicode(args[2]) + '\naddress : ' + str(args[7]) + '\nport : ' + str(args[8]))
+		new_item.setToolTip('name : ' + unicode(args[2]) + \
+							'\naddress : ' + str(args[7]) + \
+							'\nport : ' + str(args[8]) + \
+							'\nEncoding : ' + str_)
 		self.obj.userList.addItem(new_item)
 		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
-		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8])
+		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8], str_)
 		#print self.USERS
 
 	def print_error(self, *args):
@@ -81,7 +88,7 @@ class AvahiBrowser():
 
 class AvahiService():
 	def __init__(self, obj = None, name = 'Own Demo Service', \
-				description = '', port = 34100, parent = None):
+				description = 'No', port = 34100, parent = None):
 
 		self.serviceName = unicode(name)
 		self.serviceType = "_LightMight._tcp" # See http://www.dns-sd.org/ServiceTypes.html

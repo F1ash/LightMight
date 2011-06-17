@@ -23,13 +23,13 @@ class ButtonPanel(QtGui.QWidget):
 			self.TLS = True
 		else :
 			self.TLS = False
-		print name_, downLoadSize, jobNumber, serverState, addr, port, \
-							'\nclnt args :\n', info, '\nEncrypt : ', TLS
+		#print name_, downLoadSize, jobNumber, serverState, addr, port, \
+		#					'\nclnt args :\n', info, '\nEncrypt : ', TLS
 
 		self.setWindowTitle('LightMight Job')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
 		self.setToolTip('Job #' + str(jobNumber) + ':\n' + QtCore.QString().fromUtf8(info) + \
-						'\nEncrypt : ' + TLS + '\nDownload : ' + downLoadSize + ' Byte(s)')
+						'\nDownload : ' + downLoadSize + ' Byte(s)')
 
 		self.layout = QtGui.QVBoxLayout()
 

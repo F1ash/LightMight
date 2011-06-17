@@ -13,7 +13,7 @@ from ToolsThread import ToolsThread
 from TreeProc import TreeModel
 from PathToTree import SharedSourceTree2XMLFile
 from TreeProcess import TreeProcessing
-import shutil, os.path
+import shutil, os.path, string
 
 class MainWindow(QtGui.QMainWindow):
 	# custom signals
@@ -131,7 +131,14 @@ class MainWindow(QtGui.QMainWindow):
 		if 'avahiService' in dir(self) :
 			self.avahiService.__del__(); self.avahiService = None
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
-		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
+		if self.TLS :
+			encode = 'Yes'
+		else :
+			encode = 'No'
+		self.avahiService = AvahiService(self.menuTab, \
+										name = name_, \
+										port = self.server_port, \
+										description = encode)
 
 	def initServer(self, sharedSourceTree = None):
 		self.menuTab.progressBar.show()
@@ -145,12 +152,12 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
-		print self.server_port, 'free'
+		#print self.server_port, 'free'
 		if 'True' == InitConfigValue(self.Settings, 'UseTLS', 'False') :
 			self.TLS = True
 		else :
 			self.TLS = False
-		print self.TLS, '  <--- using TLS'
+		#print self.TLS, '  <--- using TLS'
 		self.serverThread = ToolsThread(\
 										ServerDaemon( ('', self.server_port), \
 													self.commonSetOfSharedSource, \
@@ -194,7 +201,14 @@ class MainWindow(QtGui.QMainWindow):
 		if 'avahiService' in dir(self) :
 			self.avahiService.__del__(); self.avahiService = None
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
-		self.avahiService = AvahiService(self.menuTab, name = name_, port = self.server_port)
+		if self.TLS :
+			encode = 'Yes'
+		else :
+			encode = 'No'
+		self.avahiService = AvahiService(self.menuTab, \
+										name = name_, \
+										port = self.server_port, \
+										description = encode)
 		self.menuTab.progressBar.hide()
 
 	def customEvent(self, event):
@@ -216,8 +230,12 @@ class MainWindow(QtGui.QMainWindow):
 																None, \
 																checkItem = True, \
 																f = handler)[1]
-			print self.currentRemoteServerState, self.currentRemoteServerAddr, self.currentRemoteServerPort
-			""" запуск клиента """
+			#print self.currentRemoteServerState, self.currentRemoteServerAddr, self.currentRemoteServerPort
+			""" client run """
+			if string.split(self.menuTab.sharedTree.toolTip(), 'Encode : ')[1] == 'Yes' :
+				encode = 'True'
+			else :
+				encode = 'False'
 			pid, start = job.startDetached('/usr/bin/python', \
 						 (QtCore.QStringList()	<< './DownLoadClient.py' \
 												<< nameMaskFile \
@@ -227,7 +245,7 @@ class MainWindow(QtGui.QMainWindow):
 												<< self.currentRemoteServerAddr \
 												<< str(self.currentRemoteServerPort) \
 												<< info \
-												<< str(self.TLS)), \
+												<< encode), \
 						 os.getcwd())
 		elif event.type() == 1011 :
 			pass

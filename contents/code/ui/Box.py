@@ -60,13 +60,16 @@ class Box(QtGui.QWidget):
 		self.layout.addItem(self.buttonLayout, 0, 2)
 
 		self.setLayout(self.layout)
+
+		self.currentTreeEncode = False
+
 		self.complete.connect(self.hideProgressBar)
 		self.tree.connect(self.showTree)
 
 	def showSharedSources(self):
 		self.progressBar.show()
 		path = self.clientThread.getSharedSourceStructFile()
-		print path, ' representation structure file'
+		#print path, ' representation structure file'
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.threadSetupTree = SetupTree(self.treeProcessing, [path], self.treeModel.rootItem, self, False, self)
 		#self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
@@ -79,8 +82,13 @@ class Box(QtGui.QWidget):
 		self.treeModel.rootItem = rootItem
 		self.sharedTree.setModel(self.treeModel)
 		#self.sharedTree.reset()
+		if self.currentTreeEncode :
+			encode = 'Yes'
+		else :
+			encode = 'No'
 		self.sharedTree.setToolTip('Shared Source :\n' + \
-								str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).')
+								str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).' + \
+								'\nEncode : ' + encode)
 
 	def itemSharedSourceQuired(self, item):
 		if 'clientThread' in dir(self) :
@@ -90,11 +98,18 @@ class Box(QtGui.QWidget):
 		## cleaning or caching
 		## print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
 		""" run in QThread """
-		self.clientThread = ToolsThread(xr_client(\
-							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]), \
-							str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2]), \
-							self.Obj, self, self.Obj.TLS), \
-							self)
+		if self.Obj.avahiBrowser.USERS[unicode(item.text())][3] == 'Yes' :
+			self.currentTreeEncode = True
+		else :
+			self.currentTreeEncode = False
+		self.clientThread = ToolsThread(\
+										xr_client(\
+												str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]), \
+												str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2]), \
+												self.Obj, \
+												self.Obj, \
+												self.currentTreeEncode), \
+										self)
 
 		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
 		self.clientThread.start()

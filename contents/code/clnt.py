@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from xmlrpclib import ServerProxy, ProtocolError, Fault
+from SSLOverloadClass import SSLServerProxy
 from httplib import HTTPException
 from Functions import *
 import os, os.path, string, socket, ssl
-
-class MyServerProxy(ServerProxy):
-	def __init__(self, _servaddr, TLS = False):
-		if TLS :
-			servaddr = 'https://' + _servaddr
-		else :
-			servaddr = 'http://' + _servaddr
-		ServerProxy.__init__(self, servaddr)
-
-		if TLS :
-			self.socket = ssl.wrap_socket(\
-							socket.socket(socket.AF_INET, socket.SOCK_STREAM), \
-							ca_certs = "/etc/ssl/ca_bundle.trust.crt", \
-							ssl_version = ssl.PROTOCOL_TLSv1)
-			print '   TLS used on client ...'
-		else :
-			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 class xr_client:
 	def __init__(self, addr = 'http://localhost', port = '34100', obj = None, parent = None, TLS = False):
@@ -38,7 +22,7 @@ class xr_client:
 
 	def run(self):
 		try :
-			self.s = MyServerProxy(self.servaddr, self.TLS)
+			self.s = SSLServerProxy(self.servaddr, self.TLS)
 
 			# self.methods = self.s.system.listMethods()
 			# get session Id & server State
