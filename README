@@ -16,6 +16,12 @@ Paths and files:
 	Trusted certificates (ca_cert) in : /etc/ssl/ca_bundle.trust.crt
 
 Description:
+	This program is made as a standalone server that is not bound
+to the IM-messendgers. It can serve several clients at once
+(how powerful your computer or wide channel). Tree Shares transferred
+to the client side as a single object, so remote users can choose
+what they need, and get a selection from the server without prompting.
+However, the client can not have other resources available on the server side.
 	Simple FileTransmitter for publication and download users
 file resources in local network. To use, you must open port 5353 (mDNS)
 and 34000-34100 by default.

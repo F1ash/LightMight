@@ -107,7 +107,7 @@ class Box(QtGui.QWidget):
 												str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]), \
 												str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2]), \
 												self.Obj, \
-												self.Obj, \
+												self, \
 												self.currentTreeEncode), \
 										self)
 

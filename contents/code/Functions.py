@@ -5,7 +5,6 @@ import os, os.path, string, random, socket, ssl
 char_set = string.ascii_letters + string.digits
 
 def randomString( j = 1):
-	#return "".join( [random.choice(string.letters) for i in xrange(j)] )
 	return ''.join(random.sample(char_set, j))
 
 class DataRendering:
@@ -43,7 +42,7 @@ def InitConfigValue(Settings = None, key = None, default = None):
 
 def getFreePort(minValue, maxValue):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	number_ = -1; 
+	number_ = -1
 	for i in xrange(maxValue - minValue) :
 		try :
 			s.bind(('127.0.0.1', minValue + i))

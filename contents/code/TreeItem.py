@@ -11,11 +11,6 @@ class TreeItem(QtCore.QObject):
 		self.childItems = []
 		self.checkState = QtCore.Qt.Unchecked
 
-	def __del__(self):
-		for c in self.childItems:
-			c.__del__()
-			self.childItems.remove(c)
-
 	def child(self, row):
 		if row <= len(self.childItems):
 			return self.childItems[row]
@@ -47,9 +42,17 @@ class TreeItem(QtCore.QObject):
 		return None
 
 	def getParentItem(self):
-		return self.parentItem
+		try :
+			return self.parentItem
+		except RuntimeError, err :
+			print 'RunTime Error : ', str(err)
+			return None
 
 	def appendChild(self, item):
 		if item is not None:
 			self.childItems.append(item)
+
+	def removeChild(self, item):
+		if item is not None:
+			self.childItems.remove(item.internalPointer())
 

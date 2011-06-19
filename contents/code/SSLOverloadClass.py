@@ -2,7 +2,6 @@
 
 import os.path, ssl, socket
 from xmlrpclib import ServerProxy
-#from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
 from SocketServer import ThreadingMixIn
 
@@ -18,8 +17,8 @@ class ThreadServer(ThreadingMixIn, DocXMLRPCServer):
 							server_side = True, \
 							certfile = os.path.expanduser("~/cert.pem"),
 							keyfile = os.path.expanduser("~/cert.pem"),
-							ssl_version = ssl.PROTOCOL_TLSv1)
-							# ciphers = '')
+							ssl_version = ssl.PROTOCOL_TLSv1, \
+							ciphers = 'HIGH:TLSv1')
 			#print '   TLS used on server...'
 		else :
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

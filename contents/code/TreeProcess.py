@@ -56,7 +56,8 @@ class TreeProcessing:
 					fileSize = node.attributes.item(1).value
 					if name_ == 'file' :
 						count += 1
-						downLoads += int(string.split(fileSize, ' ')[0])
+						_str = string.split(fileSize, ' ')
+						if len(_str) > 1 : downLoads += int(_str[0])
 				else :
 					#_ddata = [node.attributes.item(0).value, name_] ## временно для заполнения дерева в клиенте
 					fileName = node.attributes.item(0).value
@@ -69,51 +70,6 @@ class TreeProcessing:
 					downLoads += _downLoads
 			i += 1
 		return count, downLoads
-
-	"""def getSharedData(self, obj, f, emitter, jobNumber, downLoadPath, tab = '	', pref = ''):
-		i = 0
-		while i < obj.childCount() :
-			item = obj.child(i)
-			str_ = item.data(1)
-			name_ = item.data(0)
-			# print tab, name_, str_, 'chkSt : ', obj.checkState
-			if str_ != ' dir' and str_ != 'no_regular_file' :
-				if item.checkState == QtCore.Qt.Checked :
-					path = os.path.dirname(pref + name_)
-					if not os.path.isdir(downLoadPath + path) :
-						os.makedirs(downLoadPath + path)
-					\""" call downLoad client method \"""
-					f.getSharedData(pref + name_)
-					#emitter.nextfile.emit(jobNumber)
-					emitter.nextfile.emit(jobNumber, int(string.split(str_, ' ')[0]))
-			elif str_ == ' dir' and \
-				(item.checkState == QtCore.Qt.PartiallyChecked or item.checkState == QtCore.Qt.Checked) :
-				if not os.path.exists(downLoadPath + '/' + pref + name_) :
-					os.makedirs(downLoadPath + '/' + pref + name_)
-				self.getSharedData(item, f, emitter, jobNumber, downLoadPath, \
-									tab = tab + '	', pref = pref + name_ + '/')
-			i += 1
-
-	def getCheckedItemDataSumm(self, obj, f, pref = ''):
-		downLoadSize = 0
-		i = 0
-		while i < obj.childCount() :
-			item = obj.child(i)
-			str_ = item.data(1)
-			name_ = item.data(0)
-			if item.checkState == QtCore.Qt.Checked and str_ != ' dir' and str_ != 'no_regular_file' :
-				size_ = string.split(str_, ' ')[0]
-				downLoadSize += int(size_)
-				f.write('1<||>' + pref + name_ + '<||>' + size_ + '\n')
-				i += 1
-				continue
-			elif str_ == ' dir' :
-				_downLoadSize = self.getCheckedItemDataSumm(item, f, pref + name_ + '/')
-				downLoadSize += _downLoadSize
-			f.write('0<||>' + pref + name_ + '<||>\n')
-			i += 1
-		return downLoadSize
-		"""
 
 	def getCommonSetOfSharedSource(self, obj, commonSet, pref = '', \
 									j = 0, tab = '	', checkItem = False, f = None):
@@ -147,51 +103,6 @@ class TreeProcessing:
 			j += 1
 			i += 1
 		return j, downLoadSize
-
-	"""def getCheckedItemList(self, obj, prefix = '', tab = '	'):
-		Result = []
-		i = 0
-		while i < obj.childCount() :
-		#for i in xrange(obj.childCount()):
-			item = obj.child(i)
-			str_ = item.data(1)
-			name_ = item.data(0)
-			#print tab, name_, str_, 'chkSt : ', item.checkState
-			if item.checkState == QtCore.Qt.Checked :
-				Result += [os.path.join(prefix, name_)]
-			elif str_ == 'dir' :
-				_result = self.getCheckedItemList(item, os.path.join(prefix, name_), tab = tab + '	')
-				if _result != [] :
-					Result += _result
-			i += 1
-		return Result
-
-	def setDataMask(self, obj, f, tab = '	'):
-		i = 0
-		while i < obj.childCount() :
-		#for i in xrange(obj.childCount()):
-			item = obj.child(i)
-			str_ = item.data(1)
-			name_ = item.data(0)
-			# print tab, name_, str_, 'chkSt : ', obj.checkState
-			if str_ == 'file' :
-				if f.read(1) :
-					item.checkState = QtCore.Qt.Checked
-			elif str_ == 'dir' :
-				self.setDataMask(item, f, tab = tab + '	')
-		i += 1
-
-	def dataMaskToFileNameList(self, obj, f, tab = '	'):
-		global FileNameList
-		global FileNameList2UpLoad
-		i = 0
-		fileSize = os.path.getsize(f.name)
-		while i < fileSize :
-			if f.read(1) == '1' :
-				print FileNameList[i], ' selected'
-				FileNameList2UpLoad += [FileNameList[i]]
-			i += 1
-			"""
 
 	def debugPrintObj(self, some_obj, tab = '	'):
 		return

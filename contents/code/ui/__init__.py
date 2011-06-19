@@ -35,17 +35,6 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.Settings = QtCore.QSettings('LightMight','LightMight')
 
-		"""self.create_struct = QtGui.QAction(QtGui.QIcon('../icons/crst.png'),'&Create of Structure', self)
-		self.create_struct.setShortcut('Ctrl+D')
-		self.create_struct.setStatusTip('Create new structure for Backup')
-		self.connect(self.create_struct, QtCore.SIGNAL('triggered()'), self.createStruct)
-
-		self.base_ = QtGui.QAction(QtGui.QIcon('../icons/base.png'),'&Base of Backups', self)
-		self.base_.setShortcut('Ctrl+B')
-		self.base_.setStatusTip('List of backupping Path(s)')
-		self.connect(self.base_, QtCore.SIGNAL('triggered()'), self.showBase)
-		"""
-
 		self.exit_ = QtGui.QAction(QtGui.QIcon('../icons/exit.png'), '&Exit', self)
 		self.exit_.setShortcut('Ctrl+Q')
 		self.exit_.setStatusTip('Exit application')
@@ -81,11 +70,6 @@ class MainWindow(QtGui.QMainWindow):
 		help_.addAction(listHelp)
 
 		self.menuTab = Box(self)
-		#self.menuTab = BoxLayout(Box)
-		#self.menuTab.setMaximumSize(800, 650)
-		#self.menuTab.clear()
-		#self.menuTab.setUsesScrollButtons(True)
-		#self.create_menuTab(0)
 		self.setCentralWidget(self.menuTab)
 
 		self.trayIconMenu = QtGui.QMenu(self)
@@ -104,8 +88,6 @@ class MainWindow(QtGui.QMainWindow):
 																			self.trayIconClicked)
 		self.trayIcon.show()
 
-		# toolbar = self.addToolBar('Exit')
-		# toolbar.addAction(exit_)
 		self.errorString.connect(self.showMSG)
 		self.commonSet.connect(self.preProcessingComplete)
 		self.timer = QtCore.QTimer()
@@ -249,12 +231,6 @@ class MainWindow(QtGui.QMainWindow):
 						 os.getcwd())
 		elif event.type() == 1011 :
 			pass
-
-	def showBase(self): pass
-
-	def createStruct(self): pass
-
-	def refreshTab(self): pass
 
 	def show_n_hide(self):
 		if self.isVisible():

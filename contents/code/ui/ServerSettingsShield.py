@@ -48,25 +48,6 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.checkMaxPortBox.setToolTip('Maximal Port')
 		form.addWidget(self.checkMaxPortBox, 2, 2)
 
-		"""self.pool = QtGui.QLabel('Pool :')
-		form.addWidget(self.pool, 3, 1)
-
-		self.checkPoolBox = QtGui.QSpinBox()
-		self.checkPoolBox.setMinimum(1)
-		self.checkPoolBox.setMaximum(300)
-		value = InitConfigValue(self.Obj.Settings, 'Pool', '100' )
-		self.checkPoolBox.setValue(int(value))
-		self.checkPoolBox.setSingleStep(1)
-		form.addWidget(self.checkPoolBox, 3, 2)
-
-		self.useAvahi = QtGui.QLabel('Use Avahi Service (Zeroconf) :')
-		form.addWidget(self.useAvahi, 4, 1)
-
-		self.checkUseAvahi = QtGui.QCheckBox()
-		self.checkUseAvahi.setCheckState(QtCore.Qt.Unchecked)
-		form.addWidget(self.checkUseAvahi, 4, 2)
-		"""
-
 		self.useTLSLabel = QtGui.QLabel('Use encrypt (TLSv1):')
 		form.addWidget(self.useTLSLabel, 4, 1)
 
@@ -167,23 +148,21 @@ class ServerSettingsShield(QtGui.QDialog):
 		item = self.sharedTree.selectionModel().currentIndex()
 		if item.internalPointer() is not None :
 			itemParent = item.internalPointer().parentItem
-			delItem = itemParent.childItems
-			delItem.remove(item.internalPointer())
-			self.sharedTree.reset()
+			if itemParent is not None : itemParent.removeChild(item)
+			self.treeModel.reset()
 		else :
 			print 'Not select Item'
 
 	def ok(self):
 		if 'serverThread' in dir(self.Obj) :
 			self.Obj.serverThread.terminate()
-			self.Obj.serverThread.exit()
+			#self.Obj.serverThread.exit()
 		self.saveData()
 		self.Obj.initServer(self.treeModel)
 		self.done(0)
 
 	def saveData(self):
 		self.Obj.Settings.setValue('ServerName', self.serverNameString.text())
-		#self.Obj.Settings.setValue('Pool', self.checkPoolBox.value())
 		self.Obj.Settings.setValue('MinPort', self.checkMinPortBox.value())
 		self.Obj.Settings.setValue('MaxPort', self.checkMaxPortBox.value())
 		if self.saveLastStructureCheck.isChecked() :

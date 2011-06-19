@@ -42,11 +42,11 @@ class xr_client:
 				self.Obj.currentRemoteServerState = self.serverState
 				print "Handshake succeeded."
 		except ProtocolError, err :
-			print "A protocol error occurred"
+			"""print "A protocol error occurred"
 			print "URL: %s" % err.url
 			print "HTTP/HTTPS headers: %s" % err.headers
 			print "Error code: %d" % err.errcode
-			print "Error message: %s" % err.errmsg
+			print "Error message: %s" % err.errmsg"""
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :

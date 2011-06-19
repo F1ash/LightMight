@@ -38,15 +38,6 @@ class AvahiBrowser():
 		print str_
 		print 'service resolved.'
 		"""
-
-		""" для различения одинаковых имён служб (но Avahi не регистрирует одинаковые имена)
-		item = self.obj.userList.findItems(args[2], \
-				QtCore.Qt.MatchFlags(QtCore.Qt.MatchStartsWith | QtCore.Qt.MatchCaseSensitive))
-		count = ''
-		if len(item) > 0 :
-			count = "(" + str(len(item)) + ")"
-		new_item = QtGui.QListWidgetItem(args[2] + count)
-		"""
 		new_item = QtGui.QListWidgetItem(unicode(args[2]))
 		new_item.setToolTip('name : ' + unicode(args[2]) + \
 							'\naddress : ' + str(args[7]) + \
@@ -66,7 +57,7 @@ class AvahiBrowser():
 		item = self.obj.userList.findItems(name, \
 				QtCore.Qt.MatchFlags(QtCore.Qt.MatchStartsWith | QtCore.Qt.MatchCaseSensitive))
 		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
-		del self.USERS[unicode(name)]
+		if unicode(name) in self.USERS : del self.USERS[unicode(name)]
 		#print "Removed service: '%s'" % unicode(name)
 		#print self.USERS
 
