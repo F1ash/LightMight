@@ -9,11 +9,18 @@ Dependencies :
 	openssl
 
 Paths and files:
-	Configuration file: $HOME/.config/LightMight/LihgtMight.conf
-	Temporary directory : /dev/shm/LightMight
-	Last shared files structure save in : $HOME/.config/LightMight/
-	SSL certificate and key in one and the same file : $HOME/cert.pem
-	Trusted certificates (ca_cert) in : /etc/ssl/ca_bundle.trust.crt
+	Configuration file :
+			$HOME/.config/LightMight/LihgtMight.conf
+	Temporary directory :
+			/dev/shm/LightMight
+	Last shared files structure save in :
+			$HOME/.config/LightMight/
+	Backupped shared files structure save in :
+			$HOME/.config/LightMight/treeBackup
+	SSL certificate and key in one and the same file :
+			$HOME/cert.pem
+	Trusted certificates (ca_cert) in :
+			/etc/ssl/ca_bundle.trust.crt
 
 Description:
 	This program is made as a standalone server that is not bound

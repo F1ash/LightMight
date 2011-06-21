@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, os.path, string, random, socket, ssl
+import os, os.path, string, random, socket, ssl, time
 
 char_set = string.ascii_letters + string.digits
 
@@ -56,3 +56,23 @@ def getFreePort(minValue, maxValue):
 		s.close()
 		return addr, port
 	return '', 0
+
+def dateStamp():
+	return time.strftime("%Y.%m.%d_%H:%M:%S", time.localtime())
+
+def moveFile(src, dst, delete = True):
+	if os.path.isfile(src) :
+		dst_dir = os.path.dirname(dst)
+		if not os.path.isdir(dst_dir) :
+			try :
+				os.makedirs(dst_dir)
+			except OSError, err :
+				return False
+		#print src, dst
+		with open(src, 'rb') as srcFile :
+			with open(dst, 'wb') as dstFile :
+				dstFile.write(srcFile.read())
+			if delete : os.remove(srcFile.name)
+		return True
+	else :
+		return False

@@ -9,7 +9,7 @@ def createStructure():
 					'/dev/shm/LightMight/structure', \
 					'/dev/shm/LightMight/client', \
 					'/dev/shm/LightMight/server', \
-					os.path.expanduser('~/.config/LightMight')] :
+					os.path.expanduser('~/.config/LightMight/treeBackup')] :
 		if not os.path.isdir(nameDir):
 			os.makedirs(nameDir)
 

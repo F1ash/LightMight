@@ -122,7 +122,7 @@ class MainWindow(QtGui.QMainWindow):
 										port = self.server_port, \
 										description = encode)
 
-	def initServer(self, sharedSourceTree = None):
+	def initServer(self, sharedSourceTree = None, loadFile = None):
 		self.menuTab.progressBar.show()
 		if 'serverThread' in dir(self) :
 			treeModel = sharedSourceTree
@@ -155,16 +155,16 @@ class MainWindow(QtGui.QMainWindow):
 			else :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 				S.__del__(); S = None
+		elif loadFile is not None :
+			if not moveFile(loadFile, '/dev/shm/LightMight/server/sharedSource_' + self.serverState, False) :
+				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
+				S.__del__(); S = None
 		else :
 			S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 			S.__del__(); S = None
-		""" создать словарь соответствия {number : fileName}
-		"""
-		treeModel = TreeModel('Name', 'Description')		## cleaned treeModel.rootItem
 
-		"""TreeProcessing().setupItemData(['/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
-										treeModel.rootItem)
-		TreeProcessing().getCommonSetOfSharedSource(treeModel.rootItem, self.commonSetOfSharedSource)"""
+		""" creating match dictionary {number : fileName} """
+		treeModel = TreeModel('Name', 'Description')		## cleaned treeModel.rootItem
 
 		self.threadSetupTree = SetupTree(TreeProcessing(), \
 										['/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
@@ -237,10 +237,6 @@ class MainWindow(QtGui.QMainWindow):
 			self.hide()
 		else:
 			self.show()
-
-	def create_menuTab(self, i):
-		self.menuTab.setCurrentIndex(i)
-		self.menuTab.currentChanged.connect(self.refreshTab)
 
 	def trayIconClicked(self, reason):
 		if reason == QtGui.QSystemTrayIcon.DoubleClick :

@@ -3,9 +3,9 @@
 from PyQt4 import QtGui, QtCore
 from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
-from PathToTree import PathToTree
+from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
-from Functions import InitConfigValue
+from Functions import InitConfigValue, dateStamp, moveFile
 import os, stat
 
 class ServerSettingsShield(QtGui.QDialog):
@@ -84,32 +84,43 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		self.addDirPathButton = QtGui.QPushButton('&Dir')
 		self.addDirPathButton.setMaximumWidth(75)
+		self.addDirPathButton.setToolTip('Add directory to Tree of Shared Sources')
 		self.connect(self.addDirPathButton, QtCore.SIGNAL('clicked()'), self.addDirPath)
 		form.addWidget(self.addDirPathButton, 7, 2)
 
-		""" добавить возможность сохранения расшаренных структур
-			и загрузки по выбору
-		"""
-
 		self.addFilePathButton = QtGui.QPushButton('&File')
 		self.addFilePathButton.setMaximumWidth(75)
+		self.addFilePathButton.setToolTip('Add file to Tree of Shared Sources')
 		self.connect(self.addFilePathButton, QtCore.SIGNAL('clicked()'), self.addFilePaths)
 		form.addWidget(self.addFilePathButton, 8, 2)
 
 		self.delPathButton = QtGui.QPushButton('&Del')
 		self.delPathButton.setMaximumWidth(75)
+		self.delPathButton.setToolTip('Delete path from Tree of Shared Sources')
 		self.connect(self.delPathButton, QtCore.SIGNAL('clicked()'), self.delPath)
-		form.addWidget(self.delPathButton, 9, 2)
+		form.addWidget(self.delPathButton, 10, 2)
+
+		self.loadTreeButton = QtGui.QPushButton('&Load')
+		self.loadTreeButton.setMaximumWidth(75)
+		self.loadTreeButton.setToolTip('Load saved Shared Tree')
+		self.connect(self.loadTreeButton, QtCore.SIGNAL('clicked()'), self.loadTree)
+		form.addWidget(self.loadTreeButton, 11, 2)
+
+		self.saveTreeButton = QtGui.QPushButton('&Save')
+		self.saveTreeButton.setMaximumWidth(75)
+		self.saveTreeButton.setToolTip('Save Shared Tree')
+		self.connect(self.saveTreeButton, QtCore.SIGNAL('clicked()'), self.saveTree)
+		form.addWidget(self.saveTreeButton, 12, 2)
 
 		self.okButton = QtGui.QPushButton('&Ok')
 		self.okButton.setMaximumWidth(75)
 		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
-		form.addWidget(self.okButton, 10, 2)
+		form.addWidget(self.okButton, 13, 2)
 
 		self.cancelButton = QtGui.QPushButton('&Cancel')
 		self.cancelButton.setMaximumWidth(75)
 		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-		form.addWidget(self.cancelButton, 11, 2)
+		form.addWidget(self.cancelButton, 14, 2)
 
 		self.setLayout(form)
 		self.connect(self, QtCore.SIGNAL('refresh'), self.treeRefresh)
@@ -153,12 +164,36 @@ class ServerSettingsShield(QtGui.QDialog):
 		else :
 			print 'Not select Item'
 
+	def loadTree(self):
+		fileName = QtGui.QFileDialog.getOpenFileName(self, 'Path_to_', '~/.config/LightMight/treeBackup')
+		if fileName != '' :
+			if 'serverThread' in dir(self.Obj) :
+				self.Obj.serverThread.terminate()
+				#self.Obj.serverThread.exit()
+			#self.saveData()		## because load only
+			self.Obj.initServer(loadFile = fileName)
+			self.done(0)
+
+	def saveTree(self):
+		tmpFile = 'sharedSourceBackup_' + dateStamp()
+		S = SharedSourceTree2XMLFile(tmpFile, self.treeModel.rootItem)
+
+		fileName = QtGui.QFileDialog.getSaveFileName(self, 'Path_to_', '~/.config/LightMight/treeBackup')
+
+		if not moveFile('/dev/shm/LightMight/server/' + tmpFile, \
+						QtCore.QString(fileName).toUtf8().data()) :
+			showHelp = ListingText("MSG: tree not saved.", self)
+			showHelp.exec_()
+
 	def ok(self):
 		if 'serverThread' in dir(self.Obj) :
 			self.Obj.serverThread.terminate()
 			#self.Obj.serverThread.exit()
 		self.saveData()
 		self.Obj.initServer(self.treeModel)
+		self.done(0)
+
+	def cancel(self):
 		self.done(0)
 
 	def saveData(self):
@@ -176,9 +211,6 @@ class ServerSettingsShield(QtGui.QDialog):
 			value = 'False'
 		self.Obj.Settings.setValue('UseTLS', value)
 		self.Obj.Settings.sync()
-
-	def cancel(self):
-		self.done(0)
 
 	def closeEvent(self, event):
 		event.ignore()

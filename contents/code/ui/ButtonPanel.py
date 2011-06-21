@@ -36,8 +36,6 @@ class ButtonPanel(QtGui.QWidget):
 		self.progressBar = QtGui.QProgressBar()
 		self.progressBar.setOrientation(QtCore.Qt.Vertical)
 		self.progressBar.setAlignment(QtCore.Qt.AlignHCenter)
-		""" to measure the number of files """
-		#self.progressBar.setRange(0, count)
 		self.progressBar.setValue(0)
 		""" to measure the volume of downloads """
 		range_ = int(downLoadSize)
@@ -107,5 +105,3 @@ class ButtonPanel(QtGui.QWidget):
 		print 'Message : ', str(str_)
 		showHelp = ListingText("MSG: " + str(str_), self)
 		showHelp.exec_()
-
-
