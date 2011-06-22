@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import os.path, ssl, socket
+import ssl, socket
 from xmlrpclib import ServerProxy
 from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
 from SocketServer import ThreadingMixIn
 
 class ThreadServer(ThreadingMixIn, DocXMLRPCServer):
 	#ThreadingMixIn.daemon_threads = True
-	def __init__(self, serveraddr, RequestHandlerClass, allow_none = False, TLS = False):
+	def __init__(self, serveraddr, RequestHandlerClass, allow_none = False, TLS = False, certificatePath = ''):
 		DocXMLRPCServer.__init__(self, serveraddr, RequestHandlerClass)
 
 		if TLS :
@@ -15,8 +15,8 @@ class ThreadServer(ThreadingMixIn, DocXMLRPCServer):
 							socket.socket(socket.AF_INET, socket.SOCK_STREAM), \
 							ca_certs = "/etc/ssl/ca_bundle.trust.crt", \
 							server_side = True, \
-							certfile = os.path.expanduser("~/cert.pem"),
-							keyfile = os.path.expanduser("~/cert.pem"),
+							certfile = certificatePath,
+							keyfile = certificatePath,
 							ssl_version = ssl.PROTOCOL_TLSv1, \
 							ciphers = 'HIGH:TLSv1')
 			#print '   TLS used on server...'

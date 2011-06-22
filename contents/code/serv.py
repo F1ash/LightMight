@@ -7,11 +7,13 @@ from SSLOverloadClass import ThreadServer
 from Functions import *
 
 class ServerDaemon():
-	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, parent = None, TLS = False):
+	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, \
+				 parent = None, TLS = False, cert = ''):
 		self.serverState = randomString(24)
 		parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
-		self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True, TLS = TLS)
+		self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True, \
+								 TLS = TLS, certificatePath = cert)
 		self._srv.register_introspection_functions()
 		self._srv.register_function(self.sessionID, 'sessionID')
 		self._srv.register_function(self.python_clean, 'python_clean')

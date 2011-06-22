@@ -135,7 +135,9 @@ class MainWindow(QtGui.QMainWindow):
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
 		#print self.server_port, 'free'
-		if 'True' == InitConfigValue(self.Settings, 'UseTLS', 'False') :
+		certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
+		#print str(certificatePath)
+		if 'True' == InitConfigValue(self.Settings, 'UseTLS', 'False') and certificatePath != '' :
 			self.TLS = True
 		else :
 			self.TLS = False
@@ -144,7 +146,8 @@ class MainWindow(QtGui.QMainWindow):
 										ServerDaemon( ('', self.server_port), \
 													self.commonSetOfSharedSource, \
 													self, \
-													TLS = self.TLS ), \
+													TLS = self.TLS, \
+													cert = str(certificatePath)), \
 										parent = self)
 
 		""" должен сохранить результат как файл для передачи на запрос клиентов """

@@ -5,8 +5,8 @@ from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
 from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
-from Functions import InitConfigValue, dateStamp, moveFile
-import os, stat
+from Functions import InitConfigValue, dateStamp, moveFile, randomString
+import os, stat, os.path
 
 class ServerSettingsShield(QtGui.QDialog):
 	def __init__(self, obj = None, parent = None):
@@ -84,13 +84,13 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		self.addDirPathButton = QtGui.QPushButton('&Dir')
 		self.addDirPathButton.setMaximumWidth(75)
-		self.addDirPathButton.setToolTip('Add directory to Tree of Shared Sources')
+		self.addDirPathButton.setToolTip('Add directory in Tree of Shared Sources')
 		self.connect(self.addDirPathButton, QtCore.SIGNAL('clicked()'), self.addDirPath)
 		form.addWidget(self.addDirPathButton, 7, 2)
 
 		self.addFilePathButton = QtGui.QPushButton('&File')
 		self.addFilePathButton.setMaximumWidth(75)
-		self.addFilePathButton.setToolTip('Add file to Tree of Shared Sources')
+		self.addFilePathButton.setToolTip('Add file in Tree of Shared Sources')
 		self.connect(self.addFilePathButton, QtCore.SIGNAL('clicked()'), self.addFilePaths)
 		form.addWidget(self.addFilePathButton, 8, 2)
 
@@ -102,13 +102,13 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		self.loadTreeButton = QtGui.QPushButton('&Load')
 		self.loadTreeButton.setMaximumWidth(75)
-		self.loadTreeButton.setToolTip('Load saved Shared Tree')
+		self.loadTreeButton.setToolTip('Load saved Shared Sources Tree')
 		self.connect(self.loadTreeButton, QtCore.SIGNAL('clicked()'), self.loadTree)
 		form.addWidget(self.loadTreeButton, 11, 2)
 
 		self.saveTreeButton = QtGui.QPushButton('&Save')
 		self.saveTreeButton.setMaximumWidth(75)
-		self.saveTreeButton.setToolTip('Save Shared Tree')
+		self.saveTreeButton.setToolTip('Save Shared Sources Tree')
 		self.connect(self.saveTreeButton, QtCore.SIGNAL('clicked()'), self.saveTree)
 		form.addWidget(self.saveTreeButton, 12, 2)
 
@@ -125,6 +125,37 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.setLayout(form)
 		self.connect(self, QtCore.SIGNAL('refresh'), self.treeRefresh)
 		self.connect(self, QtCore.SIGNAL('threadError'), self.threadMSG)
+		self.useTLSCheck.stateChanged.connect(self.certificatePath)
+
+	def certificatePath(self, i):
+		if i == QtCore.Qt.Checked :
+			#print '  checked'
+			self.certFileName = QtGui.QFileDialog.getOpenFileName(self, 'Path_to_', '~', 'OpenSSL Certificate (*.pem);;')
+			#print self.certFileName
+			""" check certificate """
+			self.verifyProcess = QtCore.QProcess()
+			self.vrfProcOutput = '/dev/shm/LightMight/server/' + randomString(24)
+			self.verifyProcess.setStandardOutputFile(self.vrfProcOutput)
+			self.verifyProcess.setStandardErrorFile(self.vrfProcOutput)
+			self.verifyProcess.finished.connect(self.readVrfProcOutput)
+			self.verifyProcess.start('/usr/bin/openssl', \
+									QtCore.QStringList() << 'verify' << self.certFileName)
+		else :
+			#print '  unchecked'
+			pass
+
+	def readVrfProcOutput(self, i):
+		#print '  finised : ', i
+		with open(self.vrfProcOutput, 'rb') as output :
+			str_ = output.read()
+		if str_.find('unable to load certificate') == -1 :
+			STR_ = "MSG: Exit code : " + str(i) + '\n' + str_
+		else :
+			self.useTLSCheck.setCheckState(QtCore.Qt.Unchecked)
+			STR_ = 'MSG: Certificate is a unavailable or incorrect.\n' + str_
+		showHelp = ListingText(STR_, self)
+		showHelp.exec_()
+		os.remove(self.vrfProcOutput)
 
 	def addDirPath(self):
 		_nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
@@ -207,6 +238,8 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.Obj.Settings.setValue('SaveLastStructure', value)
 		if self.useTLSCheck.isChecked() :
 			value = 'True'
+			if 'certFileName' in dir(self) :
+				self.Obj.Settings.setValue('PathToCertificate', self.certFileName)
 		else :
 			value = 'False'
 		self.Obj.Settings.setValue('UseTLS', value)
