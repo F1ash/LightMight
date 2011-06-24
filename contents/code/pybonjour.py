@@ -897,6 +897,7 @@ def DNSServiceProcessResult(
 	except ctypes.ArgumentError, err :
 		print 'CTypeError : ', err
 		#BonjourError(kDNSServiceErr_NoError)
+		_DNSServiceProcessResult(DNSServiceRef())
 	finally:
 		_global_lock.release()
 

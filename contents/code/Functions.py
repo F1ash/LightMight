@@ -79,6 +79,6 @@ def moveFile(src, dst, delete = True):
 
 def pathPrefix():
 	if sys.platform == 'win32':
-		return unicode(os.path.dirname(os.tmpfile()))
+		return unicode(os.path.dirname(os.tempnam()))
 	else:
 		return u''

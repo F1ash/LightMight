@@ -63,8 +63,6 @@ class AvahiBrowser(QtCore.QThread):
 
 	def browse_callback(self, sdRef, flags, interfaceIndex, errorCode, serviceName,
 						regtype, replyDomain):
-		if errorCode is None : errorCode = 0
-		print 'PyBonjourError : ', pybonjour.BonjourError._errmsg.get(errorCode, 'unknown')
 		if errorCode != pybonjour.kDNSServiceErr_NoError :
 			return
 
