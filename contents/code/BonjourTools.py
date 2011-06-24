@@ -71,7 +71,7 @@ class AvahiBrowser(QtCore.QThread):
 		if not (flags & pybonjour.kDNSServiceFlagsAdd) :
 
 			item = self.obj.userList.findItems(serviceName, \
-					QtCore.Qt.MatchFlags(QtCore.Qt.MatchStartsWith | QtCore.Qt.MatchCaseSensitive))
+					QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
 			print item, ' find list'
 			if len(item) > 0 :
 				self.obj.userList.takeItem(self.obj.userList.row(item[0]))

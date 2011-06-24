@@ -66,7 +66,7 @@ class AvahiBrowser():
 	def myhandlerRemove(self, interface, protocol, name, stype, domain, flags):
 
 		item = self.obj.userList.findItems(name, \
-				QtCore.Qt.MatchFlags(QtCore.Qt.MatchStartsWith | QtCore.Qt.MatchCaseSensitive))
+				QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
 		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
 		if unicode(name) in self.USERS : del self.USERS[unicode(name)]
 		#print "Removed service: '%s'" % unicode(name)
