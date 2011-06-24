@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, os.path, string, random, socket, ssl, time
+import os, os.path, string, random, socket, ssl, time, sys
 
 char_set = string.ascii_letters + string.digits
 
@@ -25,7 +25,7 @@ class DataRendering:
 
 	def listToFile(self, list_ = [], name_ = ''):
 		if name_ != '' :
-			fileName = str('/dev/shm/' + name_)
+			fileName = str(pathPrefix() + '/dev/shm/' + name_)
 			l = string.join(list_, '\n')
 			f = open(fileName, 'wb')
 			f.write(l)
@@ -76,3 +76,9 @@ def moveFile(src, dst, delete = True):
 		return True
 	else :
 		return False
+
+def pathPrefix():
+	if sys.platform == 'win32':
+		return unicode(os.path.dirname(os.tempnam()))
+	else:
+		return u''

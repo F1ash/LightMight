@@ -1,19 +1,29 @@
 # -*- coding: utf-8 -*-
 
+import shutil, os.path, string, sys
 from PyQt4 import QtGui, QtCore
 from Box import Box
 from Wait import SetupTree
 from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
 from ListingText import ListingText
-from AvahiTools import AvahiBrowser, AvahiService
+
+if sys.platform == 'win32':
+	from BonjourTools import AvahiBrowser, AvahiService
+	print 'Platform : Win'
+else:
+	if sys.platform == 'darwin':
+		print 'Platform : Apple'
+	else :
+		print 'Platform : Linux'
+	from AvahiTools import AvahiBrowser, AvahiService
+	
 from serv import ServerDaemon
 from Functions import *
 from ToolsThread import ToolsThread
 from TreeProc import TreeModel
 from PathToTree import SharedSourceTree2XMLFile
 from TreeProcess import TreeProcessing
-import shutil, os.path, string
 
 class MainWindow(QtGui.QMainWindow):
 	# custom signals
@@ -21,6 +31,8 @@ class MainWindow(QtGui.QMainWindow):
 	commonSet = QtCore.pyqtSignal(dict)
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
+
+		self.pathPref = pathPrefix()
 
 		self.serverState = ''
 		self.currentRemoteServerState = ''
@@ -154,12 +166,12 @@ class MainWindow(QtGui.QMainWindow):
 		if firstRun :
 			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
 				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
-							'/dev/shm/LightMight/server/sharedSource_' + self.serverState)
+							self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState)
 			else :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 				S.__del__(); S = None
 		elif loadFile is not None :
-			if not moveFile(loadFile, '/dev/shm/LightMight/server/sharedSource_' + self.serverState, False) :
+			if not moveFile(loadFile, self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState, False) :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 				S.__del__(); S = None
 		else :
@@ -170,7 +182,7 @@ class MainWindow(QtGui.QMainWindow):
 		treeModel = TreeModel('Name', 'Description')		## cleaned treeModel.rootItem
 
 		self.threadSetupTree = SetupTree(TreeProcessing(), \
-										['/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
+										[self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
 										treeModel.rootItem, \
 										self, \
 										True, \
@@ -209,7 +221,7 @@ class MainWindow(QtGui.QMainWindow):
 				и ключей в self.commonSetOfSharedSource сервера
 			"""
 			nameMaskFile = randomString(24)
-			with open('/dev/shm/LightMight/client/' + nameMaskFile, 'a') as handler :
+			with open(self.pathPref + '/dev/shm/LightMight/client/' + nameMaskFile, 'a') as handler :
 				downLoadSize = \
 					TreeProcessing().getCommonSetOfSharedSource(self.menuTab.treeModel.rootItem, \
 																None, \
@@ -265,14 +277,14 @@ class MainWindow(QtGui.QMainWindow):
 		#print '/dev/shm/LightMight/server/sharedSource_' + self.serverState, ' close'
 		if InitConfigValue(self.Settings, 'SaveLastStructure', 'False') == 'True' :
 			#print True
-			if os.path.exists('/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
+			if os.path.exists(self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
 				#print 'Exist'
-				shutil.move('/dev/shm/LightMight/server/sharedSource_' + self.serverState, \
+				shutil.move(self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState, \
 							os.path.expanduser('~/.config/LightMight/lastSharedSource'))
 			else :
 				#print 'not Exist'
 				pass
-		shutil.rmtree('/dev/shm/LightMight', ignore_errors = True)
+		shutil.rmtree(self.pathPref + '/dev/shm/LightMight', ignore_errors = True)
 		self.close()
 
 	def closeEvent(self, event):

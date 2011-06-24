@@ -12,12 +12,13 @@ class xr_client:
 		self.serverState = ''
 		self.Parent = parent
 		self.TLS = TLS
+		self.pathPref = pathPrefix()
 		#print self.servaddr, ' clnt '
 		if obj is not None :
 			self.Obj = obj
 			self.Obj.currentRemoteServerAddr = addr
 			self.Obj.currentRemoteServerPort = port
-			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp'))
+			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', self.pathPref + '/tmp'))
 			#print '	run for get structure only '
 
 	def run(self):
@@ -26,7 +27,7 @@ class xr_client:
 
 			# self.methods = self.s.system.listMethods()
 			# get session Id & server State
-			self.randomFileName = str('/dev/shm/LightMight/' + randomString(24))
+			self.randomFileName = str(self.pathPref + '/dev/shm/LightMight/' + randomString(24))
 			#print self.randomFileName, '   clnt random string'
 			with open(self.randomFileName, "wb") as handle:
 				handle.write(self.s.sessionID().data)
@@ -76,7 +77,7 @@ class xr_client:
 
 	def getSharedSourceStructFile(self):
 		# get Shared Sources Structure
-		self.structFileName = str('/dev/shm/LightMight/client/struct_' + self.serverState) ## self.sessionID)
+		self.structFileName = str(self.pathPref + '/dev/shm/LightMight/client/struct_' + self.serverState) ## self.sessionID)
 		#print self.structFileName, ' struct'
 		with open(self.structFileName, "wb") as handle:
 					try :

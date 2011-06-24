@@ -5,7 +5,7 @@ from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
 from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
-from Functions import InitConfigValue, dateStamp, moveFile, randomString
+from Functions import InitConfigValue, dateStamp, moveFile, randomString, pathPrefix
 import os, stat, os.path
 
 class ServerSettingsShield(QtGui.QDialog):
@@ -13,6 +13,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		QtGui.QDialog.__init__(self, parent)
 
 		self.Obj = obj
+		self.pathPref = pathPrefix()
 
 		self.setWindowTitle('LightMight Server Settings')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
@@ -23,7 +24,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		form.addWidget(self.serverNameLabel, 0, 0)
 
 		self.defaultName  = InitConfigValue(self.Obj.Settings, 'ServerName', \
-											os.getenv('USER') + ' LightMight Server')
+											os.getenv('USER', '') + ' LightMight Server')
 		self.serverNameString = QtGui.QLineEdit(self.defaultName)
 		form.addWidget(self.serverNameString, 0, 1, 1, 2)
 
@@ -134,7 +135,7 @@ class ServerSettingsShield(QtGui.QDialog):
 			#print self.certFileName
 			""" check certificate """
 			self.verifyProcess = QtCore.QProcess()
-			self.vrfProcOutput = '/dev/shm/LightMight/server/' + randomString(24)
+			self.vrfProcOutput = self.pathPref + '/dev/shm/LightMight/server/' + randomString(24)
 			self.verifyProcess.setStandardOutputFile(self.vrfProcOutput)
 			self.verifyProcess.setStandardErrorFile(self.vrfProcOutput)
 			self.verifyProcess.finished.connect(self.readVrfProcOutput)
@@ -211,7 +212,7 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		fileName = QtGui.QFileDialog.getSaveFileName(self, 'Path_to_', '~/.config/LightMight/treeBackup')
 
-		if not moveFile('/dev/shm/LightMight/server/' + tmpFile, \
+		if not moveFile(self.pathPref + '/dev/shm/LightMight/server/' + tmpFile, \
 						QtCore.QString(fileName).toUtf8().data()) :
 			showHelp = ListingText("MSG: tree not saved.", self)
 			showHelp.exec_()

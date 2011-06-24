@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtCore import QThread, SIGNAL, pyqtSignal, QSettings
-from Functions import InitConfigValue
+from Functions import InitConfigValue, pathPrefix
 
 class ToolsThread(QThread):
 	""" custom signals for DownLoadClient """
@@ -13,6 +13,7 @@ class ToolsThread(QThread):
 		self.Obj = obj
 		self.Parent = parent
 		self.maskSet = maskSet
+		self.pathPref = pathPrefix()
 
 	def run(self):
 		self.Obj.run()
@@ -23,7 +24,7 @@ class ToolsThread(QThread):
 
 	def getSharedData(self):
 		downLoadPath = unicode(InitConfigValue(QSettings('LightMight','LightMight'), \
-											'DownLoadTo', '/tmp/LightMight/DownLoad'))
+											'DownLoadTo', self.pathPref + '/tmp/LightMight/DownLoad'))
 		self.Obj.getSharedData(self.maskSet, downLoadPath, self, self.Parent.currentRemoteServerState)
 
 	def terminate(self):

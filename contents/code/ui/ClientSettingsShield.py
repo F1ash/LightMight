@@ -2,7 +2,7 @@
 
 from PyQt4 import QtGui, QtCore
 from ListingText import ListingText
-from Functions import InitConfigValue
+from Functions import InitConfigValue, pathPrefix
 import os
 
 class ClientSettingsShield(QtGui.QDialog):
@@ -10,6 +10,7 @@ class ClientSettingsShield(QtGui.QDialog):
 		QtGui.QDialog.__init__(self, parent)
 
 		self.Obj = obj
+		self.pathPref = pathPrefix()
 
 		self.setWindowTitle('LightMight Client Settings')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
@@ -19,7 +20,7 @@ class ClientSettingsShield(QtGui.QDialog):
 		self.upLoadPathLabel = QtGui.QLabel('DownLoad Path :')
 		form.addWidget(self.upLoadPathLabel, 3, 0)
 
-		path_ = InitConfigValue(self.Obj.Settings, 'DownLoadTo', '/tmp/LightMight/DownLoad')
+		path_ = InitConfigValue(self.Obj.Settings, 'DownLoadTo', self.pathPref + '/tmp/LightMight/DownLoad')
 		self.upLoadPathString = QtGui.QLineEdit(path_)
 		form.addWidget(self.upLoadPathString, 4, 0, 4, 2)
 

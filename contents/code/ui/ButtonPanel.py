@@ -4,6 +4,7 @@ from PyQt4 import QtGui, QtCore
 from ToolsThread import ToolsThread
 from ListingText import ListingText
 from clnt import xr_client
+from Functions import pathPrefix
 import os, string
 
 class ButtonPanel(QtGui.QWidget):
@@ -12,6 +13,8 @@ class ButtonPanel(QtGui.QWidget):
 	def __init__(self, name_ = '', downLoadSize = 0, jobNumber = -1, \
 					serverState = '', addr = '', port = '', info = '', TLS = 'False', parent = None):
 		QtGui.QWidget.__init__(self, parent)
+
+		self.pathPref = pathPrefix()
 
 		self.nameMaskFile = name_
 		self.jobNumber = jobNumber
@@ -59,10 +62,10 @@ class ButtonPanel(QtGui.QWidget):
 		self.setMaskSet()
 
 	def setMaskSet(self):
-		if not os.path.isfile('/dev/shm/LightMight/client/' + self.nameMaskFile) :
+		if not os.path.isfile(self.pathPref + '/dev/shm/LightMight/client/' + self.nameMaskFile) :
 			print '  file not exist'
 			return None
-		with open('/dev/shm/LightMight/client/' + self.nameMaskFile) as f :
+		with open(self.pathPref + '/dev/shm/LightMight/client/' + self.nameMaskFile) as f :
 			for line in f :
 				s = string.split(line, '<||>')
 				if s[0] == '1' :
@@ -73,7 +76,7 @@ class ButtonPanel(QtGui.QWidget):
 												int(unicode(str(s[3].decode('utf-8')).replace('\n', ''))))
 					#print self.maskSet[int(unicode(str(s[3].decode('utf-8')).replace('\n', '')))]
 
-		os.remove('/dev/shm/LightMight/client/' + self.nameMaskFile)
+		os.remove(self.pathPref + '/dev/shm/LightMight/client/' + self.nameMaskFile)
 
 	def startJob(self):
 		self.startButton.hide()

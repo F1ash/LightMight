@@ -4,6 +4,7 @@ import os, os.path, stat
 from PyQt4 import QtGui, QtCore
 from xml.dom.minidom import Document, parse
 from TreeItem import TreeItem
+from Functions import pathPrefix
 
 class PathToTree(QtCore.QObject):
 	def __init__(self, path, rootItem, typePath = 'file', parent = None):
@@ -11,6 +12,7 @@ class PathToTree(QtCore.QObject):
 		self.path = path
 		self.rootItem = rootItem
 		self.typePath = typePath
+		self.pathPref = pathPrefix()
 		self.listPrepare()
 
 	def _proceed_dir(self, d, parentItem):
@@ -58,6 +60,7 @@ class SharedSourceTree2XMLFile:
 	def __init__(self, fileName = 'resultXML', obj = None, parent = None):
 		self.fileName = fileName
 		self.rootItem = obj
+		self.pathPref = pathPrefix()
 		self.doc = Document()
 		self.filePrepare()
 
@@ -70,7 +73,7 @@ class SharedSourceTree2XMLFile:
 		self.doc.appendChild(self.treeSharedDataToXML(self.rootItem))
 
 		#print self.doc.toprettyxml()
-		f = open('/dev/shm/LightMight/server/' + self.fileName, 'wb')
+		f = open(self.pathPref + '/dev/shm/LightMight/server/' + self.fileName, 'wb')
 		try :
 			#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
 			self.doc.writexml(f, encoding = 'utf-8')

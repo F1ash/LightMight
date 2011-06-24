@@ -9,6 +9,7 @@ from Functions import *
 class ServerDaemon():
 	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, \
 				 parent = None, TLS = False, cert = ''):
+		self.pathPref = pathPrefix()
 		self.serverState = randomString(24)
 		parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
@@ -24,14 +25,14 @@ class ServerDaemon():
 		fileName = randomString(24)
 		_id = randomString(24)
 		#print '/dev/shm/LightMight/' + fileName, '  temporary file in sessionId'
-		with open('/dev/shm/LightMight/' + fileName, 'wb') as f :
+		with open(self.pathPref + '/dev/shm/LightMight/' + fileName, 'wb') as f :
 			f.write(fileName + '\n' + _id + '\n' + self.serverState + '\n')
-		with open('/dev/shm/LightMight/' + fileName, "rb") as handle :
+		with open(self.pathPref + '/dev/shm/LightMight/' + fileName, "rb") as handle :
 			return xmlrpclib.Binary(handle.read())
 
 	def python_clean(self, name):
-		if os.path.isfile('/dev/shm/LightMight/' + name) :
-			os.remove('/dev/shm/LightMight/' + name)
+		if os.path.isfile(self.pathPref + '/dev/shm/LightMight/' + name) :
+			os.remove(self.pathPref + '/dev/shm/LightMight/' + name)
 
 	def python_file(self, id_):
 		""" добавить обработчик ошибок соединения и существования файлов """
@@ -43,7 +44,7 @@ class ServerDaemon():
 
 	def requestSharedSourceStruct(self, name):
 		#print '/dev/shm/LightMight/server/' + name, ' in requestSharedSourceStruct'
-		with open('/dev/shm/LightMight/server/' + name, "rb") as handle:
+		with open(self.pathPref + '/dev/shm/LightMight/server/' + name, "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
 	def run(self):

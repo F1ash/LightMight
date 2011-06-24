@@ -4,6 +4,7 @@ import dbus, gobject, avahi, time, string
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt4 import QtCore, QtGui
+from Functions import randomString
 
 class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):
@@ -38,11 +39,21 @@ class AvahiBrowser():
 		print str_
 		print 'service resolved.'
 		"""
+		for _str in string.split(str_, '.') :
+			if _str.startswith('Encoding=') :
+				__str = _str
+				break
+			else : __str = _str
+		_str_ = string.split(__str, '=')
+		if len(_str_) > 1 :
+			str__ = _str_[1]
+		else :
+			str__ = _str_[0]
 		new_item = QtGui.QListWidgetItem(unicode(args[2]))
 		new_item.setToolTip('name : ' + unicode(args[2]) + \
 							'\naddress : ' + str(args[7]) + \
 							'\nport : ' + str(args[8]) + \
-							'\nEncoding : ' + str_)
+							'\nEncoding : ' + str__)
 		self.obj.userList.addItem(new_item)
 		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
 		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8], str_)
@@ -121,7 +132,8 @@ class AvahiService():
 
 		print "Adding service '%s' of type '%s' ..." % (QtCore.QString(self.serviceName).toUtf8(), self.serviceType)
 
-		self.group.AddService(
+		try :
+			self.group.AddService(
 				avahi.IF_UNSPEC,	#interface
 				avahi.PROTO_UNSPEC, #protocol
 				dbus.UInt32(0),				  #flags
@@ -129,7 +141,14 @@ class AvahiService():
 				self.domain, self.host,
 				dbus.UInt16(self.servicePort),
 				avahi.string_array_to_txt_array(self.serviceTXT))
-		self.group.Commit()
+			self.group.Commit()
+		except dbus.exceptions.DBusException, err :
+			""" DBusError :  org.freedesktop.Avahi.CollisionError: Local name collision """
+			#print 'DBusError : ', err
+			self.serviceName += '_' + randomString(3)
+			self.add_service()
+		finally :
+			pass
 
 	def remove_service(self):
 		if not self.group is None :
@@ -167,4 +186,4 @@ class AvahiService():
 	def __del__(self):
 		self.remove_service()
 		#self.main_loop.quit()
-		time.sleep(3)			## Fix me: replace on dbus event
+		time.sleep(3)			## FIXME: replace on dbus event
