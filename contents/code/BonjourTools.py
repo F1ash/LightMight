@@ -27,20 +27,18 @@ class AvahiBrowser(QtCore.QThread):
 				pybonjour.DNSServiceProcessResult(self.browse_sdRef)
 
 	def resolve_callback(self, sdRef, flags, interfaceIndex, errorCode, fullname,
-						hosttarget, port, txtRecord, serviceName):
-		print  errorCode, '    resolve errorCode'
+						hosttarget, port, txtRecord):
 		if errorCode == pybonjour.kDNSServiceErr_NoError :
-			print 'Resolved service:'
+			"""print 'Resolved service:'
 			print '  fullname   =', fullname
 			print '  hosttarget =', hosttarget
 			print '  port	   =', port
 			print '  Record 	= ', str(txtRecord)
-			print '  InterfaceIndex = ' , interfaceIndex
-			print '  Service Name = ', unicode(serviceName)
+			print '  InterfaceIndex = ' , interfaceIndex"""
 			self.resolved.append(True)
 
-			str_ = unicode(txtRecord)
-			__str_addr = ''; __str_port = ''; __str_encode = ''
+			str_ = txtRecord
+			__str_addr = ''; __str_port = ''; __str_encode = ''; __str_name = ''
 			for _str in string.split(str_, ';') :
 				if _str.rfind('Address=') > -1 :
 					__str_addr = self.getRecord(_str)
@@ -48,14 +46,16 @@ class AvahiBrowser(QtCore.QThread):
 					__str_port = self.getRecord(_str)
 				if _str.rfind('Encoding=') > -1 :
 					__str_encode = self.getRecord(_str)
+				if _str.rfind('Name=') > -1 :
+					__str_name = self.getRecord(_str)
 
-			new_item = QtGui.QListWidgetItem(unicode(serviceName))
-			new_item.setToolTip('name : ' + unicode(serviceName) + \
+			new_item = QtGui.QListWidgetItem(unicode(__str_name, 'utf-8'))
+			new_item.setToolTip('name : ' + unicode(__str_name, 'utf-8') + \
 								'\naddress : ' + __str_addr + \
 								'\nport : ' + __str_port + \
 								'\nEncoding : ' + __str_encode)
 			self.obj.userList.addItem(new_item)
-			self.USERS[unicode(serviceName)] = (unicode(serviceName), __str_addr, __str_port, __str_encode)
+			self.USERS[unicode(__str_name, 'utf-8')] = (unicode(__str_name, 'utf-8'), __str_addr, __str_port, __str_encode)
 			#print self.USERS
 
 	def getRecord(self, str_):
@@ -67,7 +67,6 @@ class AvahiBrowser(QtCore.QThread):
 
 	def browse_callback(self, sdRef, flags, interfaceIndex, errorCode, serviceName,
 						regtype, replyDomain):
-		print errorCode, '   errorCode'
 		if errorCode != pybonjour.kDNSServiceErr_NoError :
 			return
 
@@ -79,12 +78,10 @@ class AvahiBrowser(QtCore.QThread):
 			if len(item) > 0 :
 				self.obj.userList.takeItem(self.obj.userList.row(item[0]))
 				if unicode(serviceName) in self.USERS : del self.USERS[unicode(serviceName)]
-				print 'Service removed :'
+				"""print 'Service removed :'
 				print '  fullname   =', serviceName
 				print '  replyDomain 	= ', replyDomain
-				print '  InterfaceIndex = ' , interfaceIndex
-			else :
-				print '  item not found'
+				print '  InterfaceIndex = ' , interfaceIndex"""
 			return
 
 		print 'Service added; resolving'
@@ -137,7 +134,8 @@ class AvahiService(QtCore.QThread):
 									 txtRecord = pybonjour.TXTRecord(
 														{'Encoding' : description + ';',
 														 'Address' : self.address + ';',
-														 'Port' : str(self.port) + ';'}
+														 'Port' : str(self.port) + ';',
+														 'Name' : self.name }
 																	),
 									 callBack = self.register_callback)
 			except pybonjour.BonjourError, err :
@@ -148,22 +146,22 @@ class AvahiService(QtCore.QThread):
 		self.start()
 
 	def run(self):
-		while self.RUN :
+		while True :
 			ready = select.select([self.sdRef], [], [])
 			if self.sdRef in ready[0] :
 				pybonjour.DNSServiceProcessResult(self.sdRef)
+			if not self.RUN and 'sdRef' in dir(self) : self.sdRef.close()
 
-	def register_callback(self, sdRef, flags, errorCode, name, regtype, domain, host, port):
+	def register_callback(self, sdRef, flags, errorCode, name, regtype, domain):
 		if errorCode == pybonjour.kDNSServiceErr_NoError :
 			print 'Registered service:'
 			print '  name	=', name
 			print '  regtype =', regtype
 			print '  domain  =', domain
-			print '  host = ', host
-			print '  port	= ', port
+		else :
+			print ' Registration Error : ', errorCode
 
 	def __del__(self):
 		self.RUN = False
-		if 'sdRef' in dir(self) : self.sdRef.close()
-		print ' AvaviService terminated...'
-		#self.exit()
+		print ' AvahiService terminated...'
+		self.exit()

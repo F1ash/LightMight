@@ -894,10 +894,6 @@ def DNSServiceProcessResult(
 	_global_lock.acquire()
 	try:
 		_DNSServiceProcessResult(sdRef)
-	except ctypes.ArgumentError, err :
-		print 'CTypeError : ', err
-		#BonjourError(kDNSServiceErr_NoError)
-		_DNSServiceProcessResult(None)
 	finally:
 		_global_lock.release()
 
@@ -1108,9 +1104,7 @@ def DNSServiceRegister(
 	_NO_DEFAULT.check(regtype)
 	_NO_DEFAULT.check(port)
 
-	#print port , ' 0_ _ _ _'
 	port = socket.htons(port)
-	#print port , ' _ _ _ _1'
 
 	if not txtRecord:
 		txtLen, txtRecord = 1, '\0'
@@ -1121,7 +1115,7 @@ def DNSServiceRegister(
 	def _callback(sdRef, flags, errorCode, name, regtype, domain, context):
 		if callBack is not None:
 			callBack(sdRef, flags, errorCode, name.decode(), regtype.decode(),
-					 domain.decode(), host, socket.ntohs(port))
+					 domain.decode())
 
 	_global_lock.acquire()
 	try:
@@ -1528,7 +1522,7 @@ def DNSServiceResolve(
 			port = socket.ntohs(port)
 			txtRecord = _length_and_void_p_to_string(txtLen, txtRecord)
 			callBack(sdRef, flags, interfaceIndex, errorCode, fullname.decode(),
-					 hosttarget.decode(), port, txtRecord, name)
+					 hosttarget.decode(), port, txtRecord)
 
 	_global_lock.acquire()
 	try:
