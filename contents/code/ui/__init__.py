@@ -8,7 +8,7 @@ from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
 from ListingText import ListingText
 
-if sys.platform == 'win32':
+"""if sys.platform == 'win32':
 	from BonjourTools import AvahiBrowser, AvahiService
 	print 'Platform : Win'
 else:
@@ -16,7 +16,8 @@ else:
 		print 'Platform : Apple'
 	else :
 		print 'Platform : Linux'
-	from AvahiTools import AvahiBrowser, AvahiService
+	from AvahiTools import AvahiBrowser, AvahiService"""
+from BonjourTools import AvahiBrowser, AvahiService
 	
 from serv import ServerDaemon
 from Functions import *
@@ -113,7 +114,7 @@ class MainWindow(QtGui.QMainWindow):
 
 	def initAvahiTools(self):
 		self.initAvahiBrowser()
-		self.initAvahiService()
+		#self.initAvahiService()
 
 	def initAvahiBrowser(self):
 		if 'avahiBrowser' in dir(self) :

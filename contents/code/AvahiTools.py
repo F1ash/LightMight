@@ -30,9 +30,7 @@ class AvahiBrowser():
 		self.USERS = {}
 
 	def service_resolved(self, *args):
-		str_ = ''; list_ = avahi.txt_array_to_string_array(args[9])
-		for i in xrange(len(list_)) :
-			str_ += list_[len(list_) - 1 - i]
+		str_ = string.join( avahi.txt_array_to_string_array(args[9]), '' )
 		"""print 'name:', unicode(args[2])
 		print 'address:', args[7]
 		print 'port:', args[8]
@@ -133,6 +131,9 @@ class AvahiService():
 		print "Adding service '%s' of type '%s' ..." % (QtCore.QString(self.serviceName).toUtf8(), self.serviceType)
 
 		try :
+			str_ = ''
+			for i in xrange(len(self.serviceTXT)) :
+				str_ += self.serviceTXT[len(self.serviceTXT) - 1 - i]
 			self.group.AddService(
 				avahi.IF_UNSPEC,	#interface
 				avahi.PROTO_UNSPEC, #protocol
@@ -140,7 +141,7 @@ class AvahiService():
 				self.serviceName, self.serviceType,
 				self.domain, self.host,
 				dbus.UInt16(self.servicePort),
-				avahi.string_array_to_txt_array(self.serviceTXT))
+				avahi.string_array_to_txt_array(str_))
 			self.group.Commit()
 		except dbus.exceptions.DBusException, err :
 			""" DBusError :  org.freedesktop.Avahi.CollisionError: Local name collision """

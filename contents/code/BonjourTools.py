@@ -1,5 +1,5 @@
 import select
-import sys, string
+import sys, string, socket
 import pybonjour
 from PyQt4 import QtCore, QtGui
 from Functions import randomString
@@ -28,6 +28,7 @@ class AvahiBrowser(QtCore.QThread):
 
 	def resolve_callback(self, sdRef, flags, interfaceIndex, errorCode, fullname,
 						hosttarget, port, txtRecord, serviceName):
+		print  errorCode, '    resolve errorCode'
 		if errorCode == pybonjour.kDNSServiceErr_NoError :
 			print 'Resolved service:'
 			print '  fullname   =', fullname
@@ -39,30 +40,34 @@ class AvahiBrowser(QtCore.QThread):
 			self.resolved.append(True)
 
 			str_ = unicode(txtRecord)
-			"""for i in xrange(len(txtRecord)) :
-				str_ += txtRecord[len(txtRecord) - 1 - i]"""
-			for _str in string.split(str_, '.') :
-				if _str.startswith('Encoding=') :
-					__str = _str
-					break
-				else : __str = _str
-			_str_ = string.split(__str, '=')
-			if len(_str_) > 1 :
-				str__ = _str_[1]
-			else :
-				str__ = _str_[0]
+			__str_addr = ''; __str_port = ''; __str_encode = ''
+			for _str in string.split(str_, ';') :
+				if _str.rfind('Address=') > -1 :
+					__str_addr = self.getRecord(_str)
+				if _str.rfind('Port=') > - 1 :
+					__str_port = self.getRecord(_str)
+				if _str.rfind('Encoding=') > -1 :
+					__str_encode = self.getRecord(_str)
 
 			new_item = QtGui.QListWidgetItem(unicode(serviceName))
 			new_item.setToolTip('name : ' + unicode(serviceName) + \
-								'\naddress : ' + hosttarget + \
-								'\nport : ' + str(port) + \
-								'\nEncoding : ' + str__)
+								'\naddress : ' + __str_addr + \
+								'\nport : ' + __str_port + \
+								'\nEncoding : ' + __str_encode)
 			self.obj.userList.addItem(new_item)
-			self.USERS[unicode(serviceName)] = (unicode(serviceName), hosttarget, port, str__)
+			self.USERS[unicode(serviceName)] = (unicode(serviceName), __str_addr, __str_port, __str_encode)
 			#print self.USERS
+
+	def getRecord(self, str_):
+		_str_ = string.split(str_, '=')
+		if len(_str_) > 1 :
+			return _str_[1]
+		else :
+			return _str_[0]
 
 	def browse_callback(self, sdRef, flags, interfaceIndex, errorCode, serviceName,
 						regtype, replyDomain):
+		print errorCode, '   errorCode'
 		if errorCode != pybonjour.kDNSServiceErr_NoError :
 			return
 
@@ -70,7 +75,7 @@ class AvahiBrowser(QtCore.QThread):
 
 			item = self.obj.userList.findItems(serviceName, \
 					QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
-			print item, ' find list'
+			#print item, ' find list'
 			if len(item) > 0 :
 				self.obj.userList.takeItem(self.obj.userList.row(item[0]))
 				if unicode(serviceName) in self.USERS : del self.USERS[unicode(serviceName)]
@@ -107,7 +112,7 @@ class AvahiBrowser(QtCore.QThread):
 		self.RUN = False
 		self.USER.clear()
 		if 'browse_sdRef' in dir(self) : self.browse_sdRef.close()
-		self.exit()
+		#self.exit()
 
 class AvahiService(QtCore.QThread):
 	def __init__(self, obj = None, name = 'Own Demo Service', \
@@ -118,17 +123,21 @@ class AvahiService(QtCore.QThread):
 		self.RUN = True
 		self.name = unicode(name)
 		self.regtype = '_LightMight._tcp'
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.connect(("gmail.com", 80))
+		self.address = s.getsockname()[0]
 		self.port = port
 		unicalName = False
 
-		""" instance 'txtRecord' must finished by '\n' always """
 		while not unicalName :
 			try :
 				self.sdRef = pybonjour.DNSServiceRegister(name = self.name,
 									 regtype = self.regtype,
 									 port = self.port,
 									 txtRecord = pybonjour.TXTRecord(
-														{'Encoding' : description + '\n'}
+														{'Encoding' : description + ';',
+														 'Address' : self.address + ';',
+														 'Port' : str(self.port) + ';'}
 																	),
 									 callBack = self.register_callback)
 			except pybonjour.BonjourError, err :
@@ -157,4 +166,4 @@ class AvahiService(QtCore.QThread):
 		self.RUN = False
 		if 'sdRef' in dir(self) : self.sdRef.close()
 		print ' AvaviService terminated...'
-		self.exit()
+		#self.exit()
