@@ -1,5 +1,5 @@
 import select
-import sys, string, socket
+import sys, string, socket, ctypes
 import pybonjour
 from PyQt4 import QtCore, QtGui
 from Functions import randomString
@@ -67,6 +67,7 @@ class AvahiBrowser(QtCore.QThread):
 
 	def browse_callback(self, sdRef, flags, interfaceIndex, errorCode, serviceName,
 						regtype, replyDomain):
+		print errorCode, '   errCode'
 		if errorCode != pybonjour.kDNSServiceErr_NoError :
 			return
 
@@ -95,7 +96,10 @@ class AvahiBrowser(QtCore.QThread):
 
 		try :
 			while not self.resolved :
-				ready = select.select([self.resolve_sdRef], [], [], self.timeout)
+				try :
+					ready = select.select([self.resolve_sdRef], [], [], self.timeout)
+				except ctypes.ArgumentError, err :
+					print 'CTypesArgumentError : ', err
 				if self.resolve_sdRef not in ready[0] :
 					print 'Resolve timed out'
 					break
@@ -135,7 +139,7 @@ class AvahiService(QtCore.QThread):
 														{'Encoding' : description + ';',
 														 'Address' : self.address + ';',
 														 'Port' : str(self.port) + ';',
-														 'Name' : self.name }
+														 'Name' : self.name + ';'}
 																	),
 									 callBack = self.register_callback)
 			except pybonjour.BonjourError, err :
@@ -147,7 +151,11 @@ class AvahiService(QtCore.QThread):
 
 	def run(self):
 		while True :
-			ready = select.select([self.sdRef], [], [])
+			try :
+				ready = select.select([self.sdRef], [], [])
+			except ctypes.ArgumentError, err :
+				print 'CTypesArgumentError : ', err
+				#ready = [([pybonjour.DNSServiceRef()], '')]
 			if self.sdRef in ready[0] :
 				pybonjour.DNSServiceProcessResult(self.sdRef)
 			if not self.RUN and 'sdRef' in dir(self) : self.sdRef.close()
@@ -164,4 +172,4 @@ class AvahiService(QtCore.QThread):
 	def __del__(self):
 		self.RUN = False
 		print ' AvahiService terminated...'
-		self.exit()
+		#self.exit()
