@@ -100,6 +100,7 @@ class AvahiBrowser(QtCore.QThread):
 					ready = select.select([self.resolve_sdRef], [], [], self.timeout)
 				except ctypes.ArgumentError, err :
 					print 'CTypesArgumentError : ', err
+				finally : pass
 				if self.resolve_sdRef not in ready[0] :
 					print 'Resolve timed out'
 					break
