@@ -31,8 +31,9 @@ class ButtonPanel(QtGui.QWidget):
 
 		self.setWindowTitle('LightMight Job')
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
-		self.setToolTip('Job #' + str(jobNumber) + ':\n' + QtCore.QString().fromUtf8(info) + \
-						'\nDownload : ' + downLoadSize + ' Byte(s)')
+		self.setToolTip('Job #' + str(jobNumber) + \
+						':<br>Download : ' + downLoadSize + ' Byte(s)<br>' + \
+						QtCore.QString().fromUtf8(info) )
 
 		self.layout = QtGui.QVBoxLayout()
 

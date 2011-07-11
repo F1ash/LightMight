@@ -2,7 +2,7 @@ import select
 import sys, string, socket, ctypes
 import pybonjour
 from PyQt4 import QtCore, QtGui
-from Functions import randomString
+from Functions import randomString, toolTipsHTMLWrap
 
 class AvahiBrowser(QtCore.QThread):
 	def __init__(self, obj = None, parent = None):
@@ -18,7 +18,7 @@ class AvahiBrowser(QtCore.QThread):
 
 		self.browse_sdRef = pybonjour.DNSServiceBrowse(regtype = self.regtype,
 												callBack = self.browse_callback)
-		self.start()
+		#self.start()
 
 	def run(self):
 		while self.RUN :
@@ -38,7 +38,7 @@ class AvahiBrowser(QtCore.QThread):
 			self.resolved.append(True)
 
 			str_ = txtRecord
-			__str_addr = ''; __str_port = ''; __str_encode = ''; __str_name = ''
+			__str_addr = ''; __str_port = ''; __str_encode = ''; __str_name = ''; __str_state = ''
 			for _str in string.split(str_, ';') :
 				if _str.rfind('Address=') > -1 :
 					__str_addr = self.getRecord(_str)
@@ -48,14 +48,23 @@ class AvahiBrowser(QtCore.QThread):
 					__str_encode = self.getRecord(_str)
 				if _str.rfind('Name=') > -1 :
 					__str_name = self.getRecord(_str)
+				if _str.rfind('State=') > -1 :
+					__str_state = self.getRecord(_str)
 
 			new_item = QtGui.QListWidgetItem(unicode(__str_name, 'utf-8'))
-			new_item.setToolTip('name : ' + unicode(__str_name, 'utf-8') + \
-								'\naddress : ' + __str_addr + \
-								'\nport : ' + __str_port + \
-								'\nEncoding : ' + __str_encode)
+			new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + __str_state, \
+								'name : ' + unicode(__str_name, 'utf-8') + '<br>'\
+								'\naddress : ' + __str_addr + '<br>'\
+								'\nport : ' + __str_port + '<br>'\
+								'\nEncoding : ' + __str_encode + '<br>'\
+								'\nServerState : ' + __str_state))
 			self.obj.userList.addItem(new_item)
-			self.USERS[unicode(__str_name, 'utf-8')] = (unicode(__str_name, 'utf-8'), __str_addr, __str_port, __str_encode)
+			self.USERS[unicode(__str_name, 'utf-8')] = (unicode(__str_name, 'utf-8'), \
+														__str_addr, \
+														__str_port, \
+														__str_encode,\
+														__str_state,\
+														False)
 			#print self.USERS
 
 	def getRecord(self, str_):
@@ -100,7 +109,7 @@ class AvahiBrowser(QtCore.QThread):
 					ready = select.select([self.resolve_sdRef], [], [], self.timeout)
 				except ctypes.ArgumentError, err :
 					print 'CTypesArgumentError : ', err
-				finally : pass
+				#finally : pass
 				if self.resolve_sdRef not in ready[0] :
 					print 'Resolve timed out'
 					break
@@ -126,7 +135,11 @@ class AvahiService(QtCore.QThread):
 		self.name = unicode(name)
 		self.regtype = '_LightMight._tcp'
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		s.connect(("gmail.com", 80))
+		try :
+			s.connect(("gmail.com", 80))
+		except socket.gaierror, err:
+			print err, '\nMay be internet not available. '
+			pass
 		self.address = s.getsockname()[0]
 		self.port = port
 		unicalName = False
@@ -140,7 +153,8 @@ class AvahiService(QtCore.QThread):
 														{'Encoding' : description + ';',
 														 'Address' : self.address + ';',
 														 'Port' : str(self.port) + ';',
-														 'Name' : self.name + ';'}
+														 'Name' : self.name + ';',
+														 'State' : self.obj.Obj.serverState + ';'}
 																	),
 									 callBack = self.register_callback)
 			except pybonjour.BonjourError, err :
@@ -148,7 +162,7 @@ class AvahiService(QtCore.QThread):
 				self.name += '_' + randomString(3)
 			finally :
 				if 'sdRef' in dir(self) : unicalName = True
-		self.start()
+		#self.start()
 
 	def run(self):
 		while True :
@@ -159,7 +173,8 @@ class AvahiService(QtCore.QThread):
 				#ready = [([pybonjour.DNSServiceRef()], '')]
 			if self.sdRef in ready[0] :
 				pybonjour.DNSServiceProcessResult(self.sdRef)
-			if not self.RUN and 'sdRef' in dir(self) : self.sdRef.close()
+			if not self.RUN :
+				if 'sdRef' in dir(self) : self.sdRef.close()
 
 	def register_callback(self, sdRef, flags, errorCode, name, regtype, domain):
 		if errorCode == pybonjour.kDNSServiceErr_NoError :

@@ -42,6 +42,8 @@ class xr_client:
 			if 'Obj' in dir(self) :
 				self.Obj.currentRemoteServerState = self.serverState
 				print "Handshake succeeded."
+				""" caching avatar """
+				self.getAvatar()
 		except ProtocolError, err :
 			"""print "A protocol error occurred"
 			print "URL: %s" % err.url
@@ -75,9 +77,12 @@ class xr_client:
 		finally :
 			pass
 
-	def getSharedSourceStructFile(self):
+	def getSharedSourceStructFile(self, caching = False):
 		# get Shared Sources Structure
-		self.structFileName = str(self.pathPref + '/dev/shm/LightMight/client/struct_' + self.serverState) ## self.sessionID)
+		if caching :
+			self.structFileName = str(self.pathPref + '/dev/shm/LightMight/cache/' + self.serverState)
+		else :
+			self.structFileName = str(self.pathPref + '/dev/shm/LightMight/client/struct_' + self.serverState) ## self.sessionID)
 		#print self.structFileName, ' struct'
 		with open(self.structFileName, "wb") as handle:
 					try :
@@ -100,6 +105,31 @@ class xr_client:
 					finally :
 						pass
 		return self.structFileName
+
+	def getAvatar(self):
+		self.avatarFileName = str(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + self.serverState)
+		#print self.structFileName, ' struct'
+		with open(self.avatarFileName, "wb") as handle:
+					try :
+						handle.write(self.s.requestAvatar().data)
+					except ProtocolError, err :
+						"""print "A protocol error occurred"
+						print "URL: %s" % err.url
+						print "HTTP/HTTPS headers: %s" % err.headers
+						print "Error code: %d" % err.errcode
+						print "Error message: %s" % err.errmsg"""
+						self.Parent.Obj.errorString.emit(str(err))
+					except Fault, err:
+						"""print "A fault occurred"
+						print "Fault code: %d" % err.faultCode
+						print "Fault string: %s" % err.faultString"""
+						self.Parent.Obj.errorString.emit(str(err))
+					except socket.error, err :
+						#print 'SocetError : ', err
+						self.Parent.Obj.errorString.emit(str(err))
+					finally :
+						pass
+		return self.avatarFileName
 
 	def getSharedData(self, maskSet, downLoadPath, emitter, previousRemoteServerState = 'NOTHING'):
 		""" check remote server state """

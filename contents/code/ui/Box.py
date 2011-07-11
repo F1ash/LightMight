@@ -7,6 +7,7 @@ from TreeProcess import TreeProcessing
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
+from Functions import InCache, pathPrefix, moveFile
 
 class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
@@ -66,14 +67,20 @@ class Box(QtGui.QWidget):
 		self.complete.connect(self.hideProgressBar)
 		self.tree.connect(self.showTree)
 
-	def showSharedSources(self):
-		self.progressBar.show()
-		path = self.clientThread.getSharedSourceStructFile()
+	def _showSharedSources(self, str_ = ''):
+		if not self.progressBar.isVisible() : self.progressBar.show()
+		path = str_
 		#print path, ' representation structure file'
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.threadSetupTree = SetupTree(self.treeProcessing, [path], self.treeModel.rootItem, self, False, self)
 		#self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
 		self.threadSetupTree.start()
+
+	def showSharedSources(self):
+		self.progressBar.show()
+		#print 'not cached'
+		path = self.clientThread.getSharedSourceStructFile()
+		self._showSharedSources(path)
 
 	def hideProgressBar(self):
 		self.progressBar.hide()
@@ -91,13 +98,20 @@ class Box(QtGui.QWidget):
 								'\nEncode : ' + encode)
 
 	def itemSharedSourceQuired(self, item):
+		## print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
+		pathExist = InCache(self.Obj.avahiBrowser.USERS[unicode(item.text())][4])
+		if pathExist[0] :
+			#print 'cached'
+			self._showSharedSources(pathExist[1])
+			return None
+		""" caching currentServerSharedSourceXMLFile """
+		path = pathPrefix() + '/dev/shm/LightMight/client/struct_' + self.Obj.currentRemoteServerState
+		if not InCache(path)[0] :
+			moveFile(path, '/dev/shm/LightMight/cache/' + self.Obj.currentRemoteServerState)
+		""" run the getting new structure in QThread """
 		if 'clientThread' in dir(self) :
 			self.disconnect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
 			self.clientThread = None
-		""" clean currentServerSharedSourceXMLFile """
-		## cleaning or caching
-		## print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
-		""" run in QThread """
 		if self.Obj.avahiBrowser.USERS[unicode(item.text())][3] == 'Yes' :
 			self.currentTreeEncode = True
 		else :

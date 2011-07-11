@@ -6,9 +6,11 @@ from Box import Box
 from Wait import SetupTree
 from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
+from CommonSettingsShield import CommonSettingsShield
 from ListingText import ListingText
+from DataCache import DataCache
 
-"""if sys.platform == 'win32':
+if sys.platform == 'win32':
 	from BonjourTools import AvahiBrowser, AvahiService
 	print 'Platform : Win'
 else:
@@ -16,8 +18,8 @@ else:
 		print 'Platform : Apple'
 	else :
 		print 'Platform : Linux'
-	from AvahiTools import AvahiBrowser, AvahiService"""
-from BonjourTools import AvahiBrowser, AvahiService
+	from AvahiTools import AvahiBrowser, AvahiService
+#from BonjourTools import AvahiBrowser, AvahiService
 	
 from serv import ServerDaemon
 from Functions import *
@@ -47,22 +49,28 @@ class MainWindow(QtGui.QMainWindow):
 		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
 
 		self.Settings = QtCore.QSettings('LightMight','LightMight')
+		self.avatarPath = InitConfigValue(self.Settings, 'AvatarPath', '')
 
 		self.exit_ = QtGui.QAction(QtGui.QIcon('../icons/exit.png'), '&Exit', self)
 		self.exit_.setShortcut('Ctrl+Q')
-		self.exit_.setStatusTip('Exit application')
+		#self.exit_.setStatusTip('Exit application')
 		self.connect(self.exit_, QtCore.SIGNAL('triggered()'), self._close)
 
 		listHelp = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&About LightMight', self)
-		listHelp.setStatusTip('Read help')
+		#listHelp.setStatusTip('Read help')
 		self.connect(listHelp,QtCore.SIGNAL('triggered()'), self.showMSG)
 
+		commonSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Common Settings', self)
+		#commonSettings.setStatusTip('Read help')
+		self.connect(commonSettings, QtCore.SIGNAL('triggered()'), self.showCommonSettingsShield)
+
+
 		serverSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Server Settings', self)
-		serverSettings.setStatusTip('Read help')
+		#serverSettings.setStatusTip('Read help')
 		self.connect(serverSettings, QtCore.SIGNAL('triggered()'), self.showServerSettingsShield)
 
 		clientSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Client Settings', self)
-		clientSettings.setStatusTip('Read help')
+		#clientSettings.setStatusTip('Read help')
 		self.connect(clientSettings, QtCore.SIGNAL('triggered()'), self.showClientSettingsShield)
 
 		self.statusBar()
@@ -76,6 +84,7 @@ class MainWindow(QtGui.QMainWindow):
 		file_.addAction(self.exit_)
 
 		set_ = menubar.addMenu('&Settings')
+		set_.addAction(commonSettings)
 		set_.addAction(serverSettings)
 		set_.addAction(clientSettings)
 
@@ -119,8 +128,16 @@ class MainWindow(QtGui.QMainWindow):
 	def initAvahiBrowser(self):
 		if 'avahiBrowser' in dir(self) :
 			self.avahiBrowser.__del__(); self.avahiBrowser = None
+			# stopping caching
+			if 'cachingthread' in dir(self) :
+				self.cachingThread._shutdown()
 			#self.menuTab.userList.clear()
 		self.avahiBrowser = AvahiBrowser(self.menuTab)
+		self.avahiBrowser.start()
+		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :
+			print 'Use Cache'
+			self.cachingThread = DataCache(self.avahiBrowser.USERS, self)
+			self.cachingThread.start()
 
 	def initAvahiService(self):
 		if 'avahiService' in dir(self) :
@@ -133,7 +150,8 @@ class MainWindow(QtGui.QMainWindow):
 		self.avahiService = AvahiService(self.menuTab, \
 										name = name_, \
 										port = self.server_port, \
-										description = encode)
+										description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
+		self.avahiService.start()
 
 	def initServer(self, sharedSourceTree = None, loadFile = None):
 		self.menuTab.progressBar.show()
@@ -165,6 +183,10 @@ class MainWindow(QtGui.QMainWindow):
 
 		""" должен сохранить результат как файл для передачи на запрос клиентов """
 		if firstRun :
+			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastServerState')) :
+				with open(os.path.expanduser('~/.config/LightMight/lastServerState'), 'rb') as f :
+					self.serverState = f.read()
+					self.serverThread.Obj.serverState = self.serverState
 			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
 				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
 							self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState)
@@ -206,7 +228,8 @@ class MainWindow(QtGui.QMainWindow):
 		self.avahiService = AvahiService(self.menuTab, \
 										name = name_, \
 										port = self.server_port, \
-										description = encode)
+										description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
+		self.avahiService.start()
 		self.menuTab.progressBar.hide()
 
 	def customEvent(self, event):
@@ -266,6 +289,10 @@ class MainWindow(QtGui.QMainWindow):
 		showHelp = ListingText(STR_, self)
 		showHelp.exec_()
 
+	def showCommonSettingsShield(self):
+		_CommonSettingsShield = CommonSettingsShield(self)
+		_CommonSettingsShield.exec_()
+
 	def showClientSettingsShield(self):
 		_ClientSettingsShield = ClientSettingsShield(self)
 		_ClientSettingsShield.exec_()
@@ -276,12 +303,14 @@ class MainWindow(QtGui.QMainWindow):
 
 	def _close(self):
 		#print '/dev/shm/LightMight/server/sharedSource_' + self.serverState, ' close'
-		if InitConfigValue(self.Settings, 'SaveLastStructure', 'False') == 'True' :
+		if InitConfigValue(self.Settings, 'SaveLastStructure', 'True') == 'True' :
 			#print True
 			if os.path.exists(self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
 				#print 'Exist'
 				shutil.move(self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState, \
 							os.path.expanduser('~/.config/LightMight/lastSharedSource'))
+				with open(os.path.expanduser('~/.config/LightMight/lastServerState'), 'wb') as f :
+					f.write(self.serverState)
 			else :
 				#print 'not Exist'
 				pass

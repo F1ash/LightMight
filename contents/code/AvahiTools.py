@@ -4,7 +4,7 @@ import dbus, gobject, avahi, time, string
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt4 import QtCore, QtGui
-from Functions import randomString
+from Functions import randomString, toolTipsHTMLWrap
 
 class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):
@@ -29,6 +29,14 @@ class AvahiBrowser():
 		self.obj = obj
 		self.USERS = {}
 
+	def extractValue(self, __str):
+		_str_ = string.split(__str, '=')
+		if len(_str_) > 1 :
+			str__ = _str_[1]
+		else :
+			str__ = _str_[0]
+		return str__
+
 	def service_resolved(self, *args):
 		str_ = string.join( avahi.txt_array_to_string_array(args[9]), '' )
 		"""print 'name:', unicode(args[2])
@@ -37,24 +45,24 @@ class AvahiBrowser():
 		print str_
 		print 'service resolved.'
 		"""
+		__str_state = ''; __str_encode = ''
 		for _str in string.split(str_, '.') :
 			if _str.startswith('Encoding=') :
-				__str = _str
-				break
-			else : __str = _str
-		_str_ = string.split(__str, '=')
-		if len(_str_) > 1 :
-			str__ = _str_[1]
-		else :
-			str__ = _str_[0]
+				__str_encode = self.extractValue(_str)
+				#break
+			#else : __str_encode = _str
+			if _str.startswith('State=') :
+				__str_state = self.extractValue(_str)
 		new_item = QtGui.QListWidgetItem(unicode(args[2]))
-		new_item.setToolTip('name : ' + unicode(args[2]) + \
-							'\naddress : ' + str(args[7]) + \
-							'\nport : ' + str(args[8]) + \
-							'\nEncoding : ' + str__)
+		new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + __str_state, \
+							'name : ' + unicode(args[2]) + '<br>'\
+							'\naddress : ' + str(args[7]) + '<br>'\
+							'\nport : ' + str(args[8]) + '<br>'\
+							'\nEncoding : ' + __str_encode + '<br>'\
+							'\nServerState : ' + __str_state))
 		self.obj.userList.addItem(new_item)
 		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
-		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8], str_)
+		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8], __str_encode, __str_state, False)
 		#print self.USERS
 
 	def print_error(self, *args):
@@ -85,6 +93,8 @@ class AvahiBrowser():
 		#gobject.MainLoop().close()
 		self.USERS.clear()
 		pass
+
+	def start(self): pass
 
 class AvahiService():
 	def __init__(self, obj = None, name = 'Own Demo Service', \
@@ -188,3 +198,5 @@ class AvahiService():
 		self.remove_service()
 		#self.main_loop.quit()
 		time.sleep(3)			## FIXME: replace on dbus event
+
+	def start(self): pass

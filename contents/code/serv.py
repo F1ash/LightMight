@@ -11,7 +11,8 @@ class ServerDaemon():
 				 parent = None, TLS = False, cert = ''):
 		self.pathPref = pathPrefix()
 		self.serverState = randomString(24)
-		parent.serverState = self.serverState
+		self.Parent = parent
+		self.Parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
 		self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True, \
 								 TLS = TLS, certificatePath = cert)
@@ -20,6 +21,7 @@ class ServerDaemon():
 		self._srv.register_function(self.python_clean, 'python_clean')
 		self._srv.register_function(self.python_file, 'python_file')
 		self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
+		self._srv.register_function(self.requestAvatar, 'requestAvatar')
 
 	def sessionID(self):
 		fileName = randomString(24)
@@ -45,6 +47,11 @@ class ServerDaemon():
 	def requestSharedSourceStruct(self, name):
 		#print '/dev/shm/LightMight/server/' + name, ' in requestSharedSourceStruct'
 		with open(self.pathPref + '/dev/shm/LightMight/server/' + name, "rb") as handle:
+			return xmlrpclib.Binary(handle.read())
+
+	def requestAvatar(self):
+		#print '/dev/shm/LightMight/server/' + name, ' in requestSharedSourceStruct'
+		with open(self.pathPref + unicode(self.Parent.avatarPath), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
 	def run(self):

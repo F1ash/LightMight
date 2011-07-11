@@ -3,10 +3,11 @@
 import os, sys, os.path
 from PyQt4 import QtGui, QtCore
 from ui import MainWindow
-from Functions import pathPrefix
+from Functions import pathPrefix, InitConfigValue
 
 def createStructure():
 	for nameDir in [pathPref + '/dev/shm/LightMight/cache', \
+					pathPref + '/dev/shm/LightMight/cache/avatars/', \
 					pathPref + '/dev/shm/LightMight/structure', \
 					pathPref + '/dev/shm/LightMight/client', \
 					pathPref + '/dev/shm/LightMight/server', \
@@ -22,5 +23,8 @@ pathPref = pathPrefix()
 createStructure()
 app = QtGui.QApplication(sys.argv)
 main = MainWindow()
-main.show()
+if InitConfigValue(main.Settings, 'RunInTray', 'False') == 'True' :
+	main.hide()
+else :
+	main.show()
 sys.exit(app.exec_())

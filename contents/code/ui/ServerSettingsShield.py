@@ -64,7 +64,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		form.addWidget(self.saveLastStructureLabel, 5, 1)
 
 		self.saveLastStructureCheck = QtGui.QCheckBox()
-		if InitConfigValue(self.Obj.Settings, 'SaveLastStructure', 'False') == 'True' :
+		if InitConfigValue(self.Obj.Settings, 'SaveLastStructure', 'True') == 'True' :
 			value = QtCore.Qt.Checked
 		else:
 			value = QtCore.Qt.Unchecked
@@ -218,6 +218,7 @@ class ServerSettingsShield(QtGui.QDialog):
 			showHelp.exec_()
 
 	def ok(self):
+		print '!!!'
 		if 'serverThread' in dir(self.Obj) :
 			self.Obj.serverThread.terminate()
 			#self.Obj.serverThread.exit()

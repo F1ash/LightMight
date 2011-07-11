@@ -82,3 +82,21 @@ def pathPrefix():
 		return unicode(os.path.dirname(os.tempnam()))
 	else:
 		return u''
+
+def toolTipsHTMLWrap(iconPath = '', text = ''):
+	return \
+	'<table width="100%" border="0">\
+		<col align="center" />\
+		<col align="left"  width="100%" />\
+		<tr>\
+			<td><img src="' + iconPath + '" alt="" /></td>\
+			<td>' + text + '</td>\
+		</tr>\
+	</table>'
+
+def InCache(str_ = ''):
+	if os.path.isfile(pathPrefix() + '/dev/shm/LightMight/cache/' + str_) :
+		return True, pathPrefix() + '/dev/shm/LightMight/cache/' + str_
+	elif os.path.isfile(pathPrefix() + os.path.expanduser('~/.cache/LightMight/') + str_) :
+		return True, pathPrefix() + os.path.expanduser('~/.cache/LightMight/') + str_
+	return False, ''
