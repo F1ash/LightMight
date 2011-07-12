@@ -4,6 +4,17 @@ import os, os.path, string, random, socket, ssl, time, sys
 
 char_set = string.ascii_letters + string.digits
 
+def createStructure():
+	pathPref = pathPrefix()
+	for nameDir in [pathPref + '/dev/shm/LightMight/cache', \
+					pathPref + '/dev/shm/LightMight/cache/avatars/', \
+					pathPref + '/dev/shm/LightMight/structure', \
+					pathPref + '/dev/shm/LightMight/client', \
+					pathPref + '/dev/shm/LightMight/server', \
+					os.path.expanduser('~/.config/LightMight/treeBackup')] :
+		if not os.path.isdir(nameDir):
+			os.makedirs(nameDir)
+
 def randomString( j = 1):
 	return ''.join(random.sample(char_set, j))
 
