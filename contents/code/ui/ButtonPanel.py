@@ -13,6 +13,7 @@ class ButtonPanel(QtGui.QWidget):
 	def __init__(self, name_ = '', downLoadSize = 0, jobNumber = -1, \
 					serverState = '', addr = '', port = '', info = '', TLS = 'False', parent = None):
 		QtGui.QWidget.__init__(self, parent)
+		self.Obj = self
 
 		self.pathPref = pathPrefix()
 

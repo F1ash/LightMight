@@ -50,7 +50,6 @@ class ServerDaemon():
 			return xmlrpclib.Binary(handle.read())
 
 	def requestAvatar(self):
-		#print '/dev/shm/LightMight/server/' + name, ' in requestSharedSourceStruct'
 		with open(self.pathPref + unicode(self.Parent.avatarPath), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 

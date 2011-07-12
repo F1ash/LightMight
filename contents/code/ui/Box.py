@@ -8,6 +8,7 @@ from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
 from Functions import InCache, pathPrefix, moveFile
+from os.path import basename as BaseName
 
 class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
@@ -67,7 +68,7 @@ class Box(QtGui.QWidget):
 		self.complete.connect(self.hideProgressBar)
 		self.tree.connect(self.showTree)
 
-	def _showSharedSources(self, str_ = ''):
+	def showSharedSources(self, str_ = ''):
 		if not self.progressBar.isVisible() : self.progressBar.show()
 		path = str_
 		#print path, ' representation structure file'
@@ -76,11 +77,22 @@ class Box(QtGui.QWidget):
 		#self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
 		self.threadSetupTree.start()
 
-	def showSharedSources(self):
+	def _showSharedSources(self):
 		self.progressBar.show()
 		#print 'not cached'
 		path = self.clientThread.getSharedSourceStructFile()
-		self._showSharedSources(path)
+		""" search USERS key with desired value for set it in "cashed" """
+		currentKey = ''; Value = BaseName(path)
+		for itemValue in self.Obj.avahiBrowser.USERS.iteritems() :
+			if itemValue[1][4] == Value :
+				self.Obj.avahiBrowser.USERS[itemValue[0]] = (itemValue[1][0], \
+															 itemValue[1][1], \
+															 itemValue[1][2], \
+															 itemValue[1][3], \
+															 itemValue[1][4], \
+															 True)
+				break
+		self.showSharedSources(path)
 
 	def hideProgressBar(self):
 		self.progressBar.hide()
@@ -102,12 +114,8 @@ class Box(QtGui.QWidget):
 		pathExist = InCache(self.Obj.avahiBrowser.USERS[unicode(item.text())][4])
 		if pathExist[0] :
 			#print 'cached'
-			self._showSharedSources(pathExist[1])
+			self.showSharedSources(pathExist[1])
 			return None
-		""" caching currentServerSharedSourceXMLFile """
-		path = pathPrefix() + '/dev/shm/LightMight/client/struct_' + self.Obj.currentRemoteServerState
-		if not InCache(path)[0] :
-			moveFile(path, '/dev/shm/LightMight/cache/' + self.Obj.currentRemoteServerState)
 		""" run the getting new structure in QThread """
 		if 'clientThread' in dir(self) :
 			self.disconnect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
@@ -125,7 +133,7 @@ class Box(QtGui.QWidget):
 												self.currentTreeEncode), \
 										self)
 
-		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
+		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self._showSharedSources)
 		self.clientThread.start()
 
 	def upLoad(self):

@@ -62,6 +62,10 @@ class AvahiBrowser():
 							'\nServerState : ' + __str_state))
 		self.obj.userList.addItem(new_item)
 		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
+		""" Keys of USERS defined by "name", because name may be changed in restart,
+			but "state" may be not changed. In cache the important\exclusive role
+			has the status of remote server.
+		"""
 		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8], __str_encode, __str_state, False)
 		#print self.USERS
 

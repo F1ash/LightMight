@@ -79,10 +79,7 @@ class xr_client:
 
 	def getSharedSourceStructFile(self, caching = False):
 		# get Shared Sources Structure
-		if caching :
-			self.structFileName = str(self.pathPref + '/dev/shm/LightMight/cache/' + self.serverState)
-		else :
-			self.structFileName = str(self.pathPref + '/dev/shm/LightMight/client/struct_' + self.serverState) ## self.sessionID)
+		self.structFileName = str(self.pathPref + '/dev/shm/LightMight/cache/' + self.serverState)
 		#print self.structFileName, ' struct'
 		with open(self.structFileName, "wb") as handle:
 					try :
@@ -118,15 +115,18 @@ class xr_client:
 						print "HTTP/HTTPS headers: %s" % err.headers
 						print "Error code: %d" % err.errcode
 						print "Error message: %s" % err.errmsg"""
-						self.Parent.Obj.errorString.emit(str(err))
+						#self.Parent.Obj.errorString.emit(str(err))
+						pass
 					except Fault, err:
 						"""print "A fault occurred"
 						print "Fault code: %d" % err.faultCode
 						print "Fault string: %s" % err.faultString"""
-						self.Parent.Obj.errorString.emit(str(err))
+						#self.Parent.Obj.errorString.emit(str(err))
+						pass
 					except socket.error, err :
 						#print 'SocetError : ', err
-						self.Parent.Obj.errorString.emit(str(err))
+						#self.Parent.Obj.errorString.emit(str(err))
+						pass
 					finally :
 						pass
 		return self.avatarFileName
