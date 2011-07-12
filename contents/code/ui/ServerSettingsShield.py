@@ -218,7 +218,6 @@ class ServerSettingsShield(QtGui.QDialog):
 			showHelp.exec_()
 
 	def ok(self):
-		print '!!!'
 		if 'serverThread' in dir(self.Obj) :
 			self.Obj.serverThread.terminate()
 			#self.Obj.serverThread.exit()

@@ -64,7 +64,6 @@ class MainWindow(QtGui.QMainWindow):
 		#commonSettings.setStatusTip('Read help')
 		self.connect(commonSettings, QtCore.SIGNAL('triggered()'), self.showCommonSettingsShield)
 
-
 		serverSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Server Settings', self)
 		#serverSettings.setStatusTip('Read help')
 		self.connect(serverSettings, QtCore.SIGNAL('triggered()'), self.showServerSettingsShield)
@@ -274,8 +273,10 @@ class MainWindow(QtGui.QMainWindow):
 	def show_n_hide(self):
 		if self.isVisible():
 			self.hide()
+			self.menuTab.sharedTree.hide()
 		else:
 			self.show()
+			#self.menuTab.sharedTree.show()
 
 	def trayIconClicked(self, reason):
 		if reason == QtGui.QSystemTrayIcon.DoubleClick :

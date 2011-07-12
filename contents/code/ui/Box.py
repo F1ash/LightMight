@@ -17,7 +17,13 @@ class Box(QtGui.QWidget):
 		QtGui.QWidget.__init__(self, parent)
 
 		self.Obj = Obj_
+
+		self.treeModel = TreeModel('Name', 'Description', parent = self)
+		self.treeProcessing = TreeProcessing()
+		self.sharedTree = TreeBox(self.treeModel, self)
+
 		self.layout = QtGui.QGridLayout()
+		self.layout.setColumnStretch(0, 0)
 
 		self.userList = QtGui.QListWidget()
 		self.userList.setToolTip('Users in Web')
@@ -26,16 +32,6 @@ class Box(QtGui.QWidget):
 		self.userList.sortItems()
 		self.userList.itemDoubleClicked.connect(self.itemSharedSourceQuired)
 		self.layout.addWidget(self.userList, 0, 0)
-
-		""" отображение в приложении списка расшаренных ресурсов """
-		self.treeModel = TreeModel('Name', 'Description', parent = self)
-		self.sharedTree = QtGui.QTreeView()
-		self.sharedTree.setRootIsDecorated(True)
-		self.treeProcessing = TreeProcessing()
-		self.sharedTree.setToolTip('Shared Source')
-		self.sharedTree.setExpandsOnDoubleClick(True)
-		self.sharedTree.setModel(self.treeModel)
-		self.layout.addWidget(self.sharedTree, 0, 1)
 
 		self.buttonLayout = QtGui.QVBoxLayout()
 		self.buttonLayout.addStretch(0)
@@ -47,11 +43,11 @@ class Box(QtGui.QWidget):
 		self.progressBar.hide()
 		self.buttonLayout.addWidget(self.progressBar, 0, QtCore.Qt.AlignHCenter)
 
-		self.upLoadButton = QtGui.QPushButton(QtCore.QString('&Up'))
-		self.upLoadButton.setToolTip('UpLoad checked files\nof Shared Source')
-		self.upLoadButton.setMaximumWidth(65)
-		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.upLoad)
-		self.buttonLayout.addWidget(self.upLoadButton, 0, QtCore.Qt.AlignHCenter)
+		self.treeButton = QtGui.QPushButton(QtCore.QString('&Tree'))
+		self.treeButton.setToolTip('Show Tree \nof Shared Source')
+		self.treeButton.setMaximumWidth(65)
+		self.connect(self.treeButton, QtCore.SIGNAL('clicked()'), self.hide_n_showTree)
+		self.buttonLayout.addWidget(self.treeButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.refreshButton = QtGui.QPushButton(QtCore.QString('&R'))
 		self.refreshButton.setToolTip('Refresh own Avahi service')
@@ -96,6 +92,7 @@ class Box(QtGui.QWidget):
 
 	def hideProgressBar(self):
 		self.progressBar.hide()
+		self.sharedTree.show()
 
 	def showTree(self, rootItem, c = None, d = None):
 		self.treeModel.rootItem = rootItem
@@ -136,5 +133,43 @@ class Box(QtGui.QWidget):
 		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self._showSharedSources)
 		self.clientThread.start()
 
+	def hide_n_showTree(self):
+		if self.sharedTree.isVisible():
+			self.sharedTree.hide()
+		else:
+			self.sharedTree.show()
+
+class TreeBox(QtGui.QDialog):
+	def __init__(self, treeModel = None, parent = None):
+		QtGui.QDialog.__init__(self, parent)
+
+		self.Parent = parent 
+		self.layout = QtGui.QGridLayout()
+
+		""" отображение в приложении списка расшаренных ресурсов """
+		self.sharedTree = QtGui.QTreeView()
+		self.sharedTree.setRootIsDecorated(True)
+		self.sharedTree.setToolTip('Shared Source')
+		self.sharedTree.setExpandsOnDoubleClick(True)
+		self.sharedTree.setModel(treeModel)
+		self.layout.addWidget(self.sharedTree, 0, 0)
+
+		self.buttonLayout = QtGui.QVBoxLayout()
+		self.buttonLayout.addStretch(0)
+
+		self.upLoadButton = QtGui.QPushButton(QtCore.QString('&Up'))
+		self.upLoadButton.setToolTip('UpLoad checked files\nof Shared Source')
+		self.upLoadButton.setMaximumWidth(65)
+		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.upLoad)
+		self.buttonLayout.addWidget(self.upLoadButton, 0, QtCore.Qt.AlignHCenter)
+
+		self.layout.addItem(self.buttonLayout, 0, 1)
+
+		self.setGeometry(parent.geometry())
+		self.setLayout(self.layout)
+
+	def setModel(self, obj = None):
+		self.sharedTree.setModel(obj)
+
 	def upLoad(self):
-		QtGui.QApplication.postEvent(self.Obj, QtCore.QEvent(1010))
+		QtGui.QApplication.postEvent(self.Parent.Obj, QtCore.QEvent(1010))

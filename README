@@ -6,6 +6,7 @@ Dependencies :
 	dbus-python
 	avahi
 	avahi-ui-tools (python-avahi in Ubuntu)
+	avahi-compat-libdns_sd (Fedora name)
 	openssl
 
 Paths and files:
@@ -32,8 +33,7 @@ However, the client can not have other resources available on the server side.
 	Simple FileTransmitter for publication and download users
 file resources in local network. To use, you must open port 5353 (mDNS)
 and 34000-34100 by default.
-	For using SSL encripted connection you must generate SSL Cerificate
-and Key in $HOME/cert.pem .
+	For using SSL encripted connection you must generate SSL Cerificate and Key.
 
 Tested on :
 	Fedora 14/15
