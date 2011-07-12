@@ -6,12 +6,12 @@ char_set = string.ascii_letters + string.digits
 
 def createStructure():
 	pathPref = pathPrefix()
-	for nameDir in [pathPref + '/dev/shm/LightMight/cache', \
-					pathPref + '/dev/shm/LightMight/cache/avatars/', \
+	for nameDir in [pathPref + '/dev/shm/LightMight/cache/avatars', \
 					pathPref + '/dev/shm/LightMight/structure', \
 					pathPref + '/dev/shm/LightMight/client', \
 					pathPref + '/dev/shm/LightMight/server', \
-					os.path.expanduser('~/.config/LightMight/treeBackup')] :
+					os.path.expanduser('~/.config/LightMight/treeBackup'), \
+					os.path.expanduser('~/.cache/LightMight/avatars')] :
 		if not os.path.isdir(nameDir):
 			os.makedirs(nameDir)
 
@@ -111,3 +111,17 @@ def InCache(str_ = ''):
 	elif os.path.isfile(pathPrefix() + os.path.expanduser('~/.cache/LightMight/') + str_) :
 		return True, pathPrefix() + os.path.expanduser('~/.cache/LightMight/') + str_
 	return False, ''
+
+def DelFromCache(str_):
+	i = 0
+	result = [False, False, False, False]
+	for path_ in ['/dev/shm/LightMight/cache/', \
+				 '/dev/shm/LightMight/cache/avatars/', \
+				 os.path.expanduser('~/.cache/LightMight/'), \
+				 os.path.expanduser('~/.cache/LightMight/avatars/')] :
+		path = pathPrefix() + path_ + str_
+		if os.path.isfile(path) :
+			os.remove(path)
+			result[i] = True
+		i += 1
+	return result

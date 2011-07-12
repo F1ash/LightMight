@@ -98,17 +98,14 @@ class Box(QtGui.QWidget):
 		self.treeModel.rootItem = rootItem
 		self.sharedTree.setModel(self.treeModel)
 		#self.sharedTree.reset()
-		if self.currentTreeEncode :
-			encode = 'Yes'
-		else :
-			encode = 'No'
-		self.sharedTree.setToolTip('Shared Source :\n' + \
-								str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).' + \
-								'\nEncode : ' + encode)
+		self.sharedTree.setToolTip(self.sharedTree.toolTip() + \
+									'Shared Source :\n' + \
+									str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).')
 
 	def itemSharedSourceQuired(self, item):
 		## print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
 		pathExist = InCache(self.Obj.avahiBrowser.USERS[unicode(item.text())][4])
+		self.sharedTree.setToolTip(item.toolTip())
 		if pathExist[0] :
 			#print 'cached'
 			self.showSharedSources(pathExist[1])
@@ -172,4 +169,4 @@ class TreeBox(QtGui.QDialog):
 		self.sharedTree.setModel(obj)
 
 	def upLoad(self):
-		QtGui.QApplication.postEvent(self.Parent.Obj, QtCore.QEvent(1010))
+		self.Parent.Obj.uploadSignal.emit(self.toolTip())

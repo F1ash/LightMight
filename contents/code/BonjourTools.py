@@ -2,7 +2,7 @@ import select
 import sys, string, socket, ctypes
 import pybonjour
 from PyQt4 import QtCore, QtGui
-from Functions import randomString, toolTipsHTMLWrap
+from Functions import randomString, toolTipsHTMLWrap, DelFromCache
 
 class AvahiBrowser(QtCore.QThread):
 	def __init__(self, obj = None, parent = None):
@@ -87,7 +87,10 @@ class AvahiBrowser(QtCore.QThread):
 			#print item, ' find list'
 			if len(item) > 0 :
 				self.obj.userList.takeItem(self.obj.userList.row(item[0]))
-				if unicode(serviceName) in self.USERS : del self.USERS[unicode(serviceName)]
+				if unicode(serviceName) in self.USERS :
+					stateOfServer = self.USERS[unicode(name)][4]
+					DelFromCache(stateOfServer)
+					del self.USERS[unicode(serviceName)]
 				"""print 'Service removed :'
 				print '  fullname   =', serviceName
 				print '  replyDomain 	= ', replyDomain

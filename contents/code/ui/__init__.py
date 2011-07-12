@@ -32,6 +32,7 @@ class MainWindow(QtGui.QMainWindow):
 	# custom signals
 	errorString = QtCore.pyqtSignal(str)
 	commonSet = QtCore.pyqtSignal(dict)
+	uploadSignal = QtCore.pyqtSignal(QtCore.QString)
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -111,6 +112,7 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.errorString.connect(self.showMSG)
 		self.commonSet.connect(self.preProcessingComplete)
+		self.uploadSignal.connect(self.uploadTask)
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
 		self.timer.timeout.connect(self.initServices)
@@ -231,15 +233,10 @@ class MainWindow(QtGui.QMainWindow):
 		self.avahiService.start()
 		self.menuTab.progressBar.hide()
 
-	def customEvent(self, event):
-		if event.type() == 1010 :
-			self.jobCount += 1
+	def uploadTask(self, info):
+			Info = unicode(info)
 			job = QtCore.QProcess()
-			if self.menuTab.userList.currentItem() is None :
-				self.showMSG('Empty Job')
-				return None
-			else :
-				info = self.menuTab.userList.currentItem().toolTip()
+			self.jobCount += 1
 			""" посчитать объём загрузок, создать файл с данными соответствия путей
 				и ключей в self.commonSetOfSharedSource сервера
 			"""
@@ -250,25 +247,34 @@ class MainWindow(QtGui.QMainWindow):
 																None, \
 																checkItem = True, \
 																f = handler)[1]
-			#print self.currentRemoteServerState, self.currentRemoteServerAddr, self.currentRemoteServerPort
-			""" client run """
-			if string.split(self.menuTab.sharedTree.toolTip(), 'Encode : ')[1] == 'Yes' :
+			serverState = Info.partition('ServerState : ')[2].partition('</td>')[0].partition('\n')[0].replace('<br>', '')
+			serverAddr = Info.partition('address : ')[2].partition('\n')[0].partition('<br>')[0]
+			serverPort = Info.partition('port : ')[2].partition('\n')[0].partition('<br>')[0]
+			description = Info.partition('Shared Source :')[0]
+			encoding = Info.partition('Encoding : ')[2].partition('\n')[0].partition('<br>')[0]
+			if encoding == 'Yes' :
 				encode = 'True'
 			else :
 				encode = 'False'
+			"""
+			print   '\n\n!!!!', serverState, \
+					'\n\n!!!!', serverAddr, \
+					'\n\n!!!!', serverPort, \
+					'\n\n!!!!', description, \
+					'\n\n!!!!', encoding, '  info'
+			"""
+			""" task run """
 			pid, start = job.startDetached('/usr/bin/python', \
 						 (QtCore.QStringList()	<< './DownLoadClient.py' \
 												<< nameMaskFile \
 												<< str(downLoadSize) \
 												<< str(self.jobCount) \
-												<< self.currentRemoteServerState \
-												<< self.currentRemoteServerAddr \
-												<< str(self.currentRemoteServerPort) \
-												<< info \
+												<< serverState \
+												<< serverAddr \
+												<< serverPort \
+												<< description \
 												<< encode), \
 						 os.getcwd())
-		elif event.type() == 1011 :
-			pass
 
 	def show_n_hide(self):
 		if self.isVisible():

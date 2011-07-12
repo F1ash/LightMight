@@ -4,7 +4,7 @@ import dbus, gobject, avahi, time, string
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt4 import QtCore, QtGui
-from Functions import randomString, toolTipsHTMLWrap
+from Functions import randomString, toolTipsHTMLWrap, DelFromCache
 
 class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):
@@ -78,7 +78,10 @@ class AvahiBrowser():
 		item = self.obj.userList.findItems(name, \
 				QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
 		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
-		if unicode(name) in self.USERS : del self.USERS[unicode(name)]
+		if unicode(name) in self.USERS :
+			stateOfServer = self.USERS[unicode(name)][4]
+			DelFromCache(stateOfServer)
+			del self.USERS[unicode(name)]
 		#print "Removed service: '%s'" % unicode(name)
 		#print self.USERS
 
