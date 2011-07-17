@@ -310,18 +310,29 @@ class MainWindow(QtGui.QMainWindow):
 		_ServerSettingsShield.exec_()
 
 	def saveCache(self):
+		limitCache = 10000000
 		prefPath = self.pathPref + '/dev/shm/LightMight/cache/'
 		prefPathForAvatar = prefPath + 'avatars/'
 		prefPathInStationar = self.pathPref + os.path.expanduser('~/.cache/LightMight/')
 		prefPathInStationarForAvatar = prefPathInStationar + 'avatars/'
+		#print getFolderSize(prefPath)
+		currentSize = getFolderSize(prefPathInStationar)
+		print currentSize, ':'
 		if os.path.exists(self.pathPref + '/dev/shm/LightMight/cache') :
 			listingCache = os.listdir(self.pathPref + '/dev/shm/LightMight/cache')
 			for name in listingCache :
 				path = prefPath + name
 				pathInStationarCache = prefPathInStationar + name
 				if os.path.isfile(path) and not os.path.isfile(pathInStationarCache) :
-					moveFile(path, pathInStationarCache)
-					moveFile(prefPathForAvatar + name, prefPathInStationarForAvatar + name)
+					if moveFile(path, pathInStationarCache) :
+						currentSize += os.path.getsize(pathInStationarCache)
+					if moveFile(prefPathForAvatar + name, prefPathInStationarForAvatar + name) :
+						currentSize += os.path.getsize(prefPathInStationarForAvatar + name)
+					print currentSize
+					if currentSize >= limitCache :
+						print 'cache`s limit is reached'
+						self.showMSG('cache`s limit is reached')
+						break
 
 	def _close(self):
 		#print '/dev/shm/LightMight/server/sharedSource_' + self.serverState, ' close'

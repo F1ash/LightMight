@@ -88,7 +88,7 @@ class Box(QtGui.QWidget):
 															 itemValue[1][4], \
 															 True)
 				break
-		DelFromCache(previousState)
+		if previousState != '' : DelFromCache(previousState)
 		self.showSharedSources(path)
 
 	def hideProgressBar(self):

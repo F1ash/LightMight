@@ -126,3 +126,13 @@ def DelFromCache(str_):
 			result[i] = True
 		i += 1
 	return result
+
+def getFolderSize(folder):
+	total_size = os.path.getsize(folder)
+	for item in os.listdir(folder) :
+		itempath = os.path.join(folder, item)
+		if os.path.isfile(itempath) :
+			total_size += os.path.getsize(itempath)
+		elif os.path.isdir(itempath) :
+			total_size += getFolderSize(itempath)
+	return total_size
