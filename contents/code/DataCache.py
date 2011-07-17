@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtCore import QThread, QTimer, pyqtSignal
-from Functions import InitConfigValue, pathPrefix
+from Functions import InitConfigValue, pathPrefix, DelFromCache
 from clnt import xr_client
 
 class DataCache(QThread):
@@ -37,7 +37,8 @@ class DataCache(QThread):
 								 TLS = value)
 				clnt.run()
 				clnt.getAvatar()
-				clnt.getSharedSourceStructFile(True)
+				names = clnt.getSharedSourceStructFile(True)
+				DelFromCache(names[1])
 				self.USERS[itemValue[0]] = (itemValue[1][0], \
 											itemValue[1][1], \
 											itemValue[1][2], \

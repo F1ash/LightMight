@@ -28,7 +28,8 @@ class ServerDaemon():
 		_id = randomString(24)
 		#print '/dev/shm/LightMight/' + fileName, '  temporary file in sessionId'
 		with open(self.pathPref + '/dev/shm/LightMight/' + fileName, 'wb') as f :
-			f.write(fileName + '\n' + _id + '\n' + self.serverState + '\n')
+			#print fileName + '\n' + _id + '\n' + self.serverState + '\n' + self.Parent.previousState + '\n'
+			f.write(fileName + '\n' + _id + '\n' + self.serverState + '\n' + self.Parent.previousState + '\n')
 		with open(self.pathPref + '/dev/shm/LightMight/' + fileName, "rb") as handle :
 			return xmlrpclib.Binary(handle.read())
 

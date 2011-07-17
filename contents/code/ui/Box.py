@@ -7,7 +7,7 @@ from TreeProcess import TreeProcessing
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
-from Functions import InCache, pathPrefix, moveFile
+from Functions import InCache, pathPrefix, moveFile, DelFromCache
 from os.path import basename as BaseName
 
 class Box(QtGui.QWidget):
@@ -76,7 +76,8 @@ class Box(QtGui.QWidget):
 	def _showSharedSources(self):
 		self.progressBar.show()
 		#print 'not cached'
-		path = self.clientThread.getSharedSourceStructFile()
+		path, previousState = self.clientThread.getSharedSourceStructFile()
+		#print path, previousState
 		""" search USERS key with desired value for set it in "cashed" """
 		currentKey = ''; Value = BaseName(path)
 		for itemValue in self.Obj.avahiBrowser.USERS.iteritems() :
@@ -88,6 +89,7 @@ class Box(QtGui.QWidget):
 															 itemValue[1][4], \
 															 True)
 				break
+		DelFromCache(previousState)
 		self.showSharedSources(path)
 
 	def hideProgressBar(self):

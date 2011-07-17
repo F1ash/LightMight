@@ -154,7 +154,8 @@ class MainWindow(QtGui.QMainWindow):
 										description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
 		self.avahiService.start()
 
-	def initServer(self, sharedSourceTree = None, loadFile = None):
+	def initServer(self, sharedSourceTree = None, loadFile = None, previousState = ''):
+		self.previousState = previousState
 		self.menuTab.progressBar.show()
 		if 'serverThread' in dir(self) :
 			treeModel = sharedSourceTree
@@ -308,8 +309,23 @@ class MainWindow(QtGui.QMainWindow):
 		_ServerSettingsShield = ServerSettingsShield(self)
 		_ServerSettingsShield.exec_()
 
+	def saveCache(self):
+		prefPath = self.pathPref + '/dev/shm/LightMight/cache/'
+		prefPathForAvatar = prefPath + 'avatars/'
+		prefPathInStationar = self.pathPref + os.path.expanduser('~/.cache/LightMight/')
+		prefPathInStationarForAvatar = prefPathInStationar + 'avatars/'
+		if os.path.exists(self.pathPref + '/dev/shm/LightMight/cache') :
+			listingCache = os.listdir(self.pathPref + '/dev/shm/LightMight/cache')
+			for name in listingCache :
+				path = prefPath + name
+				pathInStationarCache = prefPathInStationar + name
+				if os.path.isfile(path) and not os.path.isfile(pathInStationarCache) :
+					moveFile(path, pathInStationarCache)
+					moveFile(prefPathForAvatar + name, prefPathInStationarForAvatar + name)
+
 	def _close(self):
 		#print '/dev/shm/LightMight/server/sharedSource_' + self.serverState, ' close'
+		self.saveCache()
 		if InitConfigValue(self.Settings, 'SaveLastStructure', 'True') == 'True' :
 			#print True
 			if os.path.exists(self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState) :

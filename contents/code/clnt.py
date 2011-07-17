@@ -38,6 +38,10 @@ class xr_client:
 			self.sessionID = self.listRandomString[1]
 			#print self.sessionID, ' session ID'
 			self.serverState = self.listRandomString[2]
+			if len(self.listRandomString) > 3 :
+				self.previousState = self.listRandomString[3]
+			else :
+				self.previousState = ''
 			#print self.serverState, ' server State'
 			if 'Obj' in dir(self) :
 				self.Obj.currentRemoteServerState = self.serverState
@@ -74,14 +78,22 @@ class xr_client:
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
+		except IOError, err :
+			print 'IOError : ', err
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.Obj.errorString.emit(str(err))
 		finally :
+			self.previousState = ''
 			pass
 
 	def getSharedSourceStructFile(self, caching = False):
 		# get Shared Sources Structure
 		self.structFileName = str(self.pathPref + '/dev/shm/LightMight/cache/' + self.serverState)
 		#print self.structFileName, ' struct'
-		with open(self.structFileName, "wb") as handle:
+		try :
+			with open(self.structFileName, "wb") as handle:
 					try :
 						handle.write(self.s.requestSharedSourceStruct('sharedSource_' + self.serverState).data)
 					except ProtocolError, err :
@@ -101,12 +113,16 @@ class xr_client:
 						self.Parent.Obj.errorString.emit(str(err))
 					finally :
 						pass
-		return self.structFileName
+		except IOError, err :
+			print 'IOError : ', err
+			pass
+		return self.structFileName, self.previousState
 
 	def getAvatar(self):
 		self.avatarFileName = str(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + self.serverState)
 		#print self.structFileName, ' struct'
-		with open(self.avatarFileName, "wb") as handle:
+		try :
+			with open(self.avatarFileName, "wb") as handle:
 					try :
 						handle.write(self.s.requestAvatar().data)
 					except ProtocolError, err :
@@ -129,6 +145,9 @@ class xr_client:
 						pass
 					finally :
 						pass
+		except IOError, err :
+			print 'IOError : ', err
+			pass
 		return self.avatarFileName
 
 	def getSharedData(self, maskSet, downLoadPath, emitter, previousRemoteServerState = 'NOTHING'):

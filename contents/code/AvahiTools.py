@@ -78,10 +78,7 @@ class AvahiBrowser():
 		item = self.obj.userList.findItems(name, \
 				QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
 		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
-		if unicode(name) in self.USERS :
-			stateOfServer = self.USERS[unicode(name)][4]
-			DelFromCache(stateOfServer)
-			del self.USERS[unicode(name)]
+		if unicode(name) in self.USERS : del self.USERS[unicode(name)]
 		#print "Removed service: '%s'" % unicode(name)
 		#print self.USERS
 

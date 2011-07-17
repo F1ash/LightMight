@@ -222,7 +222,7 @@ class ServerSettingsShield(QtGui.QDialog):
 			self.Obj.serverThread.terminate()
 			#self.Obj.serverThread.exit()
 		self.saveData()
-		self.Obj.initServer(self.treeModel)
+		self.Obj.initServer(self.treeModel, previousState = self.Obj.serverState)
 		self.done(0)
 
 	def cancel(self):
