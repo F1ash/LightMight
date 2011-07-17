@@ -114,12 +114,13 @@ def InCache(str_ = ''):
 
 def DelFromCache(str_):
 	i = 0
+	pref = pathPrefix()
 	result = [False, False, False, False]
 	for path_ in ['/dev/shm/LightMight/cache/', \
 				 '/dev/shm/LightMight/cache/avatars/', \
 				 os.path.expanduser('~/.cache/LightMight/'), \
 				 os.path.expanduser('~/.cache/LightMight/avatars/')] :
-		path = pathPrefix() + path_ + str_
+		path = pref + path_ + str_
 		if os.path.isfile(path) :
 			os.remove(path)
 			result[i] = True

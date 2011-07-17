@@ -85,7 +85,6 @@ class xr_client:
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
 		finally :
-			self.previousState = ''
 			pass
 
 	def getSharedSourceStructFile(self, caching = False):
@@ -115,7 +114,7 @@ class xr_client:
 						pass
 		except IOError, err :
 			print 'IOError : ', err
-			pass
+			if 'previousState' not in dir(self) : self.previousState = ''
 		return self.structFileName, self.previousState
 
 	def getAvatar(self):

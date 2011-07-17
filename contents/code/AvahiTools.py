@@ -4,7 +4,7 @@ import dbus, gobject, avahi, time, string
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt4 import QtCore, QtGui
-from Functions import randomString, toolTipsHTMLWrap, DelFromCache
+from Functions import randomString, toolTipsHTMLWrap
 
 class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):

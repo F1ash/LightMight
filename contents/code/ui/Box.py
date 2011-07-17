@@ -77,8 +77,7 @@ class Box(QtGui.QWidget):
 		self.progressBar.show()
 		#print 'not cached'
 		path, previousState = self.clientThread.getSharedSourceStructFile()
-		#print path, previousState
-		""" search USERS key with desired value for set it in "cashed" """
+		""" search USERS key with desired value for set it in "cached" """
 		currentKey = ''; Value = BaseName(path)
 		for itemValue in self.Obj.avahiBrowser.USERS.iteritems() :
 			if itemValue[1][4] == Value :

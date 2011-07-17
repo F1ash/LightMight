@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtCore import QThread, QTimer, pyqtSignal
-from Functions import InitConfigValue, pathPrefix, DelFromCache
+from Functions import InitConfigValue, pathPrefix, DelFromCache, InCache, moveFile
 from clnt import xr_client
+import os.path
 
 class DataCache(QThread):
 	newItem = pyqtSignal(unicode)
@@ -24,6 +25,7 @@ class DataCache(QThread):
 		if self.runState : return None
 		self.runState = True
 		self.Key = True
+		self.prefPath = pathPrefix()
 		for itemValue in self.USERS.iteritems() :
 			if not itemValue[1][5] and self.Key :
 				""" call for fill clients data """
@@ -35,17 +37,42 @@ class DataCache(QThread):
 								 port = unicode(itemValue[1][2]), \
 								 parent = self, \
 								 TLS = value)
-				clnt.run()
-				clnt.getAvatar()
-				names = clnt.getSharedSourceStructFile(True)
-				DelFromCache(names[1])
+				pathExist = InCache(itemValue[1][4])
+				names = ('', '')
+				if pathExist[0] :
+					""" if data cached """
+					head, tail = os.path.split(pathExist[1])
+					if not moveFile(pathExist[1], \
+									self.prefPath + '/dev/shm/LightMight/cache/' + tail, \
+									False) :
+						clnt.run()
+						names = clnt.getSharedSourceStructFile(True)
+						#print 'download struct'
+						if not moveFile(head + '/avatars/' + tail, \
+										self.prefPath + '/dev/shm/LightMight/cache/avatars/' + tail, \
+										False) :
+							clnt.getAvatar()
+							#print ' download avatar'
+					elif not moveFile(head + '/avatars/' + tail, \
+									self.prefPath + '/dev/shm/LightMight/cache/avatars/' + tail, \
+									False) :
+						clnt.run()
+						clnt.getAvatar()
+						#print ' download avatar only'
+				else :
+					""" if data not cached """
+					clnt.run()
+					clnt.getAvatar()
+					names = clnt.getSharedSourceStructFile(True)
+				""" if remoteServerState is changed """
+				#print names
+				if names[1] != '' : DelFromCache(names[1])
 				self.USERS[itemValue[0]] = (itemValue[1][0], \
 											itemValue[1][1], \
 											itemValue[1][2], \
 											itemValue[1][3], \
 											itemValue[1][4], \
 											True)
-				#print 'work accomplished'
 			elif self.Key is False :
 				self.runState = False
 				break
