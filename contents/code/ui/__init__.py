@@ -310,15 +310,15 @@ class MainWindow(QtGui.QMainWindow):
 		_ServerSettingsShield.exec_()
 
 	def saveCache(self):
-		limitCache = 10000000
+		Once = True
+		limitCache = int(InitConfigValue(self.Settings, 'CacheSize', '100')) * 10000
 		prefPath = self.pathPref + '/dev/shm/LightMight/cache/'
 		prefPathForAvatar = prefPath + 'avatars/'
 		prefPathInStationar = self.pathPref + os.path.expanduser('~/.cache/LightMight/')
 		prefPathInStationarForAvatar = prefPathInStationar + 'avatars/'
-		#print getFolderSize(prefPath)
-		currentSize = getFolderSize(prefPathInStationar)
-		print currentSize, ':'
 		if os.path.exists(self.pathPref + '/dev/shm/LightMight/cache') :
+			currentSize = getFolderSize(prefPathInStationar)
+			print currentSize, ':'
 			listingCache = os.listdir(self.pathPref + '/dev/shm/LightMight/cache')
 			for name in listingCache :
 				path = prefPath + name
@@ -333,10 +333,16 @@ class MainWindow(QtGui.QMainWindow):
 						print 'cache`s limit is reached'
 						self.showMSG('cache`s limit is reached')
 						break
+					elif currentSize >= limitCache*4/5 and Once :
+						Once = False
+						self.showMSG('cache is reached more then 80% :\n' + \
+									 str(currentSize) + \
+									 ' from ' + \
+									 str(limitCache))
 
 	def _close(self):
 		#print '/dev/shm/LightMight/server/sharedSource_' + self.serverState, ' close'
-		self.saveCache()
+		if InitConfigValue(self.Settings, 'UseCache', 'True') == 'True' : self.saveCache()
 		if InitConfigValue(self.Settings, 'SaveLastStructure', 'True') == 'True' :
 			#print True
 			if os.path.exists(self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
