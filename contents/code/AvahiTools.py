@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import dbus, gobject, avahi, time, string
+import dbus, gobject, avahi, time, string, os.path
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt4 import QtCore, QtGui
-from Functions import randomString, toolTipsHTMLWrap
+from Functions import randomString, toolTipsHTMLWrap, InCache
 
 class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):
@@ -54,12 +54,23 @@ class AvahiBrowser():
 			if _str.startswith('State=') :
 				__str_state = self.extractValue(_str)
 		new_item = QtGui.QListWidgetItem(unicode(args[2]))
-		new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + __str_state, \
-							'name : ' + unicode(args[2]) + '<br>'\
-							'\naddress : ' + str(args[7]) + '<br>'\
-							'\nport : ' + str(args[8]) + '<br>'\
-							'\nEncoding : ' + __str_encode + '<br>'\
-							'\nServerState : ' + __str_state))
+		res_, path_ = InCache(__str_state)
+		if res_ :
+			head, tail = os.path.split(path_)
+			new_item.setIcon(QtGui.QIcon(head + '/avatars/' + tail))
+			new_item.setToolTip(toolTipsHTMLWrap(head + '/avatars/' + tail, \
+								'name : ' + unicode(args[2]) + '<br>'\
+								'\naddress : ' + str(args[7]) + '<br>'\
+								'\nport : ' + str(args[8]) + '<br>'\
+								'\nEncoding : ' + __str_encode + '<br>'\
+								'\nServerState : ' + __str_state))
+		else :
+			new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + __str_state, \
+								'name : ' + unicode(args[2]) + '<br>'\
+								'\naddress : ' + str(args[7]) + '<br>'\
+								'\nport : ' + str(args[8]) + '<br>'\
+								'\nEncoding : ' + __str_encode + '<br>'\
+								'\nServerState : ' + __str_state))
 		self.obj.userList.addItem(new_item)
 		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
 		""" Keys of USERS defined by "name", because name may be changed in restart,

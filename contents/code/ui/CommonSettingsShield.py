@@ -65,13 +65,13 @@ class CommonSettingsShield(QtGui.QDialog):
 		self.cleanAllButton.setMaximumWidth(75)
 		self.cleanAllButton.setToolTip('Clean all cached data')
 		self.connect(self.cleanAllButton, QtCore.SIGNAL('clicked()'), self.cleanAllData)
-		form.addWidget(self.cleanAllButton, 14, 0)
+		form.addWidget(self.cleanAllButton, 13, 1)
 
 		self.cleanAbsentButton = QtGui.QPushButton('A&bsent')
 		self.cleanAbsentButton.setMaximumWidth(75)
 		self.cleanAbsentButton.setToolTip('Clean cached data of absent participant')
 		self.connect(self.cleanAbsentButton, QtCore.SIGNAL('clicked()'), self.cleanAbsentParticipantData)
-		form.addWidget(self.cleanAbsentButton, 14, 1)
+		form.addWidget(self.cleanAbsentButton, 13, 2)
 
 		self.okButton = QtGui.QPushButton('&Ok')
 		self.okButton.setMaximumWidth(75)

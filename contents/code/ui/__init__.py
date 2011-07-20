@@ -333,7 +333,7 @@ class MainWindow(QtGui.QMainWindow):
 						print 'cache`s limit is reached'
 						self.showMSG('cache`s limit is reached')
 						break
-					elif currentSize >= limitCache*4/5 and Once :
+					elif Once and currentSize >= limitCache*4/5 :
 						Once = False
 						self.showMSG('cache is reached more then 80% :\n' + \
 									 str(currentSize) + \

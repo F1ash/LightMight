@@ -69,9 +69,11 @@ class Box(QtGui.QWidget):
 		path = str_
 		#print path, ' representation structure file'
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
-		self.threadSetupTree = SetupTree(self.treeProcessing, [path], self.treeModel.rootItem, self, False, self)
-		#self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
-		self.threadSetupTree.start()
+		#self.threadSetupTree = SetupTree(self.treeProcessing, [path], self.treeModel.rootItem, self, False, self)
+		#self.threadSetupTree.start()
+		count, downLoads = self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
+		self.hideProgressBar()
+		self.showTree(self.treeModel.rootItem, count, downLoads)
 
 	def _showSharedSources(self):
 		self.progressBar.show()
@@ -87,6 +89,10 @@ class Box(QtGui.QWidget):
 															 itemValue[1][3], \
 															 itemValue[1][4], \
 															 True)
+				item = self.userList.findItems(itemValue[0], QtCore.Qt.MatchCaseSensitive)
+				#print item, '&&'
+				if item != [] :
+					item[0].setIcon(QtGui.QIcon('/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
 				break
 		if previousState != '' : DelFromCache(previousState)
 		self.showSharedSources(path)
@@ -105,11 +111,13 @@ class Box(QtGui.QWidget):
 
 	def itemSharedSourceQuired(self, item):
 		## print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
-		pathExist = InCache(self.Obj.avahiBrowser.USERS[unicode(item.text())][4])
+		serverState = self.Obj.avahiBrowser.USERS[unicode(item.text())][4]
+		pathExist = InCache(serverState)
 		self.sharedTree.setToolTip(item.toolTip())
 		if pathExist[0] :
 			#print 'cached'
 			self.showSharedSources(pathExist[1])
+			#item.setIcon(QtGui.QIcon(QtCore.QString('/dev/shm/LightMight/cache/avatars/' + serverState)))
 			return None
 		""" run the getting new structure in QThread """
 		if 'clientThread' in dir(self) :

@@ -2,7 +2,7 @@ import select
 import sys, string, socket, ctypes
 import pybonjour
 from PyQt4 import QtCore, QtGui
-from Functions import randomString, toolTipsHTMLWrap
+from Functions import randomString, toolTipsHTMLWrap, InCache
 
 class AvahiBrowser(QtCore.QThread):
 	def __init__(self, obj = None, parent = None):
@@ -51,13 +51,24 @@ class AvahiBrowser(QtCore.QThread):
 				if _str.rfind('State=') > -1 :
 					__str_state = self.getRecord(_str)
 
-			new_item = QtGui.QListWidgetItem(unicode(__str_name, 'utf-8'))
-			new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + __str_state, \
-								'name : ' + unicode(__str_name, 'utf-8') + '<br>'\
-								'\naddress : ' + __str_addr + '<br>'\
-								'\nport : ' + __str_port + '<br>'\
-								'\nEncoding : ' + __str_encode + '<br>'\
-								'\nServerState : ' + __str_state))
+			new_item = QtGui.QListWidgetItem(unicode(__str_name, 'utf-8'), self.obj.userList)
+			res_, path_ = InCache(__str_state)
+			if res_ :
+				head, tail = os.path.split(path_)
+				new_item.setIcon(QtGui.QIcon(head + '/avatars/' + tail))
+				new_item.setToolTip(toolTipsHTMLWrap(head + '/avatars/' + tail, \
+									'name : ' + unicode(__str_name, 'utf-8') + '<br>'\
+									'\naddress : ' + __str_addr + '<br>'\
+									'\nport : ' + __str_port + '<br>'\
+									'\nEncoding : ' + __str_encode + '<br>'\
+									'\nServerState : ' + __str_state))
+			else :
+				new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + __str_state, \
+									'name : ' + unicode(__str_name, 'utf-8') + '<br>'\
+									'\naddress : ' + __str_addr + '<br>'\
+									'\nport : ' + __str_port + '<br>'\
+									'\nEncoding : ' + __str_encode + '<br>'\
+									'\nServerState : ' + __str_state))
 			self.obj.userList.addItem(new_item)
 			self.USERS[unicode(__str_name, 'utf-8')] = (unicode(__str_name, 'utf-8'), \
 														__str_addr, \

@@ -10,6 +10,8 @@ class TreeItem(QtCore.QObject):
 		self.fileSizeItemData = size_
 		self.childItems = []
 		self.checkState = QtCore.Qt.Unchecked
+		self.fileIcon = QtGui.QIcon('../icons/document.png')
+		self.dirIcon = QtGui.QIcon('../icons/folder.png')
 
 	def child(self, row):
 		if row <= len(self.childItems):
@@ -25,12 +27,18 @@ class TreeItem(QtCore.QObject):
 	def data(self, column, role = QtCore.Qt.DisplayRole):
 		if role == QtCore.Qt.CheckStateRole and column == 0 :
 			return self.checkState
-		elif role != QtCore.Qt.CheckStateRole and column >= 0 :
+		#elif role != QtCore.Qt.CheckStateRole and role != QtCore.Qt.DecorationRole and column >= 0 :
+		elif role == QtCore.Qt.DisplayRole and column >= 0 :
 			if column == 0 :
 				#return self.itemData[column]
 				return self.fileNameItemData
 			elif column == 1 :
 				return self.fileSizeItemData
+		elif role == QtCore.Qt.DecorationRole and column == 0 :
+			if self.fileSizeItemData not in {'dir', ' dir'} :
+				return self.fileIcon
+			else :
+				return self.dirIcon
 
 	def childIndex(self, child_link = None):
 		if child_link in self.childItems and child_link is not None:

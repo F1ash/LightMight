@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtCore import QThread, QTimer, pyqtSignal
+from PyQt4.QtCore import QThread, QTimer, pyqtSignal, Qt
+from PyQt4.QtGui import QIcon
 from Functions import InitConfigValue, pathPrefix, DelFromCache, InCache, moveFile
 from clnt import xr_client
 import os.path
@@ -73,6 +74,10 @@ class DataCache(QThread):
 											itemValue[1][3], \
 											itemValue[1][4], \
 											True)
+				item = self.Obj.menuTab.userList.findItems(itemValue[0], Qt.MatchCaseSensitive)
+				#print item, '&&'
+				if item != [] :
+					item[0].setIcon(QIcon('/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
 			elif self.Key is False :
 				self.runState = False
 				break

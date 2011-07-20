@@ -66,7 +66,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 		item = index_.internalPointer()
 		if role == QtCore.Qt.CheckStateRole :
 				return item.data(index_.column(), role)
-		elif (role != QtCore.Qt.DisplayRole) :
+		elif (role != QtCore.Qt.DisplayRole and role != QtCore.Qt.DecorationRole) :
 			return QtCore.QVariant()
 		return item.data(index_.column(), role)
 
