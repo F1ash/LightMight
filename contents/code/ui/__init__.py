@@ -9,6 +9,7 @@ from ClientSettingsShield import ClientSettingsShield
 from CommonSettingsShield import CommonSettingsShield
 from ListingText import ListingText
 from DataCache import DataCache
+from StatusBar import StatusBar
 
 if sys.platform == 'win32':
 	from BonjourTools import AvahiBrowser, AvahiService
@@ -54,26 +55,27 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.exit_ = QtGui.QAction(QtGui.QIcon('../icons/exit.png'), '&Exit', self)
 		self.exit_.setShortcut('Ctrl+Q')
-		#self.exit_.setStatusTip('Exit application')
+		self.exit_.setStatusTip('Exit application')
 		self.connect(self.exit_, QtCore.SIGNAL('triggered()'), self._close)
 
 		listHelp = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&About LightMight', self)
-		#listHelp.setStatusTip('Read help')
+		listHelp.setStatusTip('Read help')
 		self.connect(listHelp,QtCore.SIGNAL('triggered()'), self.showMSG)
 
 		commonSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Common Settings', self)
-		#commonSettings.setStatusTip('Read help')
+		commonSettings.setStatusTip('Set avatars, use cache, etc.')
 		self.connect(commonSettings, QtCore.SIGNAL('triggered()'), self.showCommonSettingsShield)
 
 		serverSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Server Settings', self)
-		#serverSettings.setStatusTip('Read help')
+		serverSettings.setStatusTip('Set shared source, encrypt, etc.')
 		self.connect(serverSettings, QtCore.SIGNAL('triggered()'), self.showServerSettingsShield)
 
 		clientSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Client Settings', self)
-		#clientSettings.setStatusTip('Read help')
+		clientSettings.setStatusTip('Set the download path, etc.')
 		self.connect(clientSettings, QtCore.SIGNAL('triggered()'), self.showClientSettingsShield)
 
-		self.statusBar()
+		self.statusBar = StatusBar(self)
+		self.setStatusBar(self.statusBar)
 
 		menubar = self.menuBar()
 
@@ -164,6 +166,8 @@ class MainWindow(QtGui.QMainWindow):
 		else :
 			treeModel = TreeModel('Name', 'Description')
 			firstRun = True
+		self.statusBar.clearMessage()
+		self.statusBar.showMessage('Server offline')
 
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
@@ -220,6 +224,8 @@ class MainWindow(QtGui.QMainWindow):
 		""" this for server commonSet """
 		self.serverThread.Obj.commonSetOfSharedSource = commonSet
 		self.serverThread.start()
+		self.statusBar.clearMessage()
+		self.statusBar.showMessage('Server online')
 		if 'avahiService' in dir(self) :
 			self.avahiService.__del__(); self.avahiService = None
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')

@@ -16,7 +16,7 @@ class TreeItem(QtCore.QObject):
 	def child(self, row):
 		if row <= len(self.childItems):
 			return self.childItems[row]
-		return None
+		return 0
 
 	def childCount(self):
 		return len(self.childItems)
@@ -47,13 +47,12 @@ class TreeItem(QtCore.QObject):
 	def row(self):
 		if (self.parentItem is not None):
 			return self.parentItem.childIndex(self)
-		return None
+		return 0
 
 	def getParentItem(self):
-		try :
+		if 'parentItem' in dir(self) :
 			return self.parentItem
-		except RuntimeError, err :
-			print 'RunTime Error : ', str(err)
+		else :
 			return None
 
 	def appendChild(self, item):

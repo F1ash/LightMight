@@ -4,6 +4,8 @@ from PyQt4 import QtGui, QtCore
 from TreeProc import TreeModel
 from TreeItem import TreeItem
 from TreeProcess import TreeProcessing
+from TreeBox import TreeBox
+from IconBox import IconBox
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
@@ -13,6 +15,7 @@ from os.path import basename as BaseName
 class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
 	tree = QtCore.pyqtSignal(TreeItem, int, int)
+	data = QtCore.pyqtSignal(QtGui.QDialog)
 	def __init__(self, Obj_, parent = None):
 		QtGui.QWidget.__init__(self, parent)
 
@@ -20,7 +23,12 @@ class Box(QtGui.QWidget):
 
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.treeProcessing = TreeProcessing()
-		self.sharedTree = TreeBox(self.treeModel, self)
+		
+		viewMode = self.Obj.Settings.value('ViewMode', 'TreeMode').toString()
+		if viewMode == 'IconMode' :
+			self.sharedTree = IconBox(self.treeModel, self)
+		else :
+			self.sharedTree = TreeBox(self.treeModel, self, viewMode)
 
 		self.layout = QtGui.QGridLayout()
 		self.layout.setColumnStretch(0, 0)
@@ -63,6 +71,7 @@ class Box(QtGui.QWidget):
 
 		self.complete.connect(self.hideProgressBar)
 		self.tree.connect(self.showTree)
+		self.data.connect(self.changeViewMode)
 
 	def showSharedSources(self, str_ = ''):
 		if not self.progressBar.isVisible() : self.progressBar.show()
@@ -145,37 +154,21 @@ class Box(QtGui.QWidget):
 		else:
 			self.sharedTree.show()
 
-class TreeBox(QtGui.QDialog):
-	def __init__(self, treeModel = None, parent = None):
-		QtGui.QDialog.__init__(self, parent)
-
-		self.Parent = parent 
-		self.layout = QtGui.QGridLayout()
-
-		""" отображение в приложении списка расшаренных ресурсов """
-		self.sharedTree = QtGui.QTreeView()
-		self.sharedTree.setRootIsDecorated(True)
-		self.sharedTree.setToolTip('Shared Source')
-		self.sharedTree.setExpandsOnDoubleClick(True)
-		self.sharedTree.setModel(treeModel)
-		self.layout.addWidget(self.sharedTree, 0, 0)
-
-		self.buttonLayout = QtGui.QVBoxLayout()
-		self.buttonLayout.addStretch(0)
-
-		self.upLoadButton = QtGui.QPushButton(QtCore.QString('&Up'))
-		self.upLoadButton.setToolTip('UpLoad checked files\nof Shared Source')
-		self.upLoadButton.setMaximumWidth(65)
-		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.upLoad)
-		self.buttonLayout.addWidget(self.upLoadButton, 0, QtCore.Qt.AlignHCenter)
-
-		self.layout.addItem(self.buttonLayout, 0, 1)
-
-		self.setGeometry(parent.geometry())
-		self.setLayout(self.layout)
-
-	def setModel(self, obj = None):
-		self.sharedTree.setModel(obj)
-
-	def upLoad(self):
-		self.Parent.Obj.uploadSignal.emit(self.toolTip())
+	def changeViewMode(self, obj):
+		if obj is not None :
+			self.Obj.Settings.sync()
+			currentIdx = obj.currentIdx
+			currentChain = obj.parentItemChain
+			obj.close()
+			#unlink()
+			del obj; obj = None
+			viewMode = self.Obj.Settings.value('ViewMode', 'TreeMode').toString()
+			if viewMode == 'IconMode' :
+				self.sharedTree = IconBox(self.treeModel, self, \
+										  currentChain = currentChain, \
+										  currentIdx = currentIdx)
+			else :
+				self.sharedTree = TreeBox(self.treeModel, self, viewMode, \
+										  currentChain = currentChain, \
+										  currentIdx = currentIdx)
+			self.sharedTree.show()
