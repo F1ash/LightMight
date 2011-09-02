@@ -159,6 +159,7 @@ class Box(QtGui.QWidget):
 			self.Obj.Settings.sync()
 			currentIdx = obj.currentIdx
 			currentChain = obj.parentItemChain
+			toolTip = obj.toolTip()
 			obj.close()
 			#unlink()
 			del obj; obj = None
@@ -171,4 +172,5 @@ class Box(QtGui.QWidget):
 				self.sharedTree = TreeBox(self.treeModel, self, viewMode, \
 										  currentChain = currentChain, \
 										  currentIdx = currentIdx)
+			self.sharedTree.setToolTip(toolTip)
 			self.sharedTree.show()
