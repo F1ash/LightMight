@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import shutil, os.path, string, sys
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -10,6 +9,7 @@ class ModePanel(QWidget):
 		self.prnt = parent
 
 		self.layout = QVBoxLayout()
+		self.layout.setSpacing(0)
 
 		self.treeIcon = QPushButton(QIcon('../icons/view-list-tree.png'), '')
 		self.treeIcon.setToolTip('Tree Mode')

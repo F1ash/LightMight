@@ -16,13 +16,20 @@ class IconBox(QtGui.QDialog):
 		self.parentItemChain = currentChain
 		self.currentIdx = currentIdx
 		self.layout = QtGui.QGridLayout()
+		self.layout.setSpacing(0)
+		self.layout.setAlignment(QtCore.Qt.AlignLeft)
 
+		self.parentLabel = QtGui.QLabel()
+		self.parentLabel.setText('..')
 		self.parentPath = QtGui.QPushButton()
 		#self.parentPath = QtGui.QLineEdit()
-		self.parentPath.setText(' >> ')
+		self.parentPath.setIcon(QtGui.QIcon('../icons/up.png'))
+		self.parentPath.setFlat(True)
+		self.parentPath.setStyleSheet('QPushButton { background: rgba(255,255,255,64);} ')
 		#self.parentPath.setReadOnly(False)
 		self.parentPath.clicked.connect(self.backToParent)
-		self.layout.addWidget(self.parentPath, 0, 0)  ##, QtCore.Qt.AlignJustify)
+		self.layout.addWidget(self.parentLabel, 0, 0)
+		self.layout.addWidget(self.parentPath, 0, 0)  ##, QtCore.Qt.AlignLeft)
 
 		""" отображение в приложении списка расшаренных ресурсов """
 		self.sharedTree = QtGui.QListView()
@@ -76,9 +83,9 @@ class IconBox(QtGui.QDialog):
 		self.sharedTree.setModel(treeModel)
 		#self.sharedTree.reset()
 		if index.internalPointer() is None or index.internalPointer().parentItem is None :
-			self.parentPath.setText(' >> ')
+			self.parentLabel.setText('..')
 		else :
-			self.parentPath.setText(' >> ' + index.internalPointer().data(0))
+			self.parentLabel.setText('..' + index.internalPointer().data(0))
 		self.parentItemChain.append(self.treeModel.parent(index))
 		self.currentIdx = index
 

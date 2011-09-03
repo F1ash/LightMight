@@ -3,6 +3,7 @@
 from PyQt4 import QtGui, QtCore
 from TreeProc import TreeModel
 from ModePanel import ModePanel
+from ViewPanel import ViewPanel
 
 class TreeBox(QtGui.QDialog):
 	mode = QtCore.pyqtSignal(QtCore.QString)
@@ -13,31 +14,44 @@ class TreeBox(QtGui.QDialog):
 
 		self.Parent = parent
 		self.treeModel = treeModel
+		self.viewMode = viewMode
 		self.parentItemChain = currentChain
 		self.currentIdx = currentIdx
 		self.layout = QtGui.QGridLayout()
+		self.layout.setSpacing(0)
+		self.layout.setAlignment(QtCore.Qt.AlignLeft)
 
 		""" отображение в приложении списка расшаренных ресурсов """
 		self.sharedTree = QtGui.QTreeView()
 
-		if viewMode == 'DetailMode' :
-			self.parentPath = QtGui.QPushButton()
-			#self.parentPath = QtGui.QLineEdit()
-			self.parentPath.setText(' >> ')
-			#self.parentPath.setReadOnly(False)
-			self.parentPath.clicked.connect(self.backToParent)
-			self.layout.addWidget(self.parentPath, 0, 0)  ##, QtCore.Qt.AlignJustify)
+		if viewMode != 'TreeMode' :
+			self.upPanel = QtGui.QLabel()
+			self.layout.addWidget(self.upPanel, 0, 0)
 			
-			self.sharedTree.setRootIsDecorated(False)
+			self.parentPath = QtGui.QPushButton()
+			self.parentPath.setToolTip('Back to ..')
+			self.parentPath.setStyleSheet('QPushButton { background: rgba(190,190,255,64);} ')
+			self.parentPath.setFlat(True)
+			self.parentPath.clicked.connect(self.backToParent)
+			self.layout.addWidget(self.parentPath, 0, 0)
+
+			if viewMode == 'DetailMode' :
+				self.sharedTree.setRootIsDecorated(False)
+			else :
+				self.sharedTree = QtGui.QListView()
+				self.sharedTree.setViewMode(QtGui.QListView.IconMode)
+
 			self.sharedTree.doubleClicked.connect(self.itemDoubleClick)
+			self.viewPanel = ViewPanel(self.sharedTree, self)
+			self.layout.addWidget(self.viewPanel, 1, 0)
 		else :
 			self.sharedTree.setRootIsDecorated(True)
+			self.sharedTree.setExpandsOnDoubleClick(True)
+			self.sharedTree.setAnimated(True)
+			self.layout.addWidget(self.sharedTree, 1, 0)
 
 		self.sharedTree.setToolTip('Shared Source')
-		self.sharedTree.setExpandsOnDoubleClick(True)
-		self.sharedTree.setAnimated(True)
 		self.sharedTree.setModel(treeModel)
-		self.layout.addWidget(self.sharedTree, 1, 0)
 
 		self.buttonLayout = QtGui.QVBoxLayout()
 		self.buttonLayout.addStretch(0)
@@ -59,7 +73,7 @@ class TreeBox(QtGui.QDialog):
 
 		if self.currentIdx is not None and viewMode != 'TreeMode':
 			#print 'old state load :: ' + viewMode
-			self.itemDoubleClick(self.currentIdx)
+			self.itemDoubleClick(self.currentIdx, False)
 
 	def setModel(self, obj = None):
 		self.sharedTree.setModel(obj)
@@ -67,36 +81,41 @@ class TreeBox(QtGui.QDialog):
 	def upLoad(self):
 		self.Parent.Obj.uploadSignal.emit(self.toolTip())
 
-	def itemDoubleClick(self, index):
+	@QtCore.pyqtSlot(QtCore.QModelIndex, name = 'itemDoubleClick')
+	def itemDoubleClick(self, index, key = True):
 		'''if (index.internalPointer() is not None) :
 			print index.data(QtCore.Qt.DisplayRole), index.model(), \
 				index.internalPointer().data(0), index.internalPointer().data(1), \
 				index.internalPointer().childCount()
 		'''
 		treeModel = TreeModel('Name', 'Description', parent = self)
-		if index.internalPointer() is None :
+		if 'internalPointer' in dir(index) and index.internalPointer() is None :
 			treeModel.rootItem = self.treeModel.rootItem
-		elif bool(index.internalPointer().childCount()) :
-			[treeModel.rootItem.appendChild(item) for item in index.internalPointer().childItems]
+		elif 'internalPointer' in dir(index) and bool(index.internalPointer().childCount()) :
+			if self.viewMode == 'IconMode' :
+				treeModel.rootItem = index.internalPointer()
+			else :
+				[treeModel.rootItem.appendChild(item) for item in index.internalPointer().childItems]
 		else : return
 		self.sharedTree.setModel(treeModel)
 		#self.sharedTree.reset()
-		if index.internalPointer() is None or index.internalPointer().parentItem is None :
-			self.parentPath.setText(' >> ')
+		if index.internalPointer() is None :
+				self.upPanel.setText('..')
 		else :
-			self.parentPath.setText(' >> ' + index.internalPointer().data(0))
-		self.parentItemChain.append(self.treeModel.parent(index))
+			self.upPanel.setText('..' + index.internalPointer().data(0))
+		if key :
+			self.parentItemChain.append(self.treeModel.parent(index))
 		self.currentIdx = index
+		#print self.parentItemChain
 
 	def backToParent(self):
+		#print self.parentItemChain
 		if len(self.parentItemChain) < 1 :
-			last = None
+			last = self.currentIdx
 		else :
 			last = self.parentItemChain.pop(len(self.parentItemChain) - 1)
-		if last is not None :
-			#print last.internalPointer().data(0)
-			#self.parentPath.setText(' >> ' + last.internalPointer().data(0))
-			self.itemDoubleClick(last)
+		#print self.parentItemChain, '===' 
+		self.itemDoubleClick(last, False)
 
 	def changeViewMode(self, mode = 'TreeMode'):
 		self.Parent.data.emit(self)

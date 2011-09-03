@@ -5,7 +5,7 @@ from TreeProc import TreeModel
 from TreeItem import TreeItem
 from TreeProcess import TreeProcessing
 from TreeBox import TreeBox
-from IconBox import IconBox
+#from IconBox import IconBox
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
@@ -15,7 +15,7 @@ from os.path import basename as BaseName
 class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
 	tree = QtCore.pyqtSignal(TreeItem, int, int)
-	data = QtCore.pyqtSignal(QtGui.QDialog)
+	data = QtCore.pyqtSignal(TreeBox)
 	def __init__(self, Obj_, parent = None):
 		QtGui.QWidget.__init__(self, parent)
 
@@ -25,10 +25,7 @@ class Box(QtGui.QWidget):
 		self.treeProcessing = TreeProcessing()
 		
 		viewMode = self.Obj.Settings.value('ViewMode', 'TreeMode').toString()
-		if viewMode == 'IconMode' :
-			self.sharedTree = IconBox(self.treeModel, self)
-		else :
-			self.sharedTree = TreeBox(self.treeModel, self, viewMode)
+		self.sharedTree = TreeBox(self.treeModel, self, viewMode)
 
 		self.layout = QtGui.QGridLayout()
 		self.layout.setColumnStretch(0, 0)
@@ -164,12 +161,7 @@ class Box(QtGui.QWidget):
 			#unlink()
 			del obj; obj = None
 			viewMode = self.Obj.Settings.value('ViewMode', 'TreeMode').toString()
-			if viewMode == 'IconMode' :
-				self.sharedTree = IconBox(self.treeModel, self, \
-										  currentChain = currentChain, \
-										  currentIdx = currentIdx)
-			else :
-				self.sharedTree = TreeBox(self.treeModel, self, viewMode, \
+			self.sharedTree = TreeBox(self.treeModel, self, viewMode, \
 										  currentChain = currentChain, \
 										  currentIdx = currentIdx)
 			self.sharedTree.setToolTip(toolTip)
