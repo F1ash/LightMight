@@ -1,5 +1,5 @@
 Name: LightMight
-Version: 0.8.15
+Version: 0.8.16
 Release: build%(date +%Y%m%d_%H%M)%{?dist}
 Summary: Programm for file`s resource publication and transmittion in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
