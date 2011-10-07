@@ -34,14 +34,14 @@ class ModePanel(QWidget):
 	def setTreeMode(self):
 		#print 'tree'
 		self.prnt.Parent.Obj.Settings.setValue('ViewMode', 'TreeMode')
-		self.prnt.mode.emit(QString('TreeMode'))
+		self.prnt.mode.emit()	##QString('TreeMode'))
 
 	def setListMode(self):
 		#print 'list'
 		self.prnt.Parent.Obj.Settings.setValue('ViewMode', 'DetailMode')
-		self.prnt.mode.emit(QString('DetailMode'))
+		self.prnt.mode.emit()	##QString('DetailMode'))
 
 	def setIconMode(self):
 		#print 'icons'
 		self.prnt.Parent.Obj.Settings.setValue('ViewMode', 'IconMode')
-		self.prnt.mode.emit(QString('IconMode'))
+		self.prnt.mode.emit()	##QString('IconMode'))

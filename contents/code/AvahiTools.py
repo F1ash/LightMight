@@ -4,7 +4,7 @@ import dbus, gobject, avahi, time, string, os.path
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt4 import QtCore, QtGui
-from Functions import randomString, toolTipsHTMLWrap, InCache
+from Functions import randomString  #, toolTipsHTMLWrap, InCache
 
 class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):
@@ -27,7 +27,7 @@ class AvahiBrowser():
 
 		#gobject.MainLoop().run()
 		self.obj = obj
-		self.USERS = {}
+		self.USERS = self.obj.USERS
 
 	def extractValue(self, __str):
 		_str_ = string.split(__str, '=')
@@ -53,7 +53,8 @@ class AvahiBrowser():
 			#else : __str_encode = _str
 			if _str.startswith('State=') :
 				__str_state = self.extractValue(_str)
-		new_item = QtGui.QListWidgetItem(unicode(args[2]))
+		self.obj.addNewContact(unicode(args[2]), str(args[7]), str(args[8]), __str_encode, __str_state)
+		'''new_item = QtGui.QListWidgetItem(unicode(args[2]))
 		res_, path_ = InCache(__str_state)
 		if res_ :
 			head, tail = os.path.split(path_)
@@ -78,7 +79,7 @@ class AvahiBrowser():
 			has the status of remote server.
 		"""
 		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8], __str_encode, __str_state, False)
-		#print self.USERS
+		#print self.USERS'''
 
 	def print_error(self, *args):
 		print 'error_handler'

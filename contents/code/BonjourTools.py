@@ -2,7 +2,7 @@ import select
 import sys, string, socket, ctypes
 import pybonjour
 from PyQt4 import QtCore, QtGui
-from Functions import randomString, toolTipsHTMLWrap, InCache
+from Functions import randomString  #, toolTipsHTMLWrap, InCache
 
 class AvahiBrowser(QtCore.QThread):
 	def __init__(self, obj = None, parent = None):
@@ -10,7 +10,7 @@ class AvahiBrowser(QtCore.QThread):
 
 		self.obj = obj
 		self.RUN = True
-		self.USERS = {}
+		self.USERS = self.obj.USERS
 
 		self.regtype = '_LightMight._tcp'
 		self.timeout = 5
@@ -51,7 +51,8 @@ class AvahiBrowser(QtCore.QThread):
 				if _str.rfind('State=') > -1 :
 					__str_state = self.getRecord(_str)
 
-			new_item = QtGui.QListWidgetItem(unicode(__str_name, 'utf-8'), self.obj.userList)
+			self.obj.addNewContact(unicode(__str_name, 'utf-8'), __str_addr, __str_port, __str_encode, __str_state)
+			'''new_item = QtGui.QListWidgetItem(unicode(__str_name, 'utf-8'), self.obj.userList)
 			res_, path_ = InCache(__str_state)
 			if res_ :
 				head, tail = os.path.split(path_)
@@ -76,7 +77,7 @@ class AvahiBrowser(QtCore.QThread):
 														__str_encode,\
 														__str_state,\
 														False)
-			#print self.USERS
+			#print self.USERS'''
 
 	def getRecord(self, str_):
 		_str_ = string.split(str_, '=')
@@ -132,7 +133,7 @@ class AvahiBrowser(QtCore.QThread):
 
 	def __del__(self):
 		self.RUN = False
-		self.USER.clear()
+		self.USERS.clear()
 		if 'browse_sdRef' in dir(self) : self.browse_sdRef.close()
 		#self.exit()
 

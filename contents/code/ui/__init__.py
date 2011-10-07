@@ -34,6 +34,8 @@ class MainWindow(QtGui.QMainWindow):
 	errorString = QtCore.pyqtSignal(str)
 	commonSet = QtCore.pyqtSignal(dict)
 	uploadSignal = QtCore.pyqtSignal(QtCore.QString)
+	contactMessage = pyqtSignal(QString, QString)
+	changeConnectState = pyqtSignal(QString)
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -45,6 +47,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.currentRemoteServerPort = ''
 		self.jobCount = 0
 		self.commonSetOfSharedSource = {}
+		self.USERS = {}
 
 		#self.resize(450, 350)
 		self.setWindowTitle('LightMight')
@@ -115,10 +118,46 @@ class MainWindow(QtGui.QMainWindow):
 		self.errorString.connect(self.showMSG)
 		self.commonSet.connect(self.preProcessingComplete)
 		self.uploadSignal.connect(self.uploadTask)
+		self.contactMessage.connect(self.receiveBroadcastMessage)
+		#self.changeConnectState.connect()
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
 		self.timer.timeout.connect(self.initServices)
 		self.timer.start(1000)
+
+	def receiveBroadcastMessage(self, data, addr):
+		pass
+
+	def addNewContact(self, name, addr, port, encode, state, avahi_method = True):
+		''' check uniqualled contact
+		'''
+		if not avahi_method :
+			pass
+		new_item = QtGui.QListWidgetItem(name)
+		in_cashe, path_ = InCache(state)
+		if in_cashe :
+			head, tail = os.path.split(path_)
+			new_item.setIcon(QtGui.QIcon(head + '/avatars/' + tail))
+			new_item.setToolTip(toolTipsHTMLWrap(head + '/avatars/' + tail, \
+								'name : ' + name + '<br>'\
+								'\naddress : ' + addr + '<br>'\
+								'\nport : ' + port + '<br>'\
+								'\nEncoding : ' + encode + '<br>'\
+								'\nServerState : ' + state))
+		else :
+			new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + state, \
+								'name : ' + name + '<br>'\
+								'\naddress : ' + addr + '<br>'\
+								'\nport : ' + port + '<br>'\
+								'\nEncoding : ' + encode + '<br>'\
+								'\nServerState : ' + state))
+		self.userList.addItem(new_item)
+		""" Keys of USERS defined by "name", because name may be changed in restart,
+			but "state" may be not changed. In cache the important\exclusive role
+			has the status of remote server.
+		"""
+		self.USERS[name] = (name, addr, port, encode, state, False)
+		#print self.USERS
 
 	def initServices(self):
 		self.initServer()
@@ -139,7 +178,8 @@ class MainWindow(QtGui.QMainWindow):
 		self.avahiBrowser.start()
 		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :
 			print 'Use Cache'
-			self.cachingThread = DataCache(self.avahiBrowser.USERS, self)
+			#self.cachingThread = DataCache(self.avahiBrowser.USERS, self)
+			self.cachingThread = DataCache(self.USERS, self)
 			self.cachingThread.start()
 
 	def initAvahiService(self):

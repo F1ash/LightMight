@@ -6,7 +6,7 @@ from ModePanel import ModePanel
 from ViewPanel import ViewPanel
 
 class TreeBox(QtGui.QDialog):
-	mode = QtCore.pyqtSignal(QtCore.QString)
+	mode = QtCore.pyqtSignal()
 	def __init__(self, treeModel = None, parent = None, viewMode = 'TreeMode', \
 										  currentChain = [], \
 										  currentIdx = None):
@@ -59,7 +59,7 @@ class TreeBox(QtGui.QDialog):
 		self.modePanel = ModePanel(viewMode, self)
 		self.buttonLayout.addWidget(self.modePanel, 0, QtCore.Qt.AlignHCenter)
 
-		self.upLoadButton = QtGui.QPushButton(QtCore.QString('&Up'))
+		self.upLoadButton = QtGui.QPushButton(QtGui.QIcon('../icons/download.png'), '')
 		self.upLoadButton.setToolTip('UpLoad checked files\nof Shared Source')
 		self.upLoadButton.setMaximumWidth(65)
 		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.upLoad)
@@ -83,11 +83,6 @@ class TreeBox(QtGui.QDialog):
 
 	@QtCore.pyqtSlot(QtCore.QModelIndex, name = 'itemDoubleClick')
 	def itemDoubleClick(self, index, key = True):
-		'''if (index.internalPointer() is not None) :
-			print index.data(QtCore.Qt.DisplayRole), index.model(), \
-				index.internalPointer().data(0), index.internalPointer().data(1), \
-				index.internalPointer().childCount()
-		'''
 		treeModel = TreeModel('Name', 'Description', parent = self)
 		if 'internalPointer' in dir(index) and index.internalPointer() is None :
 			treeModel.rootItem = self.treeModel.rootItem
@@ -102,7 +97,9 @@ class TreeBox(QtGui.QDialog):
 		if index.internalPointer() is None :
 				self.upPanel.setText('..')
 		else :
-			self.upPanel.setText('..' + index.internalPointer().data(0))
+			str_ = index.internalPointer().data(0)
+			if str_ == 'Name' : str_ = ''
+			self.upPanel.setText('../' + str_)
 		if key :
 			self.parentItemChain.append(self.treeModel.parent(index))
 		self.currentIdx = index
@@ -117,5 +114,5 @@ class TreeBox(QtGui.QDialog):
 		#print self.parentItemChain, '===' 
 		self.itemDoubleClick(last, False)
 
-	def changeViewMode(self, mode = 'TreeMode'):
+	def changeViewMode(self):
 		self.Parent.data.emit(self)

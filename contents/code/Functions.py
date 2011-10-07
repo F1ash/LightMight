@@ -46,10 +46,7 @@ class DataRendering:
 			return ''
 
 def InitConfigValue(Settings = None, key = None, default = None):
-	if not Settings is None and Settings.contains(key) :
-		return Settings.value(key).toString()
-	else :
-		return default
+	return Settings.value(key, default).toString()
 
 def getFreePort(minValue, maxValue):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

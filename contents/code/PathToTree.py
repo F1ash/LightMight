@@ -45,6 +45,7 @@ class PathToTree(QtCore.QObject):
 					self._proceed_dir(fullpath, entryItem)
 
 				parentItem.appendChild(entryItem)
+				entryItem.checkState = QtCore.Qt.Checked
 		except OSError :
 			print 'OSError'
 			pass
@@ -52,6 +53,7 @@ class PathToTree(QtCore.QObject):
 	def listPrepare(self):
 		str_path = self.path
 		entryItem = TreeItem(str_path, self.typePath, self.rootItem)
+		entryItem.checkState = QtCore.Qt.Checked
 		self.rootItem.appendChild(entryItem)
 		self._proceed_dir(str_path, entryItem)
 
