@@ -152,24 +152,30 @@ class MainWindow(QtGui.QMainWindow):
 		 pass
 
 	def delContact(self, name, addr, port, encode, state):
-		if addr != None and port != None :	## it means, that signal received from UDP-client
+		print name, addr, port, encode, state , 'Must die!'
+		if addr != None and port != None :
 			contactExist = False
 			for iter_ in self.USERS.iterkeys() :
 				try :
 					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
-						name = iter_ ## self.USERS[iter_][0]
+						name = self.USERS[iter_][0]
+						print 'Found contact:', name
 						contactExist = True
 						break
 				except RuntimeError, err :
 					print err
 				finally : pass
 			if not contactExist : return None
+		else :
+			addr = ''; port = ''
 		item = self.menuTab.userList.findItems(name, \
 				QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
 		#print item, ' find list'
 		if len(item) > 0 :
-			self.menuTab.userList.takeItem(self.menuTab.userList.row(item[0]))
-			if unicode(name) in self.USERS : del self.USERS[unicode(name)]
+			for item_ in item :
+				if item_.data(QtCore.Qt.AccessibleTextRole).toString() == addr + ':' + port :
+					self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
+					if str(addr + ':' + port) in self.USERS : del self.USERS[str(addr + ':' + port)]
 
 	def addNewContact(self, name, addr, port, encode, state, avahi_method = True):
 		''' check uniqualled contact (uniqual IP:port) '''
@@ -177,7 +183,9 @@ class MainWindow(QtGui.QMainWindow):
 			for iter_ in self.USERS.iterkeys() :
 				try :
 					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
-						print 'Not uniqual contact(B)'
+						print 'Not uniqual contact(B):', self.USERS[iter_][0], \
+														 self.USERS[iter_][1], \
+														 self.USERS[iter_][2]
 						''' add the check of optional data '''	## FIXME:
 						return False
 				except RuntimeError, err :
@@ -185,21 +193,33 @@ class MainWindow(QtGui.QMainWindow):
 				finally : pass
 			''' check uniqual name '''
 			name_ = unicode(name)
-			while name_ in self.USERS :
-				name_ = name_.split('_')[0] + '_' + randomString(3)
+			key = True
+			while key :
+				key = False
+				for iter_ in self.USERS.iterkeys() :
+					if self.USERS[iter_][0]  == name_ :
+						name_ = name_.split('_')[0] + '_' + randomString(3)
+						key = True;
+						break
 			name = name_
 		else :
 			''' check not uniqual name (avahi u. name > broadcast u. name) '''
 			for iter_ in self.USERS.iterkeys() :
 				try :
 					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
-						print 'Not uniqual contact(A)'
-						self.delContact(iter_, None, None, None, None) ## self.USERS[iter_][0]
+						print 'Not uniqual contact(A):', self.USERS[iter_][0], \
+														 self.USERS[iter_][1], \
+														 self.USERS[iter_][2]
+						self.delContact(self.USERS[iter_][0], \
+										self.USERS[iter_][1], \
+										self.USERS[iter_][2], \
+										None, None)
 						break
 				except RuntimeError, err :
 					print err
 				finally : pass
 		new_item = QtGui.QListWidgetItem(name)
+		new_item.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant(addr + ':' + port))
 		in_cashe, path_ = InCache(state)
 		if in_cashe :
 			head, tail = os.path.split(str(path_))
@@ -218,11 +238,11 @@ class MainWindow(QtGui.QMainWindow):
 								'\nEncoding : ' + encode + '<br>'\
 								'\nServerState : ' + state))
 		self.menuTab.userList.addItem(new_item)
-		""" Keys of USERS defined by "name", because name may be changed in restart,
+		""" Keys of USERS defined by "addr:port", because it uniqual property,
 			but "state" may be not changed. In cache the important\exclusive role
 			has the status of remote server.
 		"""
-		self.USERS[name] = (name, addr, port, encode, state, False)
+		self.USERS[str(addr + ':' + port)] = (name, addr, port, encode, state, False)
 		#print self.USERS
 		return True
 
@@ -240,14 +260,17 @@ class MainWindow(QtGui.QMainWindow):
 			# stopping caching
 			if 'cachingthread' in dir(self) :
 				self.cachingThread._shutdown()
-			#self.menuTab.userList.clear()
+			self.menuTab.userList.clear()
 		if 'udpClient' in dir(self) :
 			self.udpClient.stop()
-			del self.udpClient
+			self.udpClient.exit()
+			self.udpClient = None
 		if self.Settings.value('AvahiDetect', True).toBool() :
+			print 'Use Avahi'
 			self.avahiBrowser = AvahiBrowser(self.menuTab)
 			self.avahiBrowser.start()
 		if self.Settings.value('BroadcastDetect', True).toBool() :
+			print 'Use Broadcast'
 			self.udpClient = UdpClient(self)
 			self.udpClient.start()
 		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :

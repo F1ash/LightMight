@@ -23,9 +23,8 @@ class UdpClient(QThread):
 			self.udp.waitForReadyRead()
 
 	def stop(self):
-		self.udp.close()
 		self.STOP = False
-		self.quit()
+		self.udp.close()
 
 	def readUdp(self):
 		while ( self.udp.hasPendingDatagrams() ):

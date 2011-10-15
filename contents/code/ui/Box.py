@@ -116,8 +116,9 @@ class Box(QtGui.QWidget):
 									str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).')
 
 	def itemSharedSourceQuired(self, item):
-		#print unicode(item.text()) , ' dClicked :', self.Obj.USERS[unicode(item.text())]
-		serverState = self.Obj.USERS[unicode(item.text())][4]
+		key = str(item_.data(QtCore.Qt.AccessibleTextRole).toString())
+		#print unicode(item.text()) , ' dClicked :', self.Obj.USERS[key]
+		serverState = self.Obj.USERS[key][4]
 		pathExist = InCache(serverState)
 		self.sharedTree.setToolTip(item.toolTip())
 		if pathExist[0] :
@@ -129,14 +130,14 @@ class Box(QtGui.QWidget):
 		if 'clientThread' in dir(self) :
 			self.disconnect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
 			self.clientThread = None
-		if self.Obj.USERS[unicode(item.text())][3] == 'Yes' :
+		if self.Obj.USERS[key][3] == 'Yes' :
 			self.currentTreeEncode = True
 		else :
 			self.currentTreeEncode = False
 		self.clientThread = ToolsThread(\
 										xr_client(\
-												str(self.Obj.USERS[unicode(item.text())][1]), \
-												str(self.Obj.USERS[unicode(item.text())][2]), \
+												str(self.Obj.USERS[key][1]), \
+												str(self.Obj.USERS[key][2]), \
 												self.Obj, \
 												self, \
 												self.currentTreeEncode), \

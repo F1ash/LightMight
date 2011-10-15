@@ -224,21 +224,23 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def sentOfflinePost(self):
 		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
-			data = QtCore.QString('0' + '<||>' + \
-								  self.defaultName + '<||>' + \
-								  self.Obj.USERS[unicode(self.defaultName)][1] + '<||>' + \
-								  self.Obj.USERS[unicode(self.defaultName)][2] + '<||>' + \
-								  '' + '<||>' + \
-								  '' + '<||>' + \
-								  '*infoShare*')
-			Sender(data)
+			key = str(self.Obj.currentRemoteServerAddr + ':' + self.Obj.currentRemoteServerPort)
+			if key in self.Obj.USERS :
+				data = QtCore.QString('0' + '<||>' + \
+									self.defaultName + '<||>' + \
+									self.Obj.USERS[key][1] + '<||>' + \
+									self.Obj.USERS[key][2] + '<||>' + \
+									'' + '<||>' + \
+									'' + '<||>' + \
+									'*infoShare*')
+				Sender(data)
 
 	def loadTree(self):
 		fileName = QtGui.QFileDialog.getOpenFileName(self, 'Path_to_', '~/.config/LightMight/treeBackup')
 		if fileName != '' :
 			if 'serverThread' in dir(self.Obj) :
 				self.Obj.serverThread.terminate()
-				#self.Obj.serverThread.exit()
+				self.Obj.serverThread.exit()
 			self.sentOfflinePost()
 			self.saveData()
 			self.Obj.initServer(loadFile = fileName)
@@ -258,7 +260,7 @@ class ServerSettingsShield(QtGui.QDialog):
 	def ok(self):
 		if 'serverThread' in dir(self.Obj) :
 			self.Obj.serverThread.terminate()
-			#self.Obj.serverThread.exit()
+			self.Obj.serverThread.exit()
 		self.sentOfflinePost()
 		self.saveData()
 		self.Obj.initServer(self.treeModel, previousState = self.Obj.serverState)
