@@ -8,7 +8,7 @@ class AvahiBrowser(QtCore.QThread):
 	def __init__(self, obj = None, parent = None):
 		QtCore.QThread.__init__(self, parent)
 
-		self.obj = obj
+		self.obj = obj.Obj
 		self.RUN = True
 		self.USERS = self.obj.USERS
 
@@ -93,7 +93,8 @@ class AvahiBrowser(QtCore.QThread):
 			return
 
 		if not (flags & pybonjour.kDNSServiceFlagsAdd) :
-
+			self.obj.delContact(serviceName, None, None, None, None)
+			'''
 			item = self.obj.userList.findItems(serviceName, \
 					QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
 			#print item, ' find list'
@@ -104,6 +105,7 @@ class AvahiBrowser(QtCore.QThread):
 				print '  fullname   =', serviceName
 				print '  replyDomain 	= ', replyDomain
 				print '  InterfaceIndex = ' , interfaceIndex"""
+			'''
 			return
 
 		print 'Service added; resolving'
@@ -146,13 +148,7 @@ class AvahiService(QtCore.QThread):
 		self.RUN = True
 		self.name = unicode(name)
 		self.regtype = '_LightMight._tcp'
-		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		try :
-			s.connect(("gmail.com", 80))
-		except socket.gaierror, err:
-			print err, '\nMay be internet not available. '
-			pass
-		self.address = s.getsockname()[0]
+		self.address = getIP()
 		self.port = port
 		unicalName = False
 

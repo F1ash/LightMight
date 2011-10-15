@@ -87,14 +87,14 @@ class Box(QtGui.QWidget):
 		path, previousState = self.clientThread.getSharedSourceStructFile()
 		""" search USERS key with desired value for set it in "cached" """
 		currentKey = ''; Value = BaseName(path)
-		for itemValue in self.Obj.avahiBrowser.USERS.iteritems() :
+		for itemValue in self.Obj.USERS.iteritems() :
 			if itemValue[1][4] == Value :
-				self.Obj.avahiBrowser.USERS[itemValue[0]] = (itemValue[1][0], \
-															 itemValue[1][1], \
-															 itemValue[1][2], \
-															 itemValue[1][3], \
-															 itemValue[1][4], \
-															 True)
+				self.Obj.USERS[itemValue[0]] = (itemValue[1][0], \
+												itemValue[1][1], \
+												itemValue[1][2], \
+												itemValue[1][3], \
+												itemValue[1][4], \
+												True)
 				item = self.userList.findItems(itemValue[0], QtCore.Qt.MatchCaseSensitive)
 				#print item, '&&'
 				if item != [] :
@@ -116,8 +116,8 @@ class Box(QtGui.QWidget):
 									str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).')
 
 	def itemSharedSourceQuired(self, item):
-		## print unicode(item.text()) , ' dClicked :', self.Obj.avahiBrowser.USERS[unicode(item.text())]
-		serverState = self.Obj.avahiBrowser.USERS[unicode(item.text())][4]
+		#print unicode(item.text()) , ' dClicked :', self.Obj.USERS[unicode(item.text())]
+		serverState = self.Obj.USERS[unicode(item.text())][4]
 		pathExist = InCache(serverState)
 		self.sharedTree.setToolTip(item.toolTip())
 		if pathExist[0] :
@@ -129,14 +129,14 @@ class Box(QtGui.QWidget):
 		if 'clientThread' in dir(self) :
 			self.disconnect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
 			self.clientThread = None
-		if self.Obj.avahiBrowser.USERS[unicode(item.text())][3] == 'Yes' :
+		if self.Obj.USERS[unicode(item.text())][3] == 'Yes' :
 			self.currentTreeEncode = True
 		else :
 			self.currentTreeEncode = False
 		self.clientThread = ToolsThread(\
 										xr_client(\
-												str(self.Obj.avahiBrowser.USERS[unicode(item.text())][1]), \
-												str(self.Obj.avahiBrowser.USERS[unicode(item.text())][2]), \
+												str(self.Obj.USERS[unicode(item.text())][1]), \
+												str(self.Obj.USERS[unicode(item.text())][2]), \
 												self.Obj, \
 												self, \
 												self.currentTreeEncode), \

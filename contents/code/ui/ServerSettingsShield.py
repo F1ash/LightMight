@@ -6,6 +6,7 @@ from TreeProcess import TreeProcessing
 from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
 from Functions import InitConfigValue, dateStamp, moveFile, randomString, pathPrefix
+from mcastSender import _send_mcast as Sender
 import os, stat, os.path
 
 class ServerSettingsShield(QtGui.QDialog):
@@ -49,8 +50,33 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.checkMaxPortBox.setToolTip('Maximal Port')
 		form.addWidget(self.checkMaxPortBox, 2, 2)
 
+		self.detectionLabel = QtGui.QLabel('Use detection:')
+		form.addWidget(self.detectionLabel, 4, 1)
+
+		self.detectionPanel = QtGui.QHBoxLayout()
+
+		self.useAvahiDetect = QtGui.QCheckBox()
+		if InitConfigValue(self.Obj.Settings, 'AvahiDetect', 'True') == 'True' :
+			value = QtCore.Qt.Checked
+		else:
+			value = QtCore.Qt.Unchecked
+		self.useAvahiDetect.setToolTip('Avahi\Bonjour')
+		self.useAvahiDetect.setCheckState(value)
+		self.detectionPanel.addWidget(self.useAvahiDetect, 0, alignment=QtCore.Qt.AlignLeft)
+
+		self.useBroadcastDetect = QtGui.QCheckBox()
+		if InitConfigValue(self.Obj.Settings, 'BroadcastDetect', 'True') == 'True' :
+			value = QtCore.Qt.Checked
+		else:
+			value = QtCore.Qt.Unchecked
+		self.useBroadcastDetect.setToolTip('Broadcast(UDP)')
+		self.useBroadcastDetect.setCheckState(value)
+		self.detectionPanel.addWidget(self.useBroadcastDetect, 1, alignment=QtCore.Qt.AlignRight)
+
+		form.addItem(self.detectionPanel, 4, 2)
+
 		self.useTLSLabel = QtGui.QLabel('Use encrypt (TLSv1):')
-		form.addWidget(self.useTLSLabel, 4, 1)
+		form.addWidget(self.useTLSLabel, 5, 1)
 
 		self.useTLSCheck = QtGui.QCheckBox()
 		if InitConfigValue(self.Obj.Settings, 'UseTLS', 'False') == 'True' :
@@ -58,10 +84,10 @@ class ServerSettingsShield(QtGui.QDialog):
 		else:
 			value = QtCore.Qt.Unchecked
 		self.useTLSCheck.setCheckState(value)
-		form.addWidget(self.useTLSCheck, 4, 2)
+		form.addWidget(self.useTLSCheck, 5, 2)
 
 		self.saveLastStructureLabel = QtGui.QLabel('Save last Share Structure :')
-		form.addWidget(self.saveLastStructureLabel, 5, 1)
+		form.addWidget(self.saveLastStructureLabel, 6, 1)
 
 		self.saveLastStructureCheck = QtGui.QCheckBox()
 		if InitConfigValue(self.Obj.Settings, 'SaveLastStructure', 'True') == 'True' :
@@ -69,10 +95,10 @@ class ServerSettingsShield(QtGui.QDialog):
 		else:
 			value = QtCore.Qt.Unchecked
 		self.saveLastStructureCheck.setCheckState(value)
-		form.addWidget(self.saveLastStructureCheck, 5, 2)
+		form.addWidget(self.saveLastStructureCheck, 6, 2)
 
 		self.sharedSourceLabel = QtGui.QLabel('Shared Sources :')
-		form.addWidget(self.sharedSourceLabel, 6, 0)
+		form.addWidget(self.sharedSourceLabel, 7, 0)
 
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.sharedTree = QtGui.QTreeView()
@@ -81,47 +107,47 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.sharedTree.setToolTip("<font color=red><b>Select path<br>for share it !</b></font>")
 		self.sharedTree.setExpandsOnDoubleClick(True)
 		self.sharedTree.setModel(self.treeModel)
-		form.addWidget(self.sharedTree, 7, 0, 8, 2)
+		form.addWidget(self.sharedTree, 8, 0, 8, 2)
 
 		self.addDirPathButton = QtGui.QPushButton('&Dir')
 		self.addDirPathButton.setMaximumWidth(75)
 		self.addDirPathButton.setToolTip('Add directory in Tree of Shared Sources')
 		self.connect(self.addDirPathButton, QtCore.SIGNAL('clicked()'), self.addDirPath)
-		form.addWidget(self.addDirPathButton, 7, 2)
+		form.addWidget(self.addDirPathButton, 8, 2)
 
 		self.addFilePathButton = QtGui.QPushButton('&File')
 		self.addFilePathButton.setMaximumWidth(75)
 		self.addFilePathButton.setToolTip('Add file in Tree of Shared Sources')
 		self.connect(self.addFilePathButton, QtCore.SIGNAL('clicked()'), self.addFilePaths)
-		form.addWidget(self.addFilePathButton, 8, 2)
+		form.addWidget(self.addFilePathButton, 9, 2)
 
 		self.delPathButton = QtGui.QPushButton('&Del')
 		self.delPathButton.setMaximumWidth(75)
 		self.delPathButton.setToolTip('Delete path from Tree of Shared Sources')
 		self.connect(self.delPathButton, QtCore.SIGNAL('clicked()'), self.delPath)
-		form.addWidget(self.delPathButton, 10, 2)
+		form.addWidget(self.delPathButton, 11, 2)
 
 		self.loadTreeButton = QtGui.QPushButton('&Load')
 		self.loadTreeButton.setMaximumWidth(75)
 		self.loadTreeButton.setToolTip('Load saved Shared Sources Tree')
 		self.connect(self.loadTreeButton, QtCore.SIGNAL('clicked()'), self.loadTree)
-		form.addWidget(self.loadTreeButton, 11, 2)
+		form.addWidget(self.loadTreeButton, 12, 2)
 
 		self.saveTreeButton = QtGui.QPushButton('&Save')
 		self.saveTreeButton.setMaximumWidth(75)
 		self.saveTreeButton.setToolTip('Save Shared Sources Tree')
 		self.connect(self.saveTreeButton, QtCore.SIGNAL('clicked()'), self.saveTree)
-		form.addWidget(self.saveTreeButton, 12, 2)
+		form.addWidget(self.saveTreeButton, 13, 2)
 
 		self.okButton = QtGui.QPushButton('&Ok')
 		self.okButton.setMaximumWidth(75)
 		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
-		form.addWidget(self.okButton, 13, 2)
+		form.addWidget(self.okButton, 14, 2)
 
 		self.cancelButton = QtGui.QPushButton('&Cancel')
 		self.cancelButton.setMaximumWidth(75)
 		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-		form.addWidget(self.cancelButton, 14, 2)
+		form.addWidget(self.cancelButton, 15, 2)
 
 		self.setLayout(form)
 		self.connect(self, QtCore.SIGNAL('refresh'), self.treeRefresh)
@@ -196,13 +222,25 @@ class ServerSettingsShield(QtGui.QDialog):
 		else :
 			print 'Not select Item'
 
+	def sentOfflinePost(self):
+		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
+			data = QtCore.QString('0' + '<||>' + \
+								  self.defaultName + '<||>' + \
+								  self.Obj.USERS[unicode(self.defaultName)][1] + '<||>' + \
+								  self.Obj.USERS[unicode(self.defaultName)][2] + '<||>' + \
+								  '' + '<||>' + \
+								  '' + '<||>' + \
+								  '*infoShare*')
+			Sender(data)
+
 	def loadTree(self):
 		fileName = QtGui.QFileDialog.getOpenFileName(self, 'Path_to_', '~/.config/LightMight/treeBackup')
 		if fileName != '' :
 			if 'serverThread' in dir(self.Obj) :
 				self.Obj.serverThread.terminate()
 				#self.Obj.serverThread.exit()
-			#self.saveData()		## because load only
+			self.sentOfflinePost()
+			self.saveData()
 			self.Obj.initServer(loadFile = fileName)
 			self.done(0)
 
@@ -221,6 +259,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		if 'serverThread' in dir(self.Obj) :
 			self.Obj.serverThread.terminate()
 			#self.Obj.serverThread.exit()
+		self.sentOfflinePost()
 		self.saveData()
 		self.Obj.initServer(self.treeModel, previousState = self.Obj.serverState)
 		self.done(0)
@@ -232,6 +271,16 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.Obj.Settings.setValue('ServerName', self.serverNameString.text())
 		self.Obj.Settings.setValue('MinPort', self.checkMinPortBox.value())
 		self.Obj.Settings.setValue('MaxPort', self.checkMaxPortBox.value())
+		if self.useAvahiDetect.isChecked() :
+			value = 'True'
+		else :
+			value = 'False'
+		self.Obj.Settings.setValue('AvahiDetect', value)
+		if self.useBroadcastDetect.isChecked() :
+			value = 'True'
+		else :
+			value = 'False'
+		self.Obj.Settings.setValue('BroadcastDetect', value)
 		if self.saveLastStructureCheck.isChecked() :
 			value = 'True'
 		else :

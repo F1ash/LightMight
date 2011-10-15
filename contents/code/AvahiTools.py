@@ -26,7 +26,7 @@ class AvahiBrowser():
 		sbrowser.connect_to_signal("ItemRemove", self.myhandlerRemove)
 
 		#gobject.MainLoop().run()
-		self.obj = obj
+		self.obj = obj.Obj
 		self.USERS = self.obj.USERS
 
 	def extractValue(self, __str):
@@ -86,13 +86,15 @@ class AvahiBrowser():
 		print args[0]
 
 	def myhandlerRemove(self, interface, protocol, name, stype, domain, flags):
-
+		self.obj.delContact(name, None, None, None, None)
+		'''
 		item = self.obj.userList.findItems(name, \
 				QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
 		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
 		if unicode(name) in self.USERS : del self.USERS[unicode(name)]
 		#print "Removed service: '%s'" % unicode(name)
 		#print self.USERS
+		'''
 
 	def myhandler(self, interface, protocol, name, stype, domain, flags):
 		#print "Found service '%s' type '%s' domain '%s' " % (unicode(name), stype, domain)

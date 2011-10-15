@@ -48,6 +48,15 @@ class DataRendering:
 def InitConfigValue(Settings = None, key = None, default = None):
 	return Settings.value(key, default).toString()
 
+def getIP():
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	try :
+		s.connect(("gmail.com", 80))
+	except socket.gaierror, err:
+		print err, '\nMay be internet not available. '
+		pass
+	return s.getsockname()[0]
+
 def getFreePort(minValue, maxValue):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	number_ = -1

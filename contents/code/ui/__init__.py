@@ -28,14 +28,16 @@ from ToolsThread import ToolsThread
 from TreeProc import TreeModel
 from PathToTree import SharedSourceTree2XMLFile
 from TreeProcess import TreeProcessing
+from mcastSender import _send_mcast as Sender
+from UdpClient import UdpClient
 
 class MainWindow(QtGui.QMainWindow):
 	# custom signals
 	errorString = QtCore.pyqtSignal(str)
 	commonSet = QtCore.pyqtSignal(dict)
 	uploadSignal = QtCore.pyqtSignal(QtCore.QString)
-	contactMessage = pyqtSignal(QString, QString)
-	changeConnectState = pyqtSignal(QString)
+	contactMessage = QtCore.pyqtSignal(QtCore.QString, QtCore.QString)
+	changeConnectState = QtCore.pyqtSignal(QtCore.QString)
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -125,18 +127,82 @@ class MainWindow(QtGui.QMainWindow):
 		self.timer.timeout.connect(self.initServices)
 		self.timer.start(1000)
 
+	'''
+	data =  0/1/R(offline/online/reinit)<separator>
+			remoteServerName<separator>
+			address<separator>
+			port<separator>
+			Encoding<separator>
+			Status<separator>
+			ShareInfo
+	'''
+
 	def receiveBroadcastMessage(self, data, addr):
-		pass
+		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
+		''' check correct IP for local network '''
+		if addr == addr_in_data :
+			if mark == '1' : self.addNewContact(name, addr, port, encode, state, False)
+			elif mark == '0' : self.delContact(name, addr_in_data, port, encode, state)
+			elif mark == 'R' : self.reInitRequest(name, addr, port, encode, state)
+		else :
+			''' check correct IP for internet '''
+			pass
+
+	def reInitRequest(self, name, addr, port, encode, state):
+		 pass
+
+	def delContact(self, name, addr, port, encode, state):
+		if addr != None and port != None :	## it means, that signal received from UDP-client
+			contactExist = False
+			for iter_ in self.USERS.iterkeys() :
+				try :
+					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
+						name = iter_ ## self.USERS[iter_][0]
+						contactExist = True
+						break
+				except RuntimeError, err :
+					print err
+				finally : pass
+			if not contactExist : return None
+		item = self.menuTab.userList.findItems(name, \
+				QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
+		#print item, ' find list'
+		if len(item) > 0 :
+			self.menuTab.userList.takeItem(self.menuTab.userList.row(item[0]))
+			if unicode(name) in self.USERS : del self.USERS[unicode(name)]
 
 	def addNewContact(self, name, addr, port, encode, state, avahi_method = True):
-		''' check uniqualled contact
-		'''
+		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :
-			pass
+			for iter_ in self.USERS.iterkeys() :
+				try :
+					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
+						print 'Not uniqual contact(B)'
+						''' add the check of optional data '''	## FIXME:
+						return False
+				except RuntimeError, err :
+					print err
+				finally : pass
+			''' check uniqual name '''
+			name_ = unicode(name)
+			while name_ in self.USERS :
+				name_ = name_.split('_')[0] + '_' + randomString(3)
+			name = name_
+		else :
+			''' check not uniqual name (avahi u. name > broadcast u. name) '''
+			for iter_ in self.USERS.iterkeys() :
+				try :
+					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
+						print 'Not uniqual contact(A)'
+						self.delContact(iter_, None, None, None, None) ## self.USERS[iter_][0]
+						break
+				except RuntimeError, err :
+					print err
+				finally : pass
 		new_item = QtGui.QListWidgetItem(name)
 		in_cashe, path_ = InCache(state)
 		if in_cashe :
-			head, tail = os.path.split(path_)
+			head, tail = os.path.split(str(path_))
 			new_item.setIcon(QtGui.QIcon(head + '/avatars/' + tail))
 			new_item.setToolTip(toolTipsHTMLWrap(head + '/avatars/' + tail, \
 								'name : ' + name + '<br>'\
@@ -151,13 +217,14 @@ class MainWindow(QtGui.QMainWindow):
 								'\nport : ' + port + '<br>'\
 								'\nEncoding : ' + encode + '<br>'\
 								'\nServerState : ' + state))
-		self.userList.addItem(new_item)
+		self.menuTab.userList.addItem(new_item)
 		""" Keys of USERS defined by "name", because name may be changed in restart,
 			but "state" may be not changed. In cache the important\exclusive role
 			has the status of remote server.
 		"""
 		self.USERS[name] = (name, addr, port, encode, state, False)
 		#print self.USERS
+		return True
 
 	def initServices(self):
 		self.initServer()
@@ -174,8 +241,15 @@ class MainWindow(QtGui.QMainWindow):
 			if 'cachingthread' in dir(self) :
 				self.cachingThread._shutdown()
 			#self.menuTab.userList.clear()
-		self.avahiBrowser = AvahiBrowser(self.menuTab)
-		self.avahiBrowser.start()
+		if 'udpClient' in dir(self) :
+			self.udpClient.stop()
+			del self.udpClient
+		if self.Settings.value('AvahiDetect', True).toBool() :
+			self.avahiBrowser = AvahiBrowser(self.menuTab)
+			self.avahiBrowser.start()
+		if self.Settings.value('BroadcastDetect', True).toBool() :
+			self.udpClient = UdpClient(self)
+			self.udpClient.start()
 		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :
 			print 'Use Cache'
 			#self.cachingThread = DataCache(self.avahiBrowser.USERS, self)
@@ -184,17 +258,28 @@ class MainWindow(QtGui.QMainWindow):
 
 	def initAvahiService(self):
 		if 'avahiService' in dir(self) :
-			self.avahiService.__del__(); self.avahiService = None
+			if '__del__' in dir(self.avahiService) : self.avahiService.__del__()
+			self.avahiService = None
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
 		if self.TLS :
 			encode = 'Yes'
 		else :
 			encode = 'No'
-		self.avahiService = AvahiService(self.menuTab, \
-										name = name_, \
-										port = self.server_port, \
-										description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
-		self.avahiService.start()
+		if self.Settings.value('AvahiDetect', True).toBool() :
+			self.avahiService = AvahiService(self.menuTab, \
+								name = name_, \
+								port = self.server_port, \
+								description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
+			self.avahiService.start()
+		if self.Settings.value('BroadcastDetect', True).toBool() :
+			data = QtCore.QString('1' + '<||>' + \
+								  name_ + '<||>' + \
+								  getIP() + '<||>' + \
+								  str(self.server_port) + '<||>' + \
+								  encode + '<||>' + \
+								  self.serverState + '<||>' + \
+								  '*infoShare*')
+			Sender(data)
 
 	def initServer(self, sharedSourceTree = None, loadFile = None, previousState = ''):
 		self.previousState = previousState
@@ -266,18 +351,32 @@ class MainWindow(QtGui.QMainWindow):
 		self.serverThread.start()
 		self.statusBar.clearMessage()
 		self.statusBar.showMessage('Server online')
+		'''
 		if 'avahiService' in dir(self) :
-			self.avahiService.__del__(); self.avahiService = None
+			if '__del__' in dir(self.avahiService) : self.avahiService.__del__()
+			self.avahiService = None
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
 		if self.TLS :
 			encode = 'Yes'
 		else :
 			encode = 'No'
-		self.avahiService = AvahiService(self.menuTab, \
-										name = name_, \
-										port = self.server_port, \
-										description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
-		self.avahiService.start()
+		if self.Settings.value('AvahiDetect', True).toBool() :
+			self.avahiService = AvahiService(self.menuTab, \
+								name = name_, \
+								port = self.server_port, \
+								description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
+			self.avahiService.start()
+		if self.Settings.value('BroadcastDetect', True).toBool() :
+			data = QtCore.QString('1' + '<||>' + \
+								  name_ + '<||>' + \
+								  getIP() + '<||>' + \
+								  str(self.server_port) + '<||>' + \
+								  encode + '<||>' + \
+								  self.serverState + '<||>' + \
+								  '*infoShare*')
+			Sender(data)'''
+		self.initAvahiBrowser()
+		self.initAvahiService()
 		self.menuTab.progressBar.hide()
 
 	def uploadTask(self, info):

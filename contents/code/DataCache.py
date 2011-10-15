@@ -42,7 +42,7 @@ class DataCache(QThread):
 				names = ('', '')
 				if pathExist[0] :
 					""" if data cached """
-					head, tail = os.path.split(pathExist[1])
+					head, tail = os.path.split(str(pathExist[1]))
 					if not moveFile(pathExist[1], \
 									self.prefPath + '/dev/shm/LightMight/cache/' + tail, \
 									False) :
@@ -77,7 +77,7 @@ class DataCache(QThread):
 				item = self.Obj.menuTab.userList.findItems(itemValue[0], Qt.MatchCaseSensitive)
 				#print item, '&&'
 				if item != [] :
-					item[0].setIcon(QIcon('/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
+					item[0].setIcon(QIcon(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
 			elif self.Key is False :
 				self.runState = False
 				break

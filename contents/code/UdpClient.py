@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtCore import QByteArray, QObject, QString
+from PyQt4.QtCore import QByteArray, QObject, QString, QThread
 from PyQt4.QtNetwork import QUdpSocket, QHostAddress
 
-class UdpClient(QObject):
+class UdpClient(QThread):
 	def __init__(self, parent):
-		QObject.__init__(self)
+		QThread.__init__(self)
 
 		self.prnt = parent
 		self.udp = QUdpSocket(self)
@@ -16,13 +16,16 @@ class UdpClient(QObject):
 		self.udp.bind(addr, 34001)
 		self.udp.readyRead.connect(self.readUdp)
 		print "Binding..."
+		self.STOP = True
 	
-	def start(self):
-		while True :
+	def run(self):
+		while self.STOP :
 			self.udp.waitForReadyRead()
 
 	def stop(self):
 		self.udp.close()
+		self.STOP = False
+		self.quit()
 
 	def readUdp(self):
 		while ( self.udp.hasPendingDatagrams() ):
