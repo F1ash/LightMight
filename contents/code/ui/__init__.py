@@ -121,10 +121,10 @@ class MainWindow(QtGui.QMainWindow):
 		self.commonSet.connect(self.preProcessingComplete)
 		self.uploadSignal.connect(self.uploadTask)
 		self.contactMessage.connect(self.receiveBroadcastMessage)
-		#self.changeConnectState.connect()
+		self.changeConnectState.connect(self.initAvahiBrowser)
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
-		self.timer.timeout.connect(self.initServices)
+		self.timer.timeout.connect(self.initServer)
 		self.timer.start(1000)
 
 	'''
@@ -159,7 +159,7 @@ class MainWindow(QtGui.QMainWindow):
 				try :
 					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
 						name = self.USERS[iter_][0]
-						print 'Found contact:', name
+						#print 'Found contact:', name, iter_
 						contactExist = True
 						break
 				except RuntimeError, err :
@@ -178,6 +178,7 @@ class MainWindow(QtGui.QMainWindow):
 					if str(addr + ':' + port) in self.USERS : del self.USERS[str(addr + ':' + port)]
 
 	def addNewContact(self, name, addr, port, encode, state, avahi_method = True):
+		print name, addr, port, 'new contact'
 		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :
 			for iter_ in self.USERS.iterkeys() :
@@ -197,7 +198,7 @@ class MainWindow(QtGui.QMainWindow):
 			while key :
 				key = False
 				for iter_ in self.USERS.iterkeys() :
-					if self.USERS[iter_][0]  == name_ :
+					if self.USERS[iter_][0] == name_ :
 						name_ = name_.split('_')[0] + '_' + randomString(3)
 						key = True;
 						break
@@ -246,25 +247,18 @@ class MainWindow(QtGui.QMainWindow):
 		#print self.USERS
 		return True
 
-	def initServices(self):
-		self.initServer()
-		self.initAvahiTools()
-
-	def initAvahiTools(self):
-		self.initAvahiBrowser()
-		#self.initAvahiService()
-
-	def initAvahiBrowser(self):
+	def preinitAvahiBrowser(self):
 		if 'avahiBrowser' in dir(self) :
-			self.avahiBrowser.__del__(); self.avahiBrowser = None
-			# stopping caching
-			if 'cachingthread' in dir(self) :
-				self.cachingThread._shutdown()
-			self.menuTab.userList.clear()
+			if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__(); self.avahiBrowser = None
+		# stopping caching
+		if 'cachingthread' in dir(self) :
+			self.cachingThread._shutdown()
+		self.menuTab.userList.clear()
 		if 'udpClient' in dir(self) :
 			self.udpClient.stop()
-			self.udpClient.exit()
-			self.udpClient = None
+		else : self.initAvahiBrowser()
+
+	def initAvahiBrowser(self):
 		if self.Settings.value('AvahiDetect', True).toBool() :
 			print 'Use Avahi'
 			self.avahiBrowser = AvahiBrowser(self.menuTab)
@@ -297,7 +291,7 @@ class MainWindow(QtGui.QMainWindow):
 		if self.Settings.value('BroadcastDetect', True).toBool() :
 			data = QtCore.QString('1' + '<||>' + \
 								  name_ + '<||>' + \
-								  getIP() + '<||>' + \
+								  self.server_addr + '<||>' + \
 								  str(self.server_port) + '<||>' + \
 								  encode + '<||>' + \
 								  self.serverState + '<||>' + \
@@ -319,6 +313,7 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
+		self.server_addr = getIP()
 		#print self.server_port, 'free'
 		certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
 		#print str(certificatePath)
@@ -398,8 +393,8 @@ class MainWindow(QtGui.QMainWindow):
 								  self.serverState + '<||>' + \
 								  '*infoShare*')
 			Sender(data)'''
-		self.initAvahiBrowser()
-		self.initAvahiService()
+		self.preinitAvahiBrowser()
+		#self.initAvahiService()
 		self.menuTab.progressBar.hide()
 
 	def uploadTask(self, info):

@@ -116,7 +116,7 @@ class Box(QtGui.QWidget):
 									str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).')
 
 	def itemSharedSourceQuired(self, item):
-		key = str(item_.data(QtCore.Qt.AccessibleTextRole).toString())
+		key = str(item.data(QtCore.Qt.AccessibleTextRole).toString())
 		#print unicode(item.text()) , ' dClicked :', self.Obj.USERS[key]
 		serverState = self.Obj.USERS[key][4]
 		pathExist = InCache(serverState)

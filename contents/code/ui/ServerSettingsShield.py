@@ -224,7 +224,8 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def sentOfflinePost(self):
 		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
-			key = str(self.Obj.currentRemoteServerAddr + ':' + self.Obj.currentRemoteServerPort)
+			key = str(self.Obj.server_addr + ':' + str(self.Obj.server_port))
+			print 'key :', key
 			if key in self.Obj.USERS :
 				data = QtCore.QString('0' + '<||>' + \
 									self.defaultName + '<||>' + \

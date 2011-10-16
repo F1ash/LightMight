@@ -34,6 +34,7 @@ class DataCache(QThread):
 					value = True
 				else :
 					value = False
+				print 'caching:', unicode(itemValue[1][1]), unicode(itemValue[1][2]), value
 				clnt = xr_client(addr = unicode(itemValue[1][1]), \
 								 port = unicode(itemValue[1][2]), \
 								 parent = self, \
@@ -74,10 +75,16 @@ class DataCache(QThread):
 											itemValue[1][3], \
 											itemValue[1][4], \
 											True)
-				item = self.Obj.menuTab.userList.findItems(itemValue[0], Qt.MatchCaseSensitive)
+				item = None; count = self.Obj.menuTab.userList.count()
+				for i in xrange(count) :
+					item_ = self.Obj.menuTab.userList.item(i)
+					if str(item_.data(Qt.AccessibleTextRole).toString()) == \
+								 str(itemValue[1][1] + ':' + itemValue[1][2]) :
+						item = item_
+						break
 				#print item, '&&'
-				if item != [] :
-					item[0].setIcon(QIcon(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
+				if item is not None :
+					item.setIcon(QIcon(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
 			elif self.Key is False :
 				self.runState = False
 				break
@@ -90,6 +97,7 @@ class DataCache(QThread):
 			pass
 
 	def _shutdown(self):
+		self.timer.timeout.disconnect(self.initRefill)
 		self.timer.stop()
 		self.Key = False
 		pass
