@@ -69,22 +69,23 @@ class DataCache(QThread):
 				""" if remoteServerState is changed """
 				#print names
 				if names[1] != '' : DelFromCache(names[1])
-				self.USERS[itemValue[0]] = (itemValue[1][0], \
-											itemValue[1][1], \
-											itemValue[1][2], \
-											itemValue[1][3], \
-											itemValue[1][4], \
-											True)
-				item = None; count = self.Obj.menuTab.userList.count()
-				for i in xrange(count) :
-					item_ = self.Obj.menuTab.userList.item(i)
-					if str(item_.data(Qt.AccessibleTextRole).toString()) == \
-								 str(itemValue[1][1] + ':' + itemValue[1][2]) :
-						item = item_
-						break
-				#print item, '&&'
-				if item is not None :
-					item.setIcon(QIcon(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
+				if itemValue[0] in self.USERS :
+					self.USERS[itemValue[0]] = (itemValue[1][0], \
+												itemValue[1][1], \
+												itemValue[1][2], \
+												itemValue[1][3], \
+												itemValue[1][4], \
+												True)
+					item = None; count = self.Obj.menuTab.userList.count()
+					for i in xrange(count) :
+						item_ = self.Obj.menuTab.userList.item(i)
+						if str(item_.data(Qt.AccessibleTextRole).toString()) == \
+									str(itemValue[1][1] + ':' + itemValue[1][2]) :
+							item = item_
+							break
+					#print item, '&&'
+					if item is not None :
+						item.setIcon(QIcon(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
 			elif self.Key is False :
 				self.runState = False
 				break
@@ -100,4 +101,4 @@ class DataCache(QThread):
 		self.timer.timeout.disconnect(self.initRefill)
 		self.timer.stop()
 		self.Key = False
-		pass
+		self.exit()

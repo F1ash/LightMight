@@ -3,10 +3,11 @@
 
 from PyQt4.QtCore import QByteArray, QObject, QString, QThread, QMutex
 from PyQt4.QtNetwork import QUdpSocket, QHostAddress, QAbstractSocket
+import time
 
 class UdpClient(QThread):
 	def __init__(self, parent):
-		QThread.__init__(self)
+		QThread.__init__(self, parent)
 
 		self.prnt = parent
 		self.udp = QUdpSocket(self)
@@ -16,23 +17,23 @@ class UdpClient(QThread):
 		self.udp.readyRead.connect(self.readUdp)
 		print "Binding..."
 		self.STOP = False
-		#self.locker = QMutex()
+		self.locker = QMutex()
 		self.udp.stateChanged.connect(self.sc)
 
 	def run(self):
 		self.prnt.initAvahiService()
-		while not self.STOP :
-			if self.udp.state() == QAbstractSocket.UnconnectedState :
-				#self.locker.lock()
-				self.STOP = True
-				#self.locker.unlock()
+		while True :
 			if self.udp.state() == QAbstractSocket.ConnectedState :
 				self.udp.waitForReadyRead()
+			else : time.sleep(0.1)
+			if self.STOP : self.udp.close(); break
 		print 'UDPClient closed...'
-		self.prnt.changeConnectState.emit(QString(QAbstractSocket.UnconnectedState))
+		self.prnt.changeConnectState.emit()
 
 	def stop(self):
-		self.udp.close()
+		self.locker.lock()
+		self.STOP = True
+		self.locker.unlock()
 
 	def readUdp(self):
 		while ( self.udp.hasPendingDatagrams() ):

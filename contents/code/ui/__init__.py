@@ -37,7 +37,7 @@ class MainWindow(QtGui.QMainWindow):
 	commonSet = QtCore.pyqtSignal(dict)
 	uploadSignal = QtCore.pyqtSignal(QtCore.QString)
 	contactMessage = QtCore.pyqtSignal(QtCore.QString, QtCore.QString)
-	changeConnectState = QtCore.pyqtSignal(QtCore.QString)
+	changeConnectState = QtCore.pyqtSignal()
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -165,17 +165,30 @@ class MainWindow(QtGui.QMainWindow):
 				except RuntimeError, err :
 					print err
 				finally : pass
-			if not contactExist : return None
+			if contactExist :
+				item = self.menuTab.userList.findItems(name, \
+						QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
+				#print item, ' find list'
+				if len(item) > 0 :
+					for item_ in item :
+						key = str(addr + ':' + port)
+						if item_.data(QtCore.Qt.AccessibleTextRole).toString() == key :
+							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
+							if key in self.USERS :
+								del self.USERS[key]
+								print key, 'deleted'
 		else :
-			addr = ''; port = ''
-		item = self.menuTab.userList.findItems(name, \
-				QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
-		#print item, ' find list'
-		if len(item) > 0 :
-			for item_ in item :
-				if item_.data(QtCore.Qt.AccessibleTextRole).toString() == addr + ':' + port :
+			item = self.menuTab.userList.findItems(name, \
+					QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
+			#print item, ' find list'
+			if len(item) > 0 :
+				for item_ in item :
 					self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
-					if str(addr + ':' + port) in self.USERS : del self.USERS[str(addr + ':' + port)]
+					key = str(item_.data(QtCore.Qt.AccessibleTextRole).toString())
+					if key in self.USERS :
+						del self.USERS[key]
+						print key, 'deleted'
+		print 'DEL down'
 
 	def addNewContact(self, name, addr, port, encode, state, avahi_method = True):
 		print name, addr, port, 'new contact'
@@ -203,6 +216,7 @@ class MainWindow(QtGui.QMainWindow):
 						key = True;
 						break
 			name = name_
+			print 'new name :', name
 		else :
 			''' check not uniqual name (avahi u. name > broadcast u. name) '''
 			for iter_ in self.USERS.iterkeys() :
@@ -258,20 +272,21 @@ class MainWindow(QtGui.QMainWindow):
 			self.udpClient.stop()
 		else : self.initAvahiBrowser()
 
-	def initAvahiBrowser(self):
+	def initAvahiBrowser(self, *args):
 		if self.Settings.value('AvahiDetect', True).toBool() :
 			print 'Use Avahi'
 			self.avahiBrowser = AvahiBrowser(self.menuTab)
 			self.avahiBrowser.start()
-		if self.Settings.value('BroadcastDetect', True).toBool() :
-			print 'Use Broadcast'
-			self.udpClient = UdpClient(self)
-			self.udpClient.start()
 		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :
 			print 'Use Cache'
 			#self.cachingThread = DataCache(self.avahiBrowser.USERS, self)
 			self.cachingThread = DataCache(self.USERS, self)
 			self.cachingThread.start()
+		if self.Settings.value('BroadcastDetect', True).toBool() :
+			print 'Use Broadcast'
+			self.udpClient = UdpClient(self)
+			self.udpClient.start()
+		else : self.initAvahiService()
 
 	def initAvahiService(self):
 		if 'avahiService' in dir(self) :
@@ -314,7 +329,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
 		self.server_addr = getIP()
-		#print self.server_port, 'free'
+		print self.server_addr, self.server_port, 'free'
 		certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
 		#print str(certificatePath)
 		if 'True' == InitConfigValue(self.Settings, 'UseTLS', 'False') and certificatePath != '' :
