@@ -1,6 +1,6 @@
 Name: LightMight
-Version: 0.8.16
-Release: build%(date +%Y%m%d_%H%M)%{?dist}
+Version: 0.9.19
+Release: 1%{?dist}.R
 Summary: Programm for file`s resource publication and transmittion in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
 Group: Applications/Network
@@ -84,12 +84,16 @@ if [ -x %{_bindir}/gtk-update-icon-cache ]; then
 fi
 
 %changelog
-* Fri Jun 24 2011 Fl@sh				-	0.5.10
--- added avahi-compat-libdns_sd dependence
+
+* Tue Oct 18 2011 Fl@sh <kaperang07@gmail.com> - 0.9.19-1
+- version updated
+
+* Fri Jun 24 2011 Fl@sh <kaperang07@gmail.com> -	0.5.10
+- added avahi-compat-libdns_sd dependence
 	and python >= 3.0 conflict;
 
-* Sun Jun 19 2011 Fl@sh 			-	0.3.9
--- added openssl dependence;
+* Sun Jun 19 2011 Fl@sh <kaperang07@gmail.com> -	0.3.9
+- added openssl dependence;
 
-* Thu Jun 9 2011 Fl@sh <no@mail.me>	-	0.1.0
--- Build began ;)
+* Thu Jun 9 2011 Fl@sh <kaperang07@gmail.com> -	0.1.0
+- Build began ;)

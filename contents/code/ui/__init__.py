@@ -30,6 +30,7 @@ from PathToTree import SharedSourceTree2XMLFile
 from TreeProcess import TreeProcessing
 from mcastSender import _send_mcast as Sender
 from UdpClient import UdpClient
+from _udpClientThread  import UdpClientThread
 
 class MainWindow(QtGui.QMainWindow):
 	# custom signals
@@ -118,6 +119,7 @@ class MainWindow(QtGui.QMainWindow):
 																			self.trayIconClicked)
 		self.trayIcon.show()
 
+		type_id = QtCore.QMetaType.type("QAbstractSocket::SocketState")
 		self.errorString.connect(self.showMSG)
 		self.commonSet.connect(self.preProcessingComplete)
 		self.uploadSignal.connect(self.uploadTask)
@@ -217,7 +219,7 @@ class MainWindow(QtGui.QMainWindow):
 			for iter_ in self.USERS.iterkeys() :
 				try :
 					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
-						print 'Not uniqual contact(B):', self.USERS[iter_][0], \
+						print 'Not uniqual contact(B):', unicode(self.USERS[iter_][0]), \
 														 self.USERS[iter_][1], \
 														 self.USERS[iter_][2]
 						''' add the check of optional data '''	## FIXME:
@@ -242,7 +244,7 @@ class MainWindow(QtGui.QMainWindow):
 			for iter_ in self.USERS.iterkeys() :
 				try :
 					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
-						print 'Not uniqual contact(A):', self.USERS[iter_][0], \
+						print 'Not uniqual contact(A):', unicode(self.USERS[iter_][0]), \
 														 self.USERS[iter_][1], \
 														 self.USERS[iter_][2]
 						self.delContact(self.USERS[iter_][0], \
@@ -290,8 +292,8 @@ class MainWindow(QtGui.QMainWindow):
 			self.cachingThread._shutdown()
 			self.cachingThread.quit()
 			del self.cachingThread
-		if 'udpClient' in dir(self) :
-			self.udpClient.stop()
+		if 'udpClientThread' in dir(self) :
+			self.udpClientThread.stop()
 		else : self.initAvahiBrowser()
 
 	def cacheS(self):
@@ -308,8 +310,8 @@ class MainWindow(QtGui.QMainWindow):
 			self.cachingThread.start()
 		if self.Settings.value('BroadcastDetect', True).toBool() :
 			print 'Use Broadcast'
-			self.udpClient = UdpClient(self)
-			self.udpClient.start()
+			self.udpClientThread = UdpClientThread(UdpClient, self)
+			self.udpClientThread.start()
 		else : self.initAvahiService()
 
 	def initAvahiService(self):
