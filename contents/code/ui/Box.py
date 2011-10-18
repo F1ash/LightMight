@@ -20,6 +20,7 @@ class Box(QtGui.QWidget):
 		QtGui.QWidget.__init__(self, parent)
 
 		self.Obj = Obj_
+		self.prefPath = pathPrefix()
 
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.treeProcessing = TreeProcessing()
@@ -85,21 +86,25 @@ class Box(QtGui.QWidget):
 		self.progressBar.show()
 		#print 'not cached'
 		path, previousState = self.clientThread.getSharedSourceStructFile()
+		self.clientThread.Obj.getAvatar()
 		""" search USERS key with desired value for set it in "cached" """
-		currentKey = ''; Value = BaseName(path)
+		Value = BaseName(path)
 		for itemValue in self.Obj.USERS.iteritems() :
 			if itemValue[1][4] == Value :
+				#print Value, 'state found'
 				self.Obj.USERS[itemValue[0]] = (itemValue[1][0], \
 												itemValue[1][1], \
 												itemValue[1][2], \
 												itemValue[1][3], \
 												itemValue[1][4], \
 												True)
-				item = self.userList.findItems(itemValue[0], QtCore.Qt.MatchCaseSensitive)
-				#print item, '&&'
-				if item != [] :
-					item[0].setIcon(QtGui.QIcon('/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
-				break
+				count = self.userList.count()
+				for i in xrange(count) :
+					item_ = self.userList.item(i)
+					if str(item_.data(QtCore.Qt.AccessibleTextRole).toString()) == \
+								str(itemValue[1][1] + ':' + itemValue[1][2]) :
+						item_.setIcon(QtGui.QIcon(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
+						break
 		if previousState != '' : DelFromCache(previousState)
 		self.showSharedSources(path)
 
@@ -124,7 +129,7 @@ class Box(QtGui.QWidget):
 		if pathExist[0] :
 			#print 'cached'
 			self.showSharedSources(pathExist[1])
-			#item.setIcon(QtGui.QIcon(QtCore.QString('/dev/shm/LightMight/cache/avatars/' + serverState)))
+			#item.setIcon(QtGui.QIcon(QtCore.QString(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + serverState)))
 			return None
 		""" run the getting new structure in QThread """
 		if 'clientThread' in dir(self) :

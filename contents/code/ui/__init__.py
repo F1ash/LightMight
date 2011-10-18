@@ -38,6 +38,7 @@ class MainWindow(QtGui.QMainWindow):
 	uploadSignal = QtCore.pyqtSignal(QtCore.QString)
 	contactMessage = QtCore.pyqtSignal(QtCore.QString, QtCore.QString)
 	changeConnectState = QtCore.pyqtSignal()
+	cacheDown = QtCore.pyqtSignal()
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -122,13 +123,14 @@ class MainWindow(QtGui.QMainWindow):
 		self.uploadSignal.connect(self.uploadTask)
 		self.contactMessage.connect(self.receiveBroadcastMessage)
 		self.changeConnectState.connect(self.initAvahiBrowser)
+		self.cacheDown.connect(self.cacheS)
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
 		self.timer.timeout.connect(self.initServer)
 		self.timer.start(1000)
 
 	'''
-	data =  0/1/R(offline/online/reinit)<separator>
+	data =  0/1/A/R(offline/online/answer/reinit)<separator>
 			remoteServerName<separator>
 			address<separator>
 			port<separator>
@@ -141,18 +143,34 @@ class MainWindow(QtGui.QMainWindow):
 		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
 		''' check correct IP for local network '''
 		if addr == addr_in_data :
-			if mark == '1' : self.addNewContact(name, addr, port, encode, state, False)
+			if mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, False)
 			elif mark == '0' : self.delContact(name, addr_in_data, port, encode, state)
+			elif mark == 'A' : self.addNewContact(name, addr, port, encode, state)
 			elif mark == 'R' : self.reInitRequest(name, addr, port, encode, state)
 		else :
 			''' check correct IP for internet '''
 			pass
 
+	def sentAnswer(self, addr):
+		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
+		if self.TLS :
+			encode = 'Yes'
+		else :
+			encode = 'No'
+		data = QtCore.QString('A' + '<||>' + \
+							  name_ + '<||>' + \
+							  self.server_addr + '<||>' + \
+							  str(self.server_port) + '<||>' + \
+							  encode + '<||>' + \
+							  self.serverState + '<||>' + \
+							  '*infoShare*')
+		Sender(data, addr)
+
 	def reInitRequest(self, name, addr, port, encode, state):
 		 pass
 
 	def delContact(self, name, addr, port, encode, state):
-		print name, addr, port, encode, state , 'Must die!'
+		#print name, addr, port, encode, state , 'Must die!'
 		if addr != None and port != None :
 			contactExist = False
 			for iter_ in self.USERS.iterkeys() :
@@ -176,7 +194,7 @@ class MainWindow(QtGui.QMainWindow):
 							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
 							if key in self.USERS :
 								del self.USERS[key]
-								print key, 'deleted'
+								#print key, 'deleted'
 		else :
 			item = self.menuTab.userList.findItems(name, \
 					QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
@@ -187,11 +205,13 @@ class MainWindow(QtGui.QMainWindow):
 					key = str(item_.data(QtCore.Qt.AccessibleTextRole).toString())
 					if key in self.USERS :
 						del self.USERS[key]
-						print key, 'deleted'
-		print 'DEL down'
+						#print key, 'deleted'
+		for iter_ in self.USERS.iterkeys() :
+			print iter_
+		#print 'DEL down'
 
 	def addNewContact(self, name, addr, port, encode, state, avahi_method = True):
-		print name, addr, port, 'new contact'
+		#print name, addr, port, 'new contact'
 		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :
 			for iter_ in self.USERS.iterkeys() :
@@ -216,7 +236,7 @@ class MainWindow(QtGui.QMainWindow):
 						key = True;
 						break
 			name = name_
-			print 'new name :', name
+			#print 'new name :', name
 		else :
 			''' check not uniqual name (avahi u. name > broadcast u. name) '''
 			for iter_ in self.USERS.iterkeys() :
@@ -246,7 +266,8 @@ class MainWindow(QtGui.QMainWindow):
 								'\nEncoding : ' + encode + '<br>'\
 								'\nServerState : ' + state))
 		else :
-			new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + state, \
+			new_item.setIcon(QtGui.QIcon(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + state))
+			new_item.setToolTip(toolTipsHTMLWrap(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + state, \
 								'name : ' + name + '<br>'\
 								'\naddress : ' + addr + '<br>'\
 								'\nport : ' + port + '<br>'\
@@ -262,24 +283,27 @@ class MainWindow(QtGui.QMainWindow):
 		return True
 
 	def preinitAvahiBrowser(self):
-		if 'avahiBrowser' in dir(self) :
-			if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__(); self.avahiBrowser = None
+		#if 'avahiBrowser' in dir(self) :	## multiply contact
+		#	if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__(); self.avahiBrowser = None
 		# stopping caching
-		if 'cachingthread' in dir(self) :
+		if 'cachingThread' in dir(self) :
 			self.cachingThread._shutdown()
-		self.menuTab.userList.clear()
+			self.cachingThread.quit()
+			del self.cachingThread
 		if 'udpClient' in dir(self) :
 			self.udpClient.stop()
 		else : self.initAvahiBrowser()
 
+	def cacheS(self):
+		print 'Cache down signal received'
+
 	def initAvahiBrowser(self, *args):
-		if self.Settings.value('AvahiDetect', True).toBool() :
+		if self.Settings.value('AvahiDetect', True).toBool() and 'avahiBrowser' not in dir(self):
 			print 'Use Avahi'
 			self.avahiBrowser = AvahiBrowser(self.menuTab)
 			self.avahiBrowser.start()
 		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :
 			print 'Use Cache'
-			#self.cachingThread = DataCache(self.avahiBrowser.USERS, self)
 			self.cachingThread = DataCache(self.USERS, self)
 			self.cachingThread.start()
 		if self.Settings.value('BroadcastDetect', True).toBool() :

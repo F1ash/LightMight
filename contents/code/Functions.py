@@ -50,12 +50,20 @@ def InitConfigValue(Settings = None, key = None, default = None):
 
 def getIP():
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	try :
-		s.connect(("gmail.com", 80))
-	except socket.gaierror, err:
-		print err, '\nMay be internet not available. '
-		pass
-	return s.getsockname()[0]
+	error = False
+	msg = ''
+	for i in xrange(5) :
+		try :
+			#s.connect(("gmail.com", 80))
+			s.connect(('255.255.255.240', 34001))
+		except socket.gaierror, err:
+			print err
+			error = True
+		finally : pass
+		if not error : break
+	addr = s.getsockname()[0]
+	s.close()
+	return addr
 
 def getFreePort(minValue, maxValue):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -86,6 +94,7 @@ def moveFile(src, dst, delete = True):
 			except OSError, err :
 				return False
 		#print src, dst
+		if src == dst : return True
 		with open(src, 'rb') as srcFile :
 			with open(dst, 'wb') as dstFile :
 				dstFile.write(srcFile.read())
@@ -112,21 +121,22 @@ def toolTipsHTMLWrap(iconPath = '', text = ''):
 	</table>'
 
 def InCache(str_ = ''):
-	if os.path.isfile(pathPrefix() + '/dev/shm/LightMight/cache/' + str_) :
-		return True, pathPrefix() + '/dev/shm/LightMight/cache/' + str_
-	elif os.path.isfile(pathPrefix() + os.path.expanduser('~/.cache/LightMight/') + str_) :
-		return True, pathPrefix() + os.path.expanduser('~/.cache/LightMight/') + str_
+	pref = pathPrefix()
+	if os.path.isfile(pref + '/dev/shm/LightMight/cache/' + str_) :
+		return True, pref + '/dev/shm/LightMight/cache/' + str_
+	elif os.path.isfile(os.path.expanduser('~/.cache/LightMight/') + str_) :
+		return True, os.path.expanduser('~/.cache/LightMight/') + str_
 	return False, ''
 
 def DelFromCache(str_):
 	i = 0
 	pref = pathPrefix()
 	result = [False, False, False, False]
-	for path_ in ['/dev/shm/LightMight/cache/', \
-				 '/dev/shm/LightMight/cache/avatars/', \
+	for path_ in [pref + '/dev/shm/LightMight/cache/', \
+				 pref + '/dev/shm/LightMight/cache/avatars/', \
 				 os.path.expanduser('~/.cache/LightMight/'), \
 				 os.path.expanduser('~/.cache/LightMight/avatars/')] :
-		path = pref + path_ + str_
+		path = path_ + str_
 		if os.path.isfile(path) :
 			os.remove(path)
 			result[i] = True

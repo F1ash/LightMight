@@ -5,7 +5,7 @@ from PyQt4.QtCore import QByteArray, QString
 from PyQt4.QtNetwork import QUdpSocket, QHostAddress
 
 '''
-data =  0/1/R(offline/online/reinit)<separator>
+data =  0/1/A/R(offline/online/answer/reinit)<separator>
 		remoteServerName<separator>
 		address<separator>
 		port<separator>
@@ -14,10 +14,10 @@ data =  0/1/R(offline/online/reinit)<separator>
 		ShareInfo
 '''
 
-def _send_mcast(data):
+def _send_mcast(data, address = QHostAddress.Broadcast):
 	print "Sending :", data
 	udpSocket = QUdpSocket()
-	addr = QHostAddress(QHostAddress.Broadcast)
+	addr = QHostAddress(address)
 	#print addr.toString()
 	return udpSocket.writeDatagram(data, addr, 34001)
 

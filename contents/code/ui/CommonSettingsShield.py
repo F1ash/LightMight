@@ -123,7 +123,7 @@ class CommonSettingsShield(QtGui.QDialog):
 			self.sizeCacheValueLabel.hide()
 
 	def cleanAllData(self):
-		shutil.rmtree(self.pathPref + os.path.expanduser('~/.cache/LightMight/'), ignore_errors = True)
+		shutil.rmtree(os.path.expanduser('~/.cache/LightMight/'), ignore_errors = True)
 		createStructure()
 
 	def cleanAbsentParticipantData(self):
@@ -132,12 +132,14 @@ class CommonSettingsShield(QtGui.QDialog):
 			то файл удалить
 		"""
 		statesList = []
-		for item in self.Obj.avahiBrowser.USERS.values() : statesList.append(item[4]) 
+		for item in self.Obj.USERS.values() : statesList.append(item[4]) 
 		print statesList
-		for name in os.listdir(self.pathPref + os.path.expanduser('~/.cache/LightMight/')) :
-			if os.path.isfile(name) and name not in statesList :
-				os.remove(self.pathPref + os.path.expanduser('~/.cache/LightMight/') + name)
-				os.remove(self.pathPref + os.path.expanduser('~/.cache/LightMight/avatars/') + name)
+		for name in os.listdir(os.path.expanduser('~/.cache/LightMight/')) :
+			if os.path.isfile(os.path.expanduser('~/.cache/LightMight/') + name) and name not in statesList :
+				os.remove(os.path.expanduser('~/.cache/LightMight/') + name)
+				os.remove(os.path.expanduser('~/.cache/LightMight/avatars/') + name)
+				os.remove(self.pathPref + '/dev/shm/LightMight/cache/' + name)
+				os.remove(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + name)
 
 	def ok(self):
 		self.saveData()

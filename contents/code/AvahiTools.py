@@ -10,22 +10,22 @@ class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):
 
 		TYPE = '_LightMight._tcp'
+		DBusGMainLoop(set_as_default=True)
 
-		loop = DBusGMainLoop()
-		bus = dbus.SystemBus(mainloop=loop)
+		self.mainloop = gobject.MainLoop()
+		bus = dbus.SystemBus()
 
 		self.server = dbus.Interface( bus.get_object(avahi.DBUS_NAME, '/'),
 									'org.freedesktop.Avahi.Server')
 
-		sbrowser = dbus.Interface(bus.get_object(avahi.DBUS_NAME,
+		self.sbrowser = dbus.Interface(bus.get_object(avahi.DBUS_NAME,
 				self.server.ServiceBrowserNew(avahi.IF_UNSPEC,
 					avahi.PROTO_UNSPEC, TYPE, 'local', dbus.UInt32(0))),
 				avahi.DBUS_INTERFACE_SERVICE_BROWSER)
 
-		sbrowser.connect_to_signal("ItemNew", self.myhandler)
-		sbrowser.connect_to_signal("ItemRemove", self.myhandlerRemove)
+		self.sbrowser.connect_to_signal("ItemNew", self.myhandler)
+		self.sbrowser.connect_to_signal("ItemRemove", self.myhandlerRemove)
 
-		#gobject.MainLoop().run()
 		self.obj = obj.Obj
 		self.USERS = self.obj.USERS
 
@@ -108,9 +108,9 @@ class AvahiBrowser():
 			reply_handler = self.service_resolved, error_handler = self.print_error)
 
 	def __del__(self):
-		#gobject.MainLoop().close()
 		self.USERS.clear()
-		pass
+		self.mainloop.quit()
+		time.sleep(3)			## FIXME: replace on dbus event
 
 	def start(self): pass
 
@@ -129,7 +129,7 @@ class AvahiService():
 		self.group = None #our entry group
 		self.rename_count = 12 # Counter so we only rename after collisions a sensible number of times
 
-		DBusGMainLoop( set_as_default = True )
+		DBusGMainLoop(set_as_default=True)
 
 		self.main_loop = gobject.MainLoop()
 		self.bus = dbus.SystemBus()
@@ -214,7 +214,7 @@ class AvahiService():
 
 	def __del__(self):
 		self.remove_service()
-		#self.main_loop.quit()
+		self.main_loop.quit()
 		time.sleep(3)			## FIXME: replace on dbus event
 
 	def start(self): pass
