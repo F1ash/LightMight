@@ -30,7 +30,6 @@ from PathToTree import SharedSourceTree2XMLFile
 from TreeProcess import TreeProcessing
 from mcastSender import _send_mcast as Sender
 from UdpClient import UdpClient
-from _udpClientThread  import UdpClientThread
 
 class MainWindow(QtGui.QMainWindow):
 	# custom signals
@@ -40,6 +39,9 @@ class MainWindow(QtGui.QMainWindow):
 	contactMessage = QtCore.pyqtSignal(QtCore.QString, QtCore.QString)
 	changeConnectState = QtCore.pyqtSignal()
 	cacheDown = QtCore.pyqtSignal()
+	serverDown = QtCore.pyqtSignal()
+	initServeR = QtCore.pyqtSignal(TreeModel, str, str)
+	reinitServer = QtCore.pyqtSignal()
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -119,13 +121,14 @@ class MainWindow(QtGui.QMainWindow):
 																			self.trayIconClicked)
 		self.trayIcon.show()
 
-		type_id = QtCore.QMetaType.type("QAbstractSocket::SocketState")
 		self.errorString.connect(self.showMSG)
 		self.commonSet.connect(self.preProcessingComplete)
 		self.uploadSignal.connect(self.uploadTask)
 		self.contactMessage.connect(self.receiveBroadcastMessage)
 		self.changeConnectState.connect(self.initAvahiBrowser)
 		self.cacheDown.connect(self.cacheS)
+		self.initServeR.connect(self.initServer)
+		self.reinitServer.connect(self.initServer)
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
 		self.timer.timeout.connect(self.initServer)
@@ -142,10 +145,11 @@ class MainWindow(QtGui.QMainWindow):
 	'''
 
 	def receiveBroadcastMessage(self, data, addr):
+		if data.count('<||>') != 6 : return None	## ignore non-standart packets
 		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
 		''' check correct IP for local network '''
 		if addr == addr_in_data :
-			if mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, False)
+			if   mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, False)
 			elif mark == '0' : self.delContact(name, addr_in_data, port, encode, state)
 			elif mark == 'A' : self.addNewContact(name, addr, port, encode, state)
 			elif mark == 'R' : self.reInitRequest(name, addr, port, encode, state)
@@ -292,8 +296,8 @@ class MainWindow(QtGui.QMainWindow):
 			self.cachingThread._shutdown()
 			self.cachingThread.quit()
 			del self.cachingThread
-		if 'udpClientThread' in dir(self) :
-			self.udpClientThread.stop()
+		if 'udpClient' in dir(self) :
+			self.udpClient.stop()
 		else : self.initAvahiBrowser()
 
 	def cacheS(self):
@@ -310,8 +314,8 @@ class MainWindow(QtGui.QMainWindow):
 			self.cachingThread.start()
 		if self.Settings.value('BroadcastDetect', True).toBool() :
 			print 'Use Broadcast'
-			self.udpClientThread = UdpClientThread(UdpClient, self)
-			self.udpClientThread.start()
+			self.udpClient = UdpClient(self)
+			self.udpClient.start()
 		else : self.initAvahiService()
 
 	def initAvahiService(self):
@@ -363,6 +367,7 @@ class MainWindow(QtGui.QMainWindow):
 		else :
 			self.TLS = False
 		#print self.TLS, '  <--- using TLS'
+		if 'serverThread' in dir(self) : del self.serverThread
 		self.serverThread = ToolsThread(\
 										ServerDaemon( ('', self.server_port), \
 													self.commonSetOfSharedSource, \
@@ -383,7 +388,7 @@ class MainWindow(QtGui.QMainWindow):
 			else :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 				S.__del__(); S = None
-		elif loadFile is not None :
+		elif loadFile is not None and loadFile != '' :
 			if not moveFile(loadFile, self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState, False) :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 				S.__del__(); S = None
@@ -511,7 +516,9 @@ class MainWindow(QtGui.QMainWindow):
 
 	def showServerSettingsShield(self):
 		_ServerSettingsShield = ServerSettingsShield(self)
+		self.serverDown.connect(_ServerSettingsShield.preInitServer)
 		_ServerSettingsShield.exec_()
+		self.serverDown.disconnect(_ServerSettingsShield.preInitServer)
 
 	def saveCache(self):
 		Once = True
@@ -522,7 +529,7 @@ class MainWindow(QtGui.QMainWindow):
 		prefPathInStationarForAvatar = prefPathInStationar + 'avatars/'
 		if os.path.exists(self.pathPref + '/dev/shm/LightMight/cache') :
 			currentSize = getFolderSize(prefPathInStationar)
-			print currentSize, ':'
+			#print currentSize, ':'
 			listingCache = os.listdir(self.pathPref + '/dev/shm/LightMight/cache')
 			for name in listingCache :
 				path = prefPath + name
@@ -532,7 +539,7 @@ class MainWindow(QtGui.QMainWindow):
 						currentSize += os.path.getsize(pathInStationarCache)
 					if moveFile(prefPathForAvatar + name, prefPathInStationarForAvatar + name) :
 						currentSize += os.path.getsize(prefPathInStationarForAvatar + name)
-					print currentSize
+					#print currentSize
 					if currentSize >= limitCache :
 						print 'cache`s limit is reached'
 						self.showMSG('cache`s limit is reached')

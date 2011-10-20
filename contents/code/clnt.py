@@ -33,8 +33,9 @@ class xr_client:
 				handle.write(self.s.sessionID().data)
 			self.listRandomString = DataRendering().fileToList(self.randomFileName)
 			#print self.listRandomString, ' list of randomStrings'
+			#print [self.listRandomString[0]]
 			self.s.python_clean(self.listRandomString[0])
-			os.remove(self.randomFileName)
+			if os.path.exists(self.randomFileName) : os.remove(self.randomFileName)
 			self.sessionID = self.listRandomString[1]
 			#print self.sessionID, ' session ID'
 			self.serverState = self.listRandomString[2]
@@ -79,7 +80,7 @@ class xr_client:
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
 		except IOError, err :
-			print 'IOError : ', err
+			print '[in run()] IOError : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
@@ -113,13 +114,13 @@ class xr_client:
 					finally :
 						pass
 		except IOError, err :
-			print 'IOError : ', err
+			print '[in getSharedSourceStructFile()] IOError : ', err
 			if 'previousState' not in dir(self) : self.previousState = ''
 		return self.structFileName, self.previousState
 
 	def getAvatar(self):
 		self.avatarFileName = str(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + self.serverState)
-		#print self.structFileName, ' struct'
+		#print self.avatarFileName, ' avatarFileName'
 		try :
 			with open(self.avatarFileName, "wb") as handle:
 					try :
@@ -145,7 +146,7 @@ class xr_client:
 					finally :
 						pass
 		except IOError, err :
-			print 'IOError : ', err
+			print '[in getAvatar()]IOError : ', err
 			pass
 		return self.avatarFileName
 

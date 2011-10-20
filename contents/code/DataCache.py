@@ -28,7 +28,7 @@ class DataCache(QThread):
 		self.runState = True
 		self.Key = True
 		for itemValue in self.USERS.iteritems() :
-			#print itemValue
+			#print itemValue, '-- current item in USERS for caching'
 			if self.Key and not itemValue[1][5] :
 				""" call for fill clients data """
 				if itemValue[1][3] == 'Yes' :

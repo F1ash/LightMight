@@ -1,43 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtCore import QByteArray, QObject, QString, QThread, QMutex
+from PyQt4.QtCore import QByteArray, QString, QThread, QMutex, pyqtSignal, pyqtSlot
 from PyQt4.QtNetwork import QUdpSocket, QHostAddress, QAbstractSocket
 
-
-class Socket(QUdpSocket):
-	def __init__(self, parent = None):
-		QUdpSocket.__init__(self, parent)
-		
-		self.stateChanged.connect(self.handleStateChanged)
-
-	def handleStateChanged(self, state):
-		print state
-
-class UdpClient(QObject):
+class UdpClient(QThread):
 	def __init__(self, parent):
-		QObject.__init__(self, parent)
+		QThread.__init__(self, parent)
 
 		self.prnt = parent
-		self.udp = Socket(self)
+		self.udp = QUdpSocket()
 		addr = QHostAddress(QHostAddress.Any)
 		#print addr.toString()
 		self.udp.bind(addr, 34001)
-		self.udp.readyRead.connect(self.readUdp)
 		print "Binding..."
 		self.STOP = False
 		self.locker = QMutex()
-		#self.udp.stateChanged.connect(self.sc)
 
 	def run(self):
-		self.prnt.prnt.initAvahiService()
+		self.prnt.initAvahiService()
 		while True :
 			if self.udp is not None and self.udp.state() == QAbstractSocket.ConnectedState :
 				self.udp.waitForReadyRead()
-			else : self.prnt.msleep(100)
+				self.readUdp()
+			else : self.msleep(100)
 			if self.STOP and self.udp is not None: self.udp.close(); break
 		print 'UDPClient closed...'
-		self.prnt.prnt.changeConnectState.emit()
+		self.prnt.changeConnectState.emit()
 
 	def stop(self):
 		self.locker.lock()
@@ -51,10 +40,7 @@ class UdpClient(QObject):
 			port = 0
 			(data, addr, port) = self.udp.readDatagram(1024)
 			print "Datagram: [%s] from %s:%i" % (QString().fromUtf8(data), addr.toString(), port)
-			self.prnt.prnt.contactMessage.emit(QString().fromUtf8(data), addr.toString())
-
-	def sc(self, state):
-		print "State: %s" % state
+			self.prnt.contactMessage.emit(QString().fromUtf8(data), addr.toString())
 
 if __name__ == '__main__':
 	udp = UdpClient()

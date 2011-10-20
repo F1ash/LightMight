@@ -27,5 +27,5 @@ class ToolsThread(QThread):
 											'DownLoadTo', self.pathPref + '/tmp/LightMight/DownLoad'))
 		self.Obj.getSharedData(self.maskSet, downLoadPath, self, self.Parent.currentRemoteServerState)
 
-	def terminate(self):
+	def _terminate(self):
 		self.Obj._shutdown()

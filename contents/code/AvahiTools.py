@@ -54,32 +54,6 @@ class AvahiBrowser():
 			if _str.startswith('State=') :
 				__str_state = self.extractValue(_str)
 		self.obj.addNewContact(unicode(args[2]), str(args[7]), str(args[8]), __str_encode, __str_state)
-		'''new_item = QtGui.QListWidgetItem(unicode(args[2]))
-		res_, path_ = InCache(__str_state)
-		if res_ :
-			head, tail = os.path.split(path_)
-			new_item.setIcon(QtGui.QIcon(head + '/avatars/' + tail))
-			new_item.setToolTip(toolTipsHTMLWrap(head + '/avatars/' + tail, \
-								'name : ' + unicode(args[2]) + '<br>'\
-								'\naddress : ' + str(args[7]) + '<br>'\
-								'\nport : ' + str(args[8]) + '<br>'\
-								'\nEncoding : ' + __str_encode + '<br>'\
-								'\nServerState : ' + __str_state))
-		else :
-			new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + __str_state, \
-								'name : ' + unicode(args[2]) + '<br>'\
-								'\naddress : ' + str(args[7]) + '<br>'\
-								'\nport : ' + str(args[8]) + '<br>'\
-								'\nEncoding : ' + __str_encode + '<br>'\
-								'\nServerState : ' + __str_state))
-		self.obj.userList.addItem(new_item)
-		#self.USERS[args[2] + count] = (args[2], args[7], args[8])
-		""" Keys of USERS defined by "name", because name may be changed in restart,
-			but "state" may be not changed. In cache the important\exclusive role
-			has the status of remote server.
-		"""
-		self.USERS[unicode(args[2])] = (unicode(args[2]), args[7], args[8], __str_encode, __str_state, False)
-		#print self.USERS'''
 
 	def print_error(self, *args):
 		print 'error_handler'
@@ -87,14 +61,6 @@ class AvahiBrowser():
 
 	def myhandlerRemove(self, interface, protocol, name, stype, domain, flags):
 		self.obj.delContact(name, None, None, None, None)
-		'''
-		item = self.obj.userList.findItems(name, \
-				QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
-		self.obj.userList.takeItem(self.obj.userList.row(item[0]))
-		if unicode(name) in self.USERS : del self.USERS[unicode(name)]
-		#print "Removed service: '%s'" % unicode(name)
-		#print self.USERS
-		'''
 
 	def myhandler(self, interface, protocol, name, stype, domain, flags):
 		#print "Found service '%s' type '%s' domain '%s' " % (unicode(name), stype, domain)

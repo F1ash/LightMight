@@ -14,22 +14,27 @@ class ServerDaemon():
 		self.Parent = parent
 		self.Parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
-		self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True, \
-								 TLS = TLS, certificatePath = cert)
-		self._srv.register_introspection_functions()
-		self._srv.register_function(self.sessionID, 'sessionID')
-		self._srv.register_function(self.python_clean, 'python_clean')
-		self._srv.register_function(self.python_file, 'python_file')
-		self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
-		self._srv.register_function(self.requestAvatar, 'requestAvatar')
+		try :
+			exception = False
+			self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True, \
+									TLS = TLS, certificatePath = cert)
+		except socket.error, err :
+			print err
+			exceptin = True
+			self.Parent.reinitServer.emit()
+		if not exception :
+			self._srv.register_introspection_functions()
+			self._srv.register_function(self.sessionID, 'sessionID')
+			self._srv.register_function(self.python_clean, 'python_clean')
+			self._srv.register_function(self.python_file, 'python_file')
+			self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
+			self._srv.register_function(self.requestAvatar, 'requestAvatar')
 
 	def sessionID(self):
 		fileName = randomString(24)
 		_id = randomString(24)
-		#print '/dev/shm/LightMight/' + fileName, '  temporary file in sessionId'
-		with open(self.pathPref + '/dev/shm/LightMight/' + fileName, 'wb') as f :
-			#print fileName + '\n' + _id + '\n' + self.serverState + '\n' + self.Parent.previousState + '\n'
-			f.write(fileName + '\n' + _id + '\n' + self.serverState + '\n' + self.Parent.previousState + '\n')
+		list_ = [fileName, _id, self.serverState, self.Parent.previousState]
+		DataRendering().listToFile(list_, 'LightMight/' + fileName)
 		with open(self.pathPref + '/dev/shm/LightMight/' + fileName, "rb") as handle :
 			return xmlrpclib.Binary(handle.read())
 
@@ -60,6 +65,7 @@ class ServerDaemon():
 	def _shutdown(self):
 		self._srv.shutdown()
 		print ' server terminated'
+		self.Parent.serverDown.emit()
 
 if __name__ == '__main__':
 

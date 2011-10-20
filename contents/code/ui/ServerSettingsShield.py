@@ -225,8 +225,8 @@ class ServerSettingsShield(QtGui.QDialog):
 	def sentOfflinePost(self):
 		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
 			key = str(self.Obj.server_addr + ':' + str(self.Obj.server_port))
-			print 'key :', key
 			if key in self.Obj.USERS :
+				print 'key :', key, ' in USERS'
 				data = QtCore.QString('0' + '<||>' + \
 									self.defaultName + '<||>' + \
 									self.Obj.USERS[key][1] + '<||>' + \
@@ -260,11 +260,16 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def ok(self):
 		if 'serverThread' in dir(self.Obj) :
-			self.Obj.serverThread.terminate()
-			self.Obj.serverThread.exit()
+			self.Obj.serverThread._terminate()
+			#self.Obj.serverThread.exit()
+		else : self.preInitServer()
+
+	def preInitServer(self):
+		print 'serverDown signal received'
 		self.sentOfflinePost()
 		self.saveData()
-		self.Obj.initServer(self.treeModel, previousState = self.Obj.serverState)
+		self.Obj.initServeR.emit(self.treeModel, '', self.Obj.serverState)
+		#self.Obj.initServer(self.treeModel, previousState = self.Obj.serverState)
 		self.done(0)
 
 	def cancel(self):

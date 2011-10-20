@@ -23,27 +23,21 @@ class DataRendering:
 		pass
 
 	def fileToList(self, path_ = ''):
+		s = []
 		if os.path.isfile(path_) :
-			f = open(path_, 'rb')
-			l = f.read()
-			f.close()
-			s = string.split(l, '\n')
-			for i in xrange(s.count('')) :
-				s.remove('')
-			return s
-		else :
-			return []
+			with open(path_, 'rb') as f :
+				while True :
+					s.append(f.readline(24))
+					if s[len(s) - 1] == '' : break
+		return s
 
 	def listToFile(self, list_ = [], name_ = ''):
+		fileName = ''
 		if name_ != '' :
 			fileName = str(pathPrefix() + '/dev/shm/' + name_)
-			l = string.join(list_, '\n')
-			f = open(fileName, 'wb')
-			f.write(l)
-			f.close()
-			return fileName
-		else :
-			return ''
+			with open(fileName, 'wb') as f :
+				f.writelines(list_)
+		return fileName
 
 def InitConfigValue(Settings = None, key = None, default = None):
 	return Settings.value(key, default).toString()
@@ -123,8 +117,10 @@ def toolTipsHTMLWrap(iconPath = '', text = ''):
 def InCache(str_ = ''):
 	pref = pathPrefix()
 	if os.path.isfile(pref + '/dev/shm/LightMight/cache/' + str_) :
+		print pref + '/dev/shm/LightMight/cache/' + str_, 'is file'
 		return True, pref + '/dev/shm/LightMight/cache/' + str_
 	elif os.path.isfile(os.path.expanduser('~/.cache/LightMight/') + str_) :
+		print os.path.expanduser('~/.cache/LightMight/') + str_, 'is file'
 		return True, os.path.expanduser('~/.cache/LightMight/') + str_
 	return False, ''
 

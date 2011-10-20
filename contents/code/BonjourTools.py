@@ -52,32 +52,6 @@ class AvahiBrowser(QtCore.QThread):
 					__str_state = self.getRecord(_str)
 
 			self.obj.addNewContact(unicode(__str_name, 'utf-8'), __str_addr, __str_port, __str_encode, __str_state)
-			'''new_item = QtGui.QListWidgetItem(unicode(__str_name, 'utf-8'), self.obj.userList)
-			res_, path_ = InCache(__str_state)
-			if res_ :
-				head, tail = os.path.split(path_)
-				new_item.setIcon(QtGui.QIcon(head + '/avatars/' + tail))
-				new_item.setToolTip(toolTipsHTMLWrap(head + '/avatars/' + tail, \
-									'name : ' + unicode(__str_name, 'utf-8') + '<br>'\
-									'\naddress : ' + __str_addr + '<br>'\
-									'\nport : ' + __str_port + '<br>'\
-									'\nEncoding : ' + __str_encode + '<br>'\
-									'\nServerState : ' + __str_state))
-			else :
-				new_item.setToolTip(toolTipsHTMLWrap('/dev/shm/LightMight/cache/avatars/' + __str_state, \
-									'name : ' + unicode(__str_name, 'utf-8') + '<br>'\
-									'\naddress : ' + __str_addr + '<br>'\
-									'\nport : ' + __str_port + '<br>'\
-									'\nEncoding : ' + __str_encode + '<br>'\
-									'\nServerState : ' + __str_state))
-			self.obj.userList.addItem(new_item)
-			self.USERS[unicode(__str_name, 'utf-8')] = (unicode(__str_name, 'utf-8'), \
-														__str_addr, \
-														__str_port, \
-														__str_encode,\
-														__str_state,\
-														False)
-			#print self.USERS'''
 
 	def getRecord(self, str_):
 		_str_ = string.split(str_, '=')
@@ -94,18 +68,6 @@ class AvahiBrowser(QtCore.QThread):
 
 		if not (flags & pybonjour.kDNSServiceFlagsAdd) :
 			self.obj.delContact(serviceName, None, None, None, None)
-			'''
-			item = self.obj.userList.findItems(serviceName, \
-					QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
-			#print item, ' find list'
-			if len(item) > 0 :
-				self.obj.userList.takeItem(self.obj.userList.row(item[0]))
-				if unicode(serviceName) in self.USERS : del self.USERS[unicode(serviceName)]
-				"""print 'Service removed :'
-				print '  fullname   =', serviceName
-				print '  replyDomain 	= ', replyDomain
-				print '  InterfaceIndex = ' , interfaceIndex"""
-			'''
 			return
 
 		print 'Service added; resolving'
