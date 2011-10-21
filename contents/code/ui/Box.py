@@ -9,7 +9,7 @@ from TreeBox import TreeBox
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
-from Functions import InCache, pathPrefix, moveFile, DelFromCache
+from Functions import InCache, Path, moveFile, DelFromCache
 from os.path import basename as BaseName
 
 class Box(QtGui.QWidget):
@@ -20,7 +20,6 @@ class Box(QtGui.QWidget):
 		QtGui.QWidget.__init__(self, parent)
 
 		self.Obj = Obj_
-		self.prefPath = pathPrefix()
 
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.treeProcessing = TreeProcessing()
@@ -103,7 +102,7 @@ class Box(QtGui.QWidget):
 					item_ = self.userList.item(i)
 					if str(item_.data(QtCore.Qt.AccessibleTextRole).toString()) == \
 								str(itemValue[1][1] + ':' + itemValue[1][2]) :
-						item_.setIcon(QtGui.QIcon(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
+						item_.setIcon(QtGui.QIcon(Path.tempAvatar(itemValue[1][4])))
 						break
 		if previousState != '' : DelFromCache(previousState)
 		self.showSharedSources(path)
@@ -129,7 +128,7 @@ class Box(QtGui.QWidget):
 		if pathExist[0] :
 			#print 'cached'
 			self.showSharedSources(pathExist[1])
-			#item.setIcon(QtGui.QIcon(QtCore.QString(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + serverState)))
+			#item.setIcon(QtGui.QIcon(QtCore.QString(Path.tempAvatar(serverState))))
 			return None
 		""" run the getting new structure in QThread """
 		if 'clientThread' in dir(self) :

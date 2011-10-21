@@ -4,6 +4,7 @@ from PyQt4 import QtGui, QtCore
 from TreeProc import TreeModel
 from ModePanel import ModePanel
 from ViewPanel import ViewPanel
+import os
 
 class TreeBox(QtGui.QDialog):
 	mode = QtCore.pyqtSignal()
@@ -20,6 +21,7 @@ class TreeBox(QtGui.QDialog):
 		self.layout = QtGui.QGridLayout()
 		self.layout.setSpacing(0)
 		self.layout.setAlignment(QtCore.Qt.AlignLeft)
+		self.SEP = os.sep
 
 		""" отображение в приложении списка расшаренных ресурсов """
 		self.sharedTree = QtGui.QTreeView()
@@ -59,7 +61,7 @@ class TreeBox(QtGui.QDialog):
 		self.modePanel = ModePanel(viewMode, self)
 		self.buttonLayout.addWidget(self.modePanel, 0, QtCore.Qt.AlignHCenter)
 
-		self.upLoadButton = QtGui.QPushButton(QtGui.QIcon('../icons/download.png'), '')
+		self.upLoadButton = QtGui.QPushButton(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'download.png'), '')
 		self.upLoadButton.setToolTip('UpLoad checked files\nof Shared Source')
 		self.upLoadButton.setMaximumWidth(65)
 		self.connect(self.upLoadButton, QtCore.SIGNAL('clicked()'), self.upLoad)
@@ -99,7 +101,7 @@ class TreeBox(QtGui.QDialog):
 		else :
 			str_ = index.internalPointer().data(0)
 			if str_ == 'Name' : str_ = ''
-			self.upPanel.setText('../' + str_)
+			self.upPanel.setText('..' + self.SEP + str_)
 		if key :
 			self.parentItemChain.append(self.treeModel.parent(index))
 		self.currentIdx = index

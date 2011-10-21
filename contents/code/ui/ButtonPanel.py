@@ -4,7 +4,7 @@ from PyQt4 import QtGui, QtCore
 from ToolsThread import ToolsThread
 from ListingText import ListingText
 from clnt import xr_client
-from Functions import pathPrefix
+from Functions import Path
 import os, string
 
 class ButtonPanel(QtGui.QWidget):
@@ -14,8 +14,7 @@ class ButtonPanel(QtGui.QWidget):
 					serverState = '', addr = '', port = '', info = '', TLS = 'False', parent = None):
 		QtGui.QWidget.__init__(self, parent)
 		self.Obj = self
-
-		self.pathPref = pathPrefix()
+		self.SEP = os.sep
 
 		self.nameMaskFile = name_
 		self.jobNumber = jobNumber
@@ -31,7 +30,7 @@ class ButtonPanel(QtGui.QWidget):
 		#					'\nclnt args :\n', info, '\nEncrypt : ', TLS
 
 		self.setWindowTitle('LightMight Job')
-		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
+		self.setWindowIcon(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png'))
 		self.setToolTip('Job #' + str(jobNumber) + \
 						':<br>Download : ' + downLoadSize + ' Byte(s)<br>' + \
 						QtCore.QString().fromUtf8(info) )
@@ -64,10 +63,11 @@ class ButtonPanel(QtGui.QWidget):
 		self.setMaskSet()
 
 	def setMaskSet(self):
-		if not os.path.isfile(self.pathPref + '/dev/shm/LightMight/client/' + self.nameMaskFile) :
+		path_ = Path.multiPath(Path.tempStruct, 'client', self.nameMaskFile)
+		if not os.path.isfile(path_) :
 			print '  file not exist'
 			return None
-		with open(self.pathPref + '/dev/shm/LightMight/client/' + self.nameMaskFile) as f :
+		with open(path_) as f :
 			for line in f :
 				s = string.split(line, '<||>')
 				if s[0] == '1' :
@@ -78,7 +78,7 @@ class ButtonPanel(QtGui.QWidget):
 												int(unicode(str(s[3].decode('utf-8')).replace('\n', ''))))
 					#print self.maskSet[int(unicode(str(s[3].decode('utf-8')).replace('\n', '')))]
 
-		os.remove(self.pathPref + '/dev/shm/LightMight/client/' + self.nameMaskFile)
+		os.remove(path_)
 
 	def startJob(self):
 		self.startButton.hide()

@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtGui, QtCore
+import os
 
 class TreeItem(QtCore.QObject):
 	def __init__(self, name_ = '_not_define_', size_ = '_not_define_', parentItem = None, parent = None):
 		QtCore.QObject.__init__(self, parent)
+		self.SEP = os.sep
 		self.parentItem = parentItem
 		self.fileNameItemData = name_
 		self.fileSizeItemData = size_
 		self.childItems = []
 		self.checkState = QtCore.Qt.Unchecked
-		self.fileIcon = QtGui.QIcon('../icons/document.png')
-		self.dirIcon = QtGui.QIcon('../icons/folder.png')
+		self.fileIcon = QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'document.png')
+		self.dirIcon = QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'folder.png')
 
 	def child(self, row):
 		if row <= len(self.childItems):

@@ -12,13 +12,12 @@ class xr_client:
 		self.serverState = ''
 		self.Parent = parent
 		self.TLS = TLS
-		self.pathPref = pathPrefix()
 		#print self.servaddr, ' clnt '
 		if obj is not None :
 			self.Obj = obj
 			self.Obj.currentRemoteServerAddr = addr
 			self.Obj.currentRemoteServerPort = port
-			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', self.pathPref + '/tmp'))
+			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', Path.Temp))
 			#print '	run for get structure only '
 
 	def run(self):
@@ -27,7 +26,7 @@ class xr_client:
 
 			# self.methods = self.s.system.listMethods()
 			# get session Id & server State
-			self.randomFileName = str(self.pathPref + '/dev/shm/LightMight/' + randomString(24))
+			self.randomFileName = Path.tempStruct(randomString(24))
 			#print self.randomFileName, '   clnt random string'
 			with open(self.randomFileName, "wb") as handle:
 				handle.write(self.s.sessionID().data)
@@ -90,7 +89,7 @@ class xr_client:
 
 	def getSharedSourceStructFile(self, caching = False):
 		# get Shared Sources Structure
-		self.structFileName = str(self.pathPref + '/dev/shm/LightMight/cache/' + self.serverState)
+		self.structFileName = Path.tempCache(self.serverState)
 		#print self.structFileName, ' struct'
 		try :
 			with open(self.structFileName, "wb") as handle:
@@ -119,7 +118,7 @@ class xr_client:
 		return self.structFileName, self.previousState
 
 	def getAvatar(self):
-		self.avatarFileName = str(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + self.serverState)
+		self.avatarFileName = Path.tempAvatar(self.serverState)
 		#print self.avatarFileName, ' avatarFileName'
 		try :
 			with open(self.avatarFileName, "wb") as handle:
@@ -164,7 +163,7 @@ class xr_client:
 			return None
 		for i in maskSet.iterkeys() :
 			if maskSet[i][0] == 1 :
-				_path = downLoadPath + maskSet[i][1]
+				_path = os.path.join(downLoadPath, maskSet[i][1])
 				path = os.path.dirname(_path)
 				#print _path, i, ' clnt'
 				if not os.path.exists(path) :

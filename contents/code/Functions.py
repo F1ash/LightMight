@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import os, os.path, string, random, socket, ssl, time, sys
+from Path import  Path
 
 char_set = string.ascii_letters + string.digits
 
 def createStructure():
-	pathPref = pathPrefix()
-	for nameDir in [pathPref + '/dev/shm/LightMight/cache/avatars', \
-					pathPref + '/dev/shm/LightMight/structure', \
-					pathPref + '/dev/shm/LightMight/client', \
-					pathPref + '/dev/shm/LightMight/server', \
-					os.path.expanduser('~/.config/LightMight/treeBackup'), \
-					os.path.expanduser('~/.cache/LightMight/avatars')] :
+	for nameDir in [Path.TempAvatar, \
+					Path.tempStruct('structure'), \
+					Path.tempStruct('client'), \
+					Path.tempStruct('server'), \
+					Path.config('treeBackup'), \
+					Path.Avatar] :
 		if not os.path.isdir(nameDir):
 			os.makedirs(nameDir)
 
@@ -34,7 +34,8 @@ class DataRendering:
 	def listToFile(self, list_ = [], name_ = ''):
 		fileName = ''
 		if name_ != '' :
-			fileName = str(pathPrefix() + '/dev/shm/' + name_)
+			#fileName = str(pathPrefix() + '/dev/shm/LightMight/' + name_)
+			fileName = Path.tempStruct(name_)
 			with open(fileName, 'wb') as f :
 				f.writelines(list_)
 		return fileName
@@ -115,24 +116,20 @@ def toolTipsHTMLWrap(iconPath = '', text = ''):
 	</table>'
 
 def InCache(str_ = ''):
-	pref = pathPrefix()
-	if os.path.isfile(pref + '/dev/shm/LightMight/cache/' + str_) :
-		print pref + '/dev/shm/LightMight/cache/' + str_, 'is file'
-		return True, pref + '/dev/shm/LightMight/cache/' + str_
-	elif os.path.isfile(os.path.expanduser('~/.cache/LightMight/') + str_) :
-		print os.path.expanduser('~/.cache/LightMight/') + str_, 'is file'
-		return True, os.path.expanduser('~/.cache/LightMight/') + str_
+	if os.path.isfile(Path.tempCache(str_)) :
+		return True, Path.tempCache(str_)
+	elif os.path.isfile(Path.cache(str_)) :
+		return True, Path.cache(str_)
 	return False, ''
 
 def DelFromCache(str_):
 	i = 0
-	pref = pathPrefix()
 	result = [False, False, False, False]
-	for path_ in [pref + '/dev/shm/LightMight/cache/', \
-				 pref + '/dev/shm/LightMight/cache/avatars/', \
-				 os.path.expanduser('~/.cache/LightMight/'), \
-				 os.path.expanduser('~/.cache/LightMight/avatars/')] :
-		path = path_ + str_
+	for path_ in [Path.TempCache, \
+				 Path.TempAvatar, \
+				 Path.Cache, \
+				 Path.Avatar] :
+		path = os.path.join(path_, str_)
 		if os.path.isfile(path) :
 			os.remove(path)
 			result[i] = True

@@ -2,28 +2,30 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+import os
 
 class ModePanel(QWidget):
 	def __init__(self, param, parent = None):
 		QWidget.__init__(self, parent)
 		self.prnt = parent
+		self.SEP = os.sep
 
 		self.layout = QVBoxLayout()
 		self.layout.setSpacing(0)
 
-		self.treeIcon = QPushButton(QIcon('../icons/view-list-tree.png'), '')
+		self.treeIcon = QPushButton(QIcon('..' + self.SEP + 'icons' + self.SEP + 'view-list-tree.png'), '')
 		self.treeIcon.setToolTip('Tree Mode')
 		if param == 'TreeMode' :  self.treeIcon.setEnabled(False)
 		self.treeIcon.clicked.connect(self.setTreeMode)
 		self.layout.addWidget(self.treeIcon, 0)
 
-		self.listIcon = QPushButton(QIcon('../icons/view-list-details.png'), '')
+		self.listIcon = QPushButton(QIcon('..' + self.SEP + 'icons' + self.SEP + 'view-list-details.png'), '')
 		self.listIcon.setToolTip('Detail Mode')
 		if param == 'DetailMode' :  self.listIcon.setEnabled(False)
 		self.listIcon.clicked.connect(self.setListMode)
 		self.layout.addWidget(self.listIcon, 0)
 
-		self.iconIcon = QPushButton(QIcon('../icons/view-list-icons.png'), '')
+		self.iconIcon = QPushButton(QIcon('..' + self.SEP + 'icons' + self.SEP + 'view-list-icons.png'), '')
 		self.iconIcon.setToolTip('Icons Mode')
 		if param == 'IconMode' :  self.iconIcon.setEnabled(False)
 		self.iconIcon.clicked.connect(self.setIconMode)

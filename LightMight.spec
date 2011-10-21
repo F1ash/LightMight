@@ -1,5 +1,5 @@
 Name: LightMight
-Version: 0.9.19
+Version: 0.9.20
 Release: 1%{?dist}.R
 Summary: Programm for file`s resource publication and transmittion in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
@@ -84,6 +84,9 @@ if [ -x %{_bindir}/gtk-update-icon-cache ]; then
 fi
 
 %changelog
+
+* Thu Oct 20 2011 Fl@sh <kaperang07@gmail.com> - 0.9.20-1
+- version updated
 
 * Tue Oct 18 2011 Fl@sh <kaperang07@gmail.com> - 0.9.19-1
 - version updated

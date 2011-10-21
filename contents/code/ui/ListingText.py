@@ -6,9 +6,10 @@ import os, string
 class ListingText(QtGui.QDialog):
 	def __init__(self, path_, parent = None):
 		QtGui.QDialog.__init__(self, parent)
+		self.SEP = os.sep
 
 		self.setWindowTitle('LightMight Message')
-		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
+		self.setWindowIcon(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png'))
 
 		browseText = QtGui.QTextEdit()
 		browseText.setReadOnly(True)

@@ -2,7 +2,7 @@
 
 from PyQt4.QtCore import QThread, QTimer, pyqtSignal, Qt
 from PyQt4.QtGui import QIcon
-from Functions import InitConfigValue, pathPrefix, DelFromCache, InCache, moveFile
+from Functions import InitConfigValue, Path, DelFromCache, InCache, moveFile
 from clnt import xr_client
 import os.path
 
@@ -19,7 +19,6 @@ class DataCache(QThread):
 		self.timer.timeout.connect(self.initRefill)
 
 	def run(self):
-		self.prefPath = pathPrefix()
 		self.setPriority(QThread.LowPriority)
 		self.timer.start(10000)
 
@@ -47,18 +46,18 @@ class DataCache(QThread):
 					""" if data cached """
 					head, tail = os.path.split(str(pathExist[1]))
 					if not moveFile(pathExist[1], \
-									self.prefPath + '/dev/shm/LightMight/cache/' + tail, \
+									Path.tempCache(tail), \
 									False) :
 						clnt.run()
 						names = clnt.getSharedSourceStructFile(True)
 						#print 'download struct'
-						if not moveFile(head + '/avatars/' + tail, \
-										self.prefPath + '/dev/shm/LightMight/cache/avatars/' + tail, \
+						if not moveFile(os.path.join(head, 'avatars', tail), \
+										Path.tempAvatar(tail), \
 										False) :
 							clnt.getAvatar()
 							#print ' download avatar'
-					elif not moveFile(head + '/avatars/' + tail, \
-									self.prefPath + '/dev/shm/LightMight/cache/avatars/' + tail, \
+					elif not moveFile(os.path.join(head, 'avatars', tail), \
+									Path.tempAvatar(tail), \
 									False) :
 						clnt.run()
 						clnt.getAvatar()
@@ -85,7 +84,7 @@ class DataCache(QThread):
 						item_ = self.Obj.menuTab.userList.item(i)
 						if str(item_.data(Qt.AccessibleTextRole).toString()) == \
 									str(itemValue[1][1] + ':' + itemValue[1][2]) :
-							item_.setIcon(QIcon(self.prefPath + '/dev/shm/LightMight/cache/avatars/' + itemValue[1][4]))
+							item_.setIcon(QIcon(Path.tempAvatar(itemValue[1][4])))
 			elif self.Key is False :
 				#print 'cache key is locked...'
 				break

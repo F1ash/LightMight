@@ -4,15 +4,15 @@ import os, os.path, stat
 from PyQt4 import QtGui, QtCore
 from xml.dom.minidom import Document, parse
 from TreeItem import TreeItem
-from Functions import pathPrefix
+from Functions import Path
 
 class PathToTree(QtCore.QObject):
 	def __init__(self, path, rootItem, typePath = 'file', parent = None):
 		QtCore.QObject.__init__(self, parent)
+		self.SEP = os.sep
 		self.path = path
 		self.rootItem = rootItem
 		self.typePath = typePath
-		self.pathPref = pathPrefix()
 		self.listPrepare()
 
 	def _proceed_dir(self, d, parentItem):
@@ -28,7 +28,7 @@ class PathToTree(QtCore.QObject):
 					#print entry_dir, ':', d, QtCore.QString().fromUtf8(d), \
 					#						QtCore.QString().fromUtf8(entry_dir)
 					#fullpath = os.path.join(d, entry_dir)
-					fullpath = QtCore.QString().fromUtf8(d) + '/' + \
+					fullpath = QtCore.QString().fromUtf8(d) + self.SEP + \
 											QtCore.QString().fromUtf8(entry_dir)
 				except UnicodeEncodeError :
 					#print 'UnicodeError_file'
@@ -62,7 +62,7 @@ class SharedSourceTree2XMLFile:
 	def __init__(self, fileName = 'resultXML', obj = None, parent = None):
 		self.fileName = fileName
 		self.rootItem = obj
-		self.pathPref = pathPrefix()
+		self.SEP = os.sep
 		self.doc = Document()
 		self.filePrepare()
 
@@ -75,7 +75,7 @@ class SharedSourceTree2XMLFile:
 		self.doc.appendChild(self.treeSharedDataToXML(self.rootItem))
 
 		#print self.doc.toprettyxml()
-		f = open(self.pathPref + '/dev/shm/LightMight/server/' + self.fileName, 'wb')
+		f = open(Path.multiPath(Path.tempStruct, 'server', self.fileName), 'wb')
 		try :
 			#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
 			self.doc.writexml(f, encoding = 'utf-8')
@@ -110,7 +110,7 @@ class SharedSourceTree2XMLFile:
 					if _name == 'Name' :
 						prefix_ = ''
 					else :
-						prefix_ = prefix + _name + '/'
+						prefix_ = prefix + _name + self.SEP
 					listChild = []
 					try:
 						listChild = os.listdir(path_)
@@ -143,7 +143,7 @@ class SharedSourceTree2XMLFile:
 				if _name == 'Name' :
 					prefix_ = ''
 				else :
-					prefix_ = prefix + _name + '/'
+					prefix_ = prefix + _name + self.SEP
 				#print tab, str_, prefix, name_, 'pref'
 				elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
 			else :

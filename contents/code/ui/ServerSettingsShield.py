@@ -5,7 +5,7 @@ from TreeProc import TreeModel
 from TreeProcess import TreeProcessing
 from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
-from Functions import InitConfigValue, dateStamp, moveFile, randomString, pathPrefix
+from Functions import InitConfigValue, dateStamp, moveFile, randomString, Path
 from mcastSender import _send_mcast as Sender
 import os, stat, os.path
 
@@ -14,10 +14,10 @@ class ServerSettingsShield(QtGui.QDialog):
 		QtGui.QDialog.__init__(self, parent)
 
 		self.Obj = obj
-		self.pathPref = pathPrefix()
+		self.SEP = os.sep
 
 		self.setWindowTitle('LightMight Server Settings')
-		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
+		self.setWindowIcon(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png'))
 
 		form = QtGui.QGridLayout()
 
@@ -161,11 +161,11 @@ class ServerSettingsShield(QtGui.QDialog):
 			#print self.certFileName
 			""" check certificate """
 			self.verifyProcess = QtCore.QProcess()
-			self.vrfProcOutput = self.pathPref + '/dev/shm/LightMight/server/' + randomString(24)
+			self.vrfProcOutput = Path.multiPath(Path.tempStruct, 'server', randomString(24))
 			self.verifyProcess.setStandardOutputFile(self.vrfProcOutput)
 			self.verifyProcess.setStandardErrorFile(self.vrfProcOutput)
 			self.verifyProcess.finished.connect(self.readVrfProcOutput)
-			self.verifyProcess.start('/usr/bin/openssl', \
+			self.verifyProcess.start('openssl', \
 									QtCore.QStringList() << 'verify' << self.certFileName)
 		else :
 			#print '  unchecked'
@@ -226,7 +226,7 @@ class ServerSettingsShield(QtGui.QDialog):
 		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
 			key = str(self.Obj.server_addr + ':' + str(self.Obj.server_port))
 			if key in self.Obj.USERS :
-				print 'key :', key, ' in USERS'
+				#print 'key :', key, ' in USERS'
 				data = QtCore.QString('0' + '<||>' + \
 									self.defaultName + '<||>' + \
 									self.Obj.USERS[key][1] + '<||>' + \
@@ -237,7 +237,7 @@ class ServerSettingsShield(QtGui.QDialog):
 				Sender(data)
 
 	def loadTree(self):
-		fileName = QtGui.QFileDialog.getOpenFileName(self, 'Path_to_', '~/.config/LightMight/treeBackup')
+		fileName = QtGui.QFileDialog.getOpenFileName(self, 'Path_to_', Path.config('treeBackup'))
 		if fileName != '' :
 			if 'serverThread' in dir(self.Obj) :
 				self.Obj.serverThread.terminate()
@@ -251,9 +251,9 @@ class ServerSettingsShield(QtGui.QDialog):
 		tmpFile = 'sharedSourceBackup_' + dateStamp()
 		S = SharedSourceTree2XMLFile(tmpFile, self.treeModel.rootItem)
 
-		fileName = QtGui.QFileDialog.getSaveFileName(self, 'Path_to_', '~/.config/LightMight/treeBackup')
+		fileName = QtGui.QFileDialog.getSaveFileName(self, 'Path_to_', Path.config('treeBackup'))
 
-		if not moveFile(self.pathPref + '/dev/shm/LightMight/server/' + tmpFile, \
+		if not moveFile(Path.multiPath(Path.tempStruct, 'server', tmpFile), \
 						QtCore.QString(fileName).toUtf8().data()) :
 			showHelp = ListingText("MSG: tree not saved.", self)
 			showHelp.exec_()

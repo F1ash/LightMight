@@ -2,7 +2,7 @@ import select
 import sys, string, socket, ctypes
 import pybonjour
 from PyQt4 import QtCore, QtGui
-from Functions import randomString  #, toolTipsHTMLWrap, InCache
+from Functions import randomString
 
 class AvahiBrowser(QtCore.QThread):
 	def __init__(self, obj = None, parent = None):

@@ -9,7 +9,6 @@ from Functions import *
 class ServerDaemon():
 	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, \
 				 parent = None, TLS = False, cert = ''):
-		self.pathPref = pathPrefix()
 		self.serverState = randomString(24)
 		self.Parent = parent
 		self.Parent.serverState = self.serverState
@@ -34,13 +33,13 @@ class ServerDaemon():
 		fileName = randomString(24)
 		_id = randomString(24)
 		list_ = [fileName, _id, self.serverState, self.Parent.previousState]
-		DataRendering().listToFile(list_, 'LightMight/' + fileName)
-		with open(self.pathPref + '/dev/shm/LightMight/' + fileName, "rb") as handle :
+		DataRendering().listToFile(list_, fileName)
+		with open(Path.tempStruct(fileName), "rb") as handle :
 			return xmlrpclib.Binary(handle.read())
 
 	def python_clean(self, name):
-		if os.path.isfile(self.pathPref + '/dev/shm/LightMight/' + name) :
-			os.remove(self.pathPref + '/dev/shm/LightMight/' + name)
+		path_ = Path.tempStruct(name)
+		if os.path.isfile(path_) : os.remove(path_)
 
 	def python_file(self, id_):
 		""" добавить обработчик ошибок соединения и существования файлов """
@@ -51,12 +50,12 @@ class ServerDaemon():
 					return xmlrpclib.Binary(handle.read())
 
 	def requestSharedSourceStruct(self, name):
-		#print '/dev/shm/LightMight/server/' + name, ' in requestSharedSourceStruct'
-		with open(self.pathPref + '/dev/shm/LightMight/server/' + name, "rb") as handle:
+		#print Path.multiPath(Path.tempStruct, 'server', name), ' in requestSharedSourceStruct'
+		with open(Path.multiPath(Path.tempStruct, 'server', name), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
 	def requestAvatar(self):
-		with open(self.pathPref + unicode(self.Parent.avatarPath), "rb") as handle:
+		with open(unicode(self.Parent.avatarPath), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
 	def run(self):

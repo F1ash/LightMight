@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import shutil, os.path, string, sys
+import shutil, os.path, string, sys, os
 from PyQt4 import QtGui, QtCore
+from Functions import *
 from Box import Box
 from Wait import SetupTree
 from ServerSettingsShield import ServerSettingsShield
@@ -11,19 +12,12 @@ from ListingText import ListingText
 from DataCache import DataCache
 from StatusBar import StatusBar
 
-if sys.platform == 'win32':
+if Path.platform == 'win':
 	from BonjourTools import AvahiBrowser, AvahiService
-	print 'Platform : Win'
 else:
-	if sys.platform == 'darwin':
-		print 'Platform : Apple'
-	else :
-		print 'Platform : Linux'
 	from AvahiTools import AvahiBrowser, AvahiService
-#from BonjourTools import AvahiBrowser, AvahiService
-	
+
 from serv import ServerDaemon
-from Functions import *
 from ToolsThread import ToolsThread
 from TreeProc import TreeModel
 from PathToTree import SharedSourceTree2XMLFile
@@ -45,8 +39,6 @@ class MainWindow(QtGui.QMainWindow):
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
-		self.pathPref = pathPrefix()
-
 		self.serverState = ''
 		self.currentRemoteServerState = ''
 		self.currentRemoteServerAddr = ''
@@ -54,32 +46,33 @@ class MainWindow(QtGui.QMainWindow):
 		self.jobCount = 0
 		self.commonSetOfSharedSource = {}
 		self.USERS = {}
+		self.SEP = os.sep
 
 		#self.resize(450, 350)
 		self.setWindowTitle('LightMight')
-		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
+		self.setWindowIcon(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png'))
 
 		self.Settings = QtCore.QSettings('LightMight','LightMight')
 		self.avatarPath = InitConfigValue(self.Settings, 'AvatarPath', '')
 
-		self.exit_ = QtGui.QAction(QtGui.QIcon('../icons/exit.png'), '&Exit', self)
+		self.exit_ = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'exit.png'), '&Exit', self)
 		self.exit_.setShortcut('Ctrl+Q')
 		self.exit_.setStatusTip('Exit application')
 		self.connect(self.exit_, QtCore.SIGNAL('triggered()'), self._close)
 
-		listHelp = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&About LightMight', self)
+		listHelp = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'&About LightMight', self)
 		listHelp.setStatusTip('Read help')
 		self.connect(listHelp,QtCore.SIGNAL('triggered()'), self.showMSG)
 
-		commonSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Common Settings', self)
+		commonSettings = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'&Common Settings', self)
 		commonSettings.setStatusTip('Set avatars, use cache, etc.')
 		self.connect(commonSettings, QtCore.SIGNAL('triggered()'), self.showCommonSettingsShield)
 
-		serverSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Server Settings', self)
+		serverSettings = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'&Server Settings', self)
 		serverSettings.setStatusTip('Set shared source, encrypt, etc.')
 		self.connect(serverSettings, QtCore.SIGNAL('triggered()'), self.showServerSettingsShield)
 
-		clientSettings = QtGui.QAction(QtGui.QIcon('../icons/help.png'),'&Client Settings', self)
+		clientSettings = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'&Client Settings', self)
 		clientSettings.setStatusTip('Set the download path, etc.')
 		self.connect(clientSettings, QtCore.SIGNAL('triggered()'), self.showClientSettingsShield)
 
@@ -106,13 +99,13 @@ class MainWindow(QtGui.QMainWindow):
 		self.setCentralWidget(self.menuTab)
 
 		self.trayIconMenu = QtGui.QMenu(self)
-		show_hide = self.trayIconMenu.addAction(QtGui.QIcon('../icons/tux_partizan.png'), 'Hide / Show')
+		show_hide = self.trayIconMenu.addAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png'), 'Hide / Show')
 		self.connect(show_hide, QtCore.SIGNAL('triggered()'), self.show_n_hide)
-		help_tray = self.trayIconMenu.addAction(QtGui.QIcon('../icons/help.png'), 'Help')
+		help_tray = self.trayIconMenu.addAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'), 'Help')
 		self.connect(help_tray, QtCore.SIGNAL('triggered()'), self.showMSG)
-		exit_tray = self.trayIconMenu.addAction(QtGui.QIcon('../icons/exit.png'), '&Exit')
+		exit_tray = self.trayIconMenu.addAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'exit.png'), '&Exit')
 		self.connect(exit_tray, QtCore.SIGNAL('triggered()'), self._close)
-		self.trayIconPixmap = QtGui.QPixmap('../icons/tux_partizan.png') # файл иконки
+		self.trayIconPixmap = QtGui.QPixmap('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png') # файл иконки
 		self.trayIcon = QtGui.QSystemTrayIcon(self)
 		self.trayIcon.setToolTip('LightMight')
 		self.trayIcon.setContextMenu(self.trayIconMenu)
@@ -223,9 +216,11 @@ class MainWindow(QtGui.QMainWindow):
 			for iter_ in self.USERS.iterkeys() :
 				try :
 					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
+						'''
 						print 'Not uniqual contact(B):', unicode(self.USERS[iter_][0]), \
 														 self.USERS[iter_][1], \
 														 self.USERS[iter_][2]
+						'''
 						''' add the check of optional data '''	## FIXME:
 						return False
 				except RuntimeError, err :
@@ -248,9 +243,11 @@ class MainWindow(QtGui.QMainWindow):
 			for iter_ in self.USERS.iterkeys() :
 				try :
 					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
+						'''
 						print 'Not uniqual contact(A):', unicode(self.USERS[iter_][0]), \
 														 self.USERS[iter_][1], \
 														 self.USERS[iter_][2]
+						'''
 						self.delContact(self.USERS[iter_][0], \
 										self.USERS[iter_][1], \
 										self.USERS[iter_][2], \
@@ -264,21 +261,23 @@ class MainWindow(QtGui.QMainWindow):
 		in_cashe, path_ = InCache(state)
 		if in_cashe :
 			head, tail = os.path.split(str(path_))
-			new_item.setIcon(QtGui.QIcon(head + '/avatars/' + tail))
-			new_item.setToolTip(toolTipsHTMLWrap(head + '/avatars/' + tail, \
-								'name : ' + name + '<br>'\
-								'\naddress : ' + addr + '<br>'\
-								'\nport : ' + port + '<br>'\
-								'\nEncoding : ' + encode + '<br>'\
-								'\nServerState : ' + state))
+			path_ = os.path.join(head, 'avatars', tail)
+			#new_item.setIcon(QtGui.QIcon(path_))
+			#new_item.setToolTip(toolTipsHTMLWrap(path_, \
+			#					'name : ' + name + '<br>'\
+			#					'\naddress : ' + addr + '<br>'\
+			#					'\nport : ' + port + '<br>'\
+			#					'\nEncoding : ' + encode + '<br>'\
+			#					'\nServerState : ' + state))
 		else :
-			new_item.setIcon(QtGui.QIcon(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + state))
-			new_item.setToolTip(toolTipsHTMLWrap(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + state, \
-								'name : ' + name + '<br>'\
-								'\naddress : ' + addr + '<br>'\
-								'\nport : ' + port + '<br>'\
-								'\nEncoding : ' + encode + '<br>'\
-								'\nServerState : ' + state))
+			path_ = Path.tempAvatar(state)
+		new_item.setIcon(QtGui.QIcon(path_))
+		new_item.setToolTip(toolTipsHTMLWrap(path_, \
+							'name : ' + name + '<br>'\
+							'\naddress : ' + addr + '<br>'\
+							'\nport : ' + port + '<br>'\
+							'\nEncoding : ' + encode + '<br>'\
+							'\nServerState : ' + state))
 		self.menuTab.userList.addItem(new_item)
 		""" Keys of USERS defined by "addr:port", because it uniqual property,
 			but "state" may be not changed. In cache the important\exclusive role
@@ -378,18 +377,19 @@ class MainWindow(QtGui.QMainWindow):
 
 		""" должен сохранить результат как файл для передачи на запрос клиентов """
 		if firstRun :
-			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastServerState')) :
-				with open(os.path.expanduser('~/.config/LightMight/lastServerState'), 'rb') as f :
+			path_ = Path.config('lastServerState')
+			if os.path.exists(path_) :
+				with open(path_, 'rb') as f :
 					self.serverState = f.read()
 					self.serverThread.Obj.serverState = self.serverState
-			if os.path.exists(os.path.expanduser('~/.config/LightMight/lastSharedSource')) :
-				shutil.move(os.path.expanduser('~/.config/LightMight/lastSharedSource'), \
-							self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState)
+			path_ = Path.config('lastSharedSource')
+			if os.path.exists(path_) :
+				shutil.move(path_, Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState))
 			else :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 				S.__del__(); S = None
 		elif loadFile is not None and loadFile != '' :
-			if not moveFile(loadFile, self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState, False) :
+			if not moveFile(loadFile, Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), False) :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 				S.__del__(); S = None
 		else :
@@ -400,7 +400,7 @@ class MainWindow(QtGui.QMainWindow):
 		treeModel = TreeModel('Name', 'Description')		## cleaned treeModel.rootItem
 
 		self.threadSetupTree = SetupTree(TreeProcessing(), \
-										[self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState], \
+										[Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState)], \
 										treeModel.rootItem, \
 										self, \
 										True, \
@@ -415,32 +415,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.serverThread.start()
 		self.statusBar.clearMessage()
 		self.statusBar.showMessage('Server online')
-		'''
-		if 'avahiService' in dir(self) :
-			if '__del__' in dir(self.avahiService) : self.avahiService.__del__()
-			self.avahiService = None
-		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
-		if self.TLS :
-			encode = 'Yes'
-		else :
-			encode = 'No'
-		if self.Settings.value('AvahiDetect', True).toBool() :
-			self.avahiService = AvahiService(self.menuTab, \
-								name = name_, \
-								port = self.server_port, \
-								description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
-			self.avahiService.start()
-		if self.Settings.value('BroadcastDetect', True).toBool() :
-			data = QtCore.QString('1' + '<||>' + \
-								  name_ + '<||>' + \
-								  getIP() + '<||>' + \
-								  str(self.server_port) + '<||>' + \
-								  encode + '<||>' + \
-								  self.serverState + '<||>' + \
-								  '*infoShare*')
-			Sender(data)'''
 		self.preinitAvahiBrowser()
-		#self.initAvahiService()
 		self.menuTab.progressBar.hide()
 
 	def uploadTask(self, info):
@@ -451,7 +426,7 @@ class MainWindow(QtGui.QMainWindow):
 				и ключей в self.commonSetOfSharedSource сервера
 			"""
 			nameMaskFile = randomString(24)
-			with open(self.pathPref + '/dev/shm/LightMight/client/' + nameMaskFile, 'a') as handler :
+			with open(Path.multiPath(Path.tempStruct, 'client', nameMaskFile), 'a') as handler :
 				downLoadSize = \
 					TreeProcessing().getCommonSetOfSharedSource(self.menuTab.treeModel.rootItem, \
 																None, \
@@ -474,8 +449,8 @@ class MainWindow(QtGui.QMainWindow):
 					'\n\n!!!!', encoding, '  info'
 			"""
 			""" task run """
-			pid, start = job.startDetached('/usr/bin/python', \
-						 (QtCore.QStringList()	<< './DownLoadClient.py' \
+			pid, start = job.startDetached('python', \
+						 (QtCore.QStringList()	<< '.' + self.SEP + 'DownLoadClient.py' \
 												<< nameMaskFile \
 												<< str(downLoadSize) \
 												<< str(self.jobCount) \
@@ -500,7 +475,7 @@ class MainWindow(QtGui.QMainWindow):
 
 	def showMSG(self, str_ = "README"):
 		if str_ == "README" :
-			STR_ = '../../README'
+			STR_ = '..' + self.SEP + '..' + self.SEP + 'README'
 		else :
 			STR_ = "MSG: " + str_
 		showHelp = ListingText(STR_, self)
@@ -523,22 +498,22 @@ class MainWindow(QtGui.QMainWindow):
 	def saveCache(self):
 		Once = True
 		limitCache = int(InitConfigValue(self.Settings, 'CacheSize', '100')) * 10000
-		prefPath = self.pathPref + '/dev/shm/LightMight/cache/'
-		prefPathForAvatar = prefPath + 'avatars/'
-		prefPathInStationar = self.pathPref + os.path.expanduser('~/.cache/LightMight/')
-		prefPathInStationarForAvatar = prefPathInStationar + 'avatars/'
-		if os.path.exists(self.pathPref + '/dev/shm/LightMight/cache') :
+		prefPath = Path.TempCache
+		prefPathForAvatar = Path.TempAvatar
+		prefPathInStationar = Path.Cache
+		prefPathInStationarForAvatar = Path.Avatar
+		if os.path.exists(Path.TempCache) :
 			currentSize = getFolderSize(prefPathInStationar)
 			#print currentSize, ':'
-			listingCache = os.listdir(self.pathPref + '/dev/shm/LightMight/cache')
+			listingCache = os.listdir(Path.TempCache)
 			for name in listingCache :
-				path = prefPath + name
-				pathInStationarCache = prefPathInStationar + name
+				path = Path.tempCache(name)
+				pathInStationarCache = Path.cache(name)
 				if os.path.isfile(path) and not os.path.isfile(pathInStationarCache) :
 					if moveFile(path, pathInStationarCache) :
 						currentSize += os.path.getsize(pathInStationarCache)
-					if moveFile(prefPathForAvatar + name, prefPathInStationarForAvatar + name) :
-						currentSize += os.path.getsize(prefPathInStationarForAvatar + name)
+					if moveFile(Path.tempAvatar(name), Path.avatar(name)) :
+						currentSize += os.path.getsize(Path.avatar(name))
 					#print currentSize
 					if currentSize >= limitCache :
 						print 'cache`s limit is reached'
@@ -552,20 +527,20 @@ class MainWindow(QtGui.QMainWindow):
 									 str(limitCache))
 
 	def _close(self):
-		#print '/dev/shm/LightMight/server/sharedSource_' + self.serverState, ' close'
+		#print Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), ' close'
 		if InitConfigValue(self.Settings, 'UseCache', 'True') == 'True' : self.saveCache()
 		if InitConfigValue(self.Settings, 'SaveLastStructure', 'True') == 'True' :
 			#print True
-			if os.path.exists(self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState) :
+			if os.path.exists(Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState)) :
 				#print 'Exist'
-				shutil.move(self.pathPref + '/dev/shm/LightMight/server/sharedSource_' + self.serverState, \
-							os.path.expanduser('~/.config/LightMight/lastSharedSource'))
-				with open(os.path.expanduser('~/.config/LightMight/lastServerState'), 'wb') as f :
+				shutil.move(Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), \
+							Path.config('lastSharedSource'))
+				with open(Path.config('lastServerState'), 'wb') as f :
 					f.write(self.serverState)
 			else :
 				#print 'not Exist'
 				pass
-		shutil.rmtree(self.pathPref + '/dev/shm/LightMight', ignore_errors = True)
+		shutil.rmtree(Path.TempStruct, ignore_errors = True)
 		self.close()
 
 	def closeEvent(self, event):

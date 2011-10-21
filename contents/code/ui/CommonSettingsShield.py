@@ -2,7 +2,7 @@
 
 from PyQt4 import QtGui, QtCore
 from ListingText import ListingText
-from Functions import InitConfigValue, pathPrefix, createStructure
+from Functions import InitConfigValue, Path, createStructure
 import os, stat, os.path, shutil
 
 class CommonSettingsShield(QtGui.QDialog):
@@ -10,10 +10,10 @@ class CommonSettingsShield(QtGui.QDialog):
 		QtGui.QDialog.__init__(self, parent)
 
 		self.Obj = obj
-		self.pathPref = pathPrefix()
+		self.SEP = os.sep
 
 		self.setWindowTitle('LightMight Common Settings')
-		self.setWindowIcon(QtGui.QIcon('../icons/tux_partizan.png'))
+		self.setWindowIcon(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png'))
 
 		form = QtGui.QGridLayout()
 
@@ -123,7 +123,7 @@ class CommonSettingsShield(QtGui.QDialog):
 			self.sizeCacheValueLabel.hide()
 
 	def cleanAllData(self):
-		shutil.rmtree(os.path.expanduser('~/.cache/LightMight/'), ignore_errors = True)
+		shutil.rmtree(Path.Cache, ignore_errors = True)
 		createStructure()
 
 	def cleanAbsentParticipantData(self):
@@ -134,12 +134,12 @@ class CommonSettingsShield(QtGui.QDialog):
 		statesList = []
 		for item in self.Obj.USERS.values() : statesList.append(item[4]) 
 		print statesList
-		for name in os.listdir(os.path.expanduser('~/.cache/LightMight/')) :
-			if os.path.isfile(os.path.expanduser('~/.cache/LightMight/') + name) and name not in statesList :
-				os.remove(os.path.expanduser('~/.cache/LightMight/') + name)
-				os.remove(os.path.expanduser('~/.cache/LightMight/avatars/') + name)
-				os.remove(self.pathPref + '/dev/shm/LightMight/cache/' + name)
-				os.remove(self.pathPref + '/dev/shm/LightMight/cache/avatars/' + name)
+		for name in os.listdir(Path.Cache) :
+			if os.path.isfile(Path.cache(name)) and name not in statesList :
+				os.remove(Path.cache(name))
+				os.remove(Path.avatar(name))
+				os.remove(Path.tempCache(name))
+				os.remove(Path.tempAvatar(name))
 
 	def ok(self):
 		self.saveData()
