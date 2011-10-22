@@ -100,7 +100,7 @@ class Box(QtGui.QWidget):
 				count = self.userList.count()
 				for i in xrange(count) :
 					item_ = self.userList.item(i)
-					if str(item_.data(QtCore.Qt.AccessibleTextRole).toString()) == \
+					if str(item_.data(QtCore.Qt.AccessibleTextRole).toList()[0].toString()) == \
 								str(itemValue[1][1] + ':' + itemValue[1][2]) :
 						item_.setIcon(QtGui.QIcon(Path.tempAvatar(itemValue[1][4])))
 						break
@@ -120,7 +120,7 @@ class Box(QtGui.QWidget):
 									str(d) + ' Byte(s)\nin ' + str(c) + ' file(s).')
 
 	def itemSharedSourceQuired(self, item):
-		key = str(item.data(QtCore.Qt.AccessibleTextRole).toString())
+		key = str(item.data(QtCore.Qt.AccessibleTextRole).toList()[0].toString())
 		#print unicode(item.text()) , ' dClicked :', self.Obj.USERS[key]
 		serverState = self.Obj.USERS[key][4]
 		pathExist = InCache(serverState)

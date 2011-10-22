@@ -189,7 +189,7 @@ class MainWindow(QtGui.QMainWindow):
 				if len(item) > 0 :
 					for item_ in item :
 						key = str(addr + ':' + port)
-						if item_.data(QtCore.Qt.AccessibleTextRole).toString() == key :
+						if item_.data(QtCore.Qt.AccessibleTextRole).toList()[0].toString() == key :
 							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
 							if key in self.USERS :
 								del self.USERS[key]
@@ -200,13 +200,15 @@ class MainWindow(QtGui.QMainWindow):
 			#print item, ' find list'
 			if len(item) > 0 :
 				for item_ in item :
-					self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
-					key = str(item_.data(QtCore.Qt.AccessibleTextRole).toString())
-					if key in self.USERS :
-						del self.USERS[key]
-						#print key, 'deleted'
-		for iter_ in self.USERS.iterkeys() :
-			print iter_
+					data = item_.data(QtCore.Qt.AccessibleTextRole).toList()
+					if data[1].toBool() :
+						self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
+						key = str(data[0].toString())
+						if key in self.USERS :
+							del self.USERS[key]
+							#print key, 'deleted'
+		#for iter_ in self.USERS.iterkeys() :
+		#	print iter_
 		#print 'DEL down'
 
 	def addNewContact(self, name, addr, port, encode, state, avahi_method = True):
@@ -257,20 +259,14 @@ class MainWindow(QtGui.QMainWindow):
 					print err
 				finally : pass
 		new_item = QtGui.QListWidgetItem(name)
-		new_item.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant(addr + ':' + port))
+		new_item.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant([addr + ':' + port, avahi_method]))
 		in_cashe, path_ = InCache(state)
 		if in_cashe :
 			head, tail = os.path.split(str(path_))
 			path_ = os.path.join(head, 'avatars', tail)
-			#new_item.setIcon(QtGui.QIcon(path_))
-			#new_item.setToolTip(toolTipsHTMLWrap(path_, \
-			#					'name : ' + name + '<br>'\
-			#					'\naddress : ' + addr + '<br>'\
-			#					'\nport : ' + port + '<br>'\
-			#					'\nEncoding : ' + encode + '<br>'\
-			#					'\nServerState : ' + state))
 		else :
 			path_ = Path.tempAvatar(state)
+
 		new_item.setIcon(QtGui.QIcon(path_))
 		new_item.setToolTip(toolTipsHTMLWrap(path_, \
 							'name : ' + name + '<br>'\
