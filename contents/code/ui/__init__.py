@@ -142,9 +142,9 @@ class MainWindow(QtGui.QMainWindow):
 		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
 		''' check correct IP for local network '''
 		if addr == addr_in_data :
-			if   mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, False)
+			if   mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, None, False)
 			elif mark == '0' : self.delContact(name, addr_in_data, port, encode, state)
-			elif mark == 'A' : self.addNewContact(name, addr, port, encode, state)
+			elif mark == 'A' : self.addNewContact(name, addr, port, encode, state, None, False)
 			elif mark == 'R' : self.reInitRequest(name, addr, port, encode, state)
 		else :
 			''' check correct IP for internet '''
@@ -171,95 +171,64 @@ class MainWindow(QtGui.QMainWindow):
 	def delContact(self, name, addr, port, encode, state):
 		#print name, addr, port, encode, state , 'Must die!'
 		if addr != None and port != None :
-			contactExist = False
-			for iter_ in self.USERS.iterkeys() :
-				try :
-					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
-						name = self.USERS[iter_][0]
-						#print 'Found contact:', name, iter_
-						contactExist = True
+			key = str(addr + ':' + port)
+			if key in self.USERS :
+				for i in xrange(self.menuTab.userList.count()) :
+					item_ = self.menuTab.userList.item(i)
+					if item_ is not None and item_.data(QtCore.Qt.AccessibleTextRole).toList()[0] == key :
+						self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
+						if key in self.USERS :
+							del self.USERS[key]
+							#print key, 'deleted'
 						break
-				except RuntimeError, err :
-					print err
-				finally : pass
-			if contactExist :
-				item = self.menuTab.userList.findItems(name, \
-						QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
-				#print item, ' find list'
-				if len(item) > 0 :
-					for item_ in item :
-						key = str(addr + ':' + port)
-						if item_.data(QtCore.Qt.AccessibleTextRole).toList()[0].toString() == key :
-							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
-							if key in self.USERS :
-								del self.USERS[key]
-								#print key, 'deleted'
 		else :
 			item = self.menuTab.userList.findItems(name, \
 					QtCore.Qt.MatchFlags(QtCore.Qt.MatchCaseSensitive))
+			domain = str(state)
 			#print item, ' find list'
 			if len(item) > 0 :
 				for item_ in item :
 					data = item_.data(QtCore.Qt.AccessibleTextRole).toList()
 					if data[1].toBool() :
-						self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
-						key = str(data[0].toString())
-						if key in self.USERS :
-							del self.USERS[key]
-							#print key, 'deleted'
-		#for iter_ in self.USERS.iterkeys() :
-		#	print iter_
+						if domain in data[2:] : data.remove(domain)
+						if data[2:] in ([], [None]) :
+							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
+							key = str(data[0].toString())
+							if key in self.USERS :
+								del self.USERS[key]
+								#print key, 'deleted'
 		#print 'DEL down'
 
-	def addNewContact(self, name, addr, port, encode, state, avahi_method = True):
+	def addNewContact(self, name, addr, port, encode, state, domain, avahi_method = True):
 		#print name, addr, port, 'new contact'
+		key = str(addr + ':' + port)
 		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :
-			for iter_ in self.USERS.iterkeys() :
-				try :
-					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
-						'''
-						print 'Not uniqual contact(B):', unicode(self.USERS[iter_][0]), \
-														 self.USERS[iter_][1], \
-														 self.USERS[iter_][2]
-						'''
-						''' add the check of optional data '''	## FIXME:
-						return False
-				except RuntimeError, err :
-					print err
-				finally : pass
-			''' check uniqual name '''
-			name_ = unicode(name)
-			key = True
-			while key :
-				key = False
-				for iter_ in self.USERS.iterkeys() :
-					if self.USERS[iter_][0] == name_ :
-						name_ = name_.split('_')[0] + '_' + randomString(3)
-						key = True;
-						break
-			name = name_
-			#print 'new name :', name
+			if key in self.USERS :
+				'''
+				print 'Not uniqual contact(B):', unicode(self.USERS[iter_][0]), \
+												 self.USERS[iter_][1], \
+												 self.USERS[iter_][2]
+				'''
+				return False
 		else :
 			''' check not uniqual name (avahi u. name > broadcast u. name) '''
-			for iter_ in self.USERS.iterkeys() :
-				try :
-					if self.USERS[iter_][1] == addr and self.USERS[iter_][2] == port :
-						'''
-						print 'Not uniqual contact(A):', unicode(self.USERS[iter_][0]), \
-														 self.USERS[iter_][1], \
-														 self.USERS[iter_][2]
-						'''
-						self.delContact(self.USERS[iter_][0], \
-										self.USERS[iter_][1], \
-										self.USERS[iter_][2], \
-										None, None)
-						break
-				except RuntimeError, err :
-					print err
-				finally : pass
+			if key in self.USERS :
+				'''
+				print 'Not uniqual contact(A):', unicode(self.USERS[iter_][0]), \
+												 self.USERS[iter_][1], \
+												self.USERS[iter_][2]
+				'''
+				for i in xrange(self.menuTab.userList.count()) :
+					item_ = self.menuTab.userList.item(i)
+					data = item_.data(QtCore.Qt.AccessibleTextRole).toList()
+					if domain not in data[2:] :
+						data.append(domain)
+						data[1] = avahi_method
+						item_.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant(data))
+					return True
 		new_item = QtGui.QListWidgetItem(name)
-		new_item.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant([addr + ':' + port, avahi_method]))
+		new_item.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant([key, avahi_method, domain]))
 		in_cashe, path_ = InCache(state)
 		if in_cashe :
 			head, tail = os.path.split(str(path_))
@@ -279,7 +248,7 @@ class MainWindow(QtGui.QMainWindow):
 			but "state" may be not changed. In cache the important\exclusive role
 			has the status of remote server.
 		"""
-		self.USERS[str(addr + ':' + port)] = (name, addr, port, encode, state, False)
+		self.USERS[key] = (name, addr, port, encode, state, False)
 		#print self.USERS
 		return True
 

@@ -2,7 +2,7 @@ import select
 import sys, string, socket, ctypes
 import pybonjour
 from PyQt4 import QtCore, QtGui
-from Functions import randomString
+from Functions import randomString, getIP
 
 class AvahiBrowser(QtCore.QThread):
 	def __init__(self, obj = None, parent = None):
@@ -67,7 +67,7 @@ class AvahiBrowser(QtCore.QThread):
 			return
 
 		if not (flags & pybonjour.kDNSServiceFlagsAdd) :
-			self.obj.delContact(serviceName, None, None, None, None)
+			self.obj.delContact(serviceName, None, None, None, replyDomain)
 			return
 
 		print 'Service added; resolving'

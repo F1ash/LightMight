@@ -39,12 +39,13 @@ class AvahiBrowser():
 
 	def service_resolved(self, *args):
 		str_ = string.join( avahi.txt_array_to_string_array(args[9]), '' )
-		"""print 'name:', unicode(args[2])
+		domain = str(args[4])
+		'''print 'name:', unicode(args[2])
 		print 'address:', args[7]
 		print 'port:', args[8]
-		print str_
+		print str_, '\n', args
 		print 'service resolved.'
-		"""
+		'''
 		__str_state = ''; __str_encode = ''
 		for _str in string.split(str_, '.') :
 			if _str.startswith('Encoding=') :
@@ -53,14 +54,14 @@ class AvahiBrowser():
 			#else : __str_encode = _str
 			if _str.startswith('State=') :
 				__str_state = self.extractValue(_str)
-		self.obj.addNewContact(unicode(args[2]), str(args[7]), str(args[8]), __str_encode, __str_state)
+		self.obj.addNewContact(unicode(args[2]), str(args[7]), str(args[8]), __str_encode, __str_state, domain)
 
 	def print_error(self, *args):
 		print 'error_handler'
 		print args[0]
 
 	def myhandlerRemove(self, interface, protocol, name, stype, domain, flags):
-		self.obj.delContact(name, None, None, None, None)
+		self.obj.delContact(name, None, None, None, domain)
 
 	def myhandler(self, interface, protocol, name, stype, domain, flags):
 		#print "Found service '%s' type '%s' domain '%s' " % (unicode(name), stype, domain)

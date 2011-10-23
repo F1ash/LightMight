@@ -28,6 +28,7 @@ class PathClass():
 		self.Config = os.path.join(os.path.expanduser('~'), '.config', 'LightMight')
 		self.Cache = os.path.join(os.path.expanduser('~'), '.cache', 'LightMight')
 		self.Avatar = os.path.join(self.Cache, 'avatars')
+		self.methodType = type(self.tempAvatar)
 
 	def tempStruct(self, name = ''):
 		return os.path.join(self.TempStruct, unicode(name))
@@ -48,7 +49,7 @@ class PathClass():
 		return os.path.join(self.Avatar, unicode(name))
 
 	def multiPath(self, arg, name1 = '', name2 = ''):
-		if isinstance(arg, type(self.tempAvatar)) :
+		if isinstance(arg, self.methodType) :
 			return os.path.join(arg(name1), unicode(name2))
 		return ''
 
