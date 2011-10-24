@@ -16,6 +16,7 @@ class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
 	tree = QtCore.pyqtSignal(TreeItem, int, int)
 	data = QtCore.pyqtSignal(TreeBox)
+	setAvatar = QtCore.pyqtSignal(QtGui.QListWidgetItem, str)
 	def __init__(self, Obj_, parent = None):
 		QtGui.QWidget.__init__(self, parent)
 
@@ -69,6 +70,7 @@ class Box(QtGui.QWidget):
 		self.complete.connect(self.hideProgressBar)
 		self.tree.connect(self.showTree)
 		self.data.connect(self.changeViewMode)
+		self.setAvatar.connect(self.setContactAvatar)
 
 	def showSharedSources(self, str_ = ''):
 		if not self.progressBar.isVisible() : self.progressBar.show()
@@ -80,6 +82,9 @@ class Box(QtGui.QWidget):
 		count, downLoads = self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
 		self.hideProgressBar()
 		self.showTree(self.treeModel.rootItem, count, downLoads)
+
+	def setContactAvatar(self, item_, name_):
+		item_.setIcon(QtGui.QIcon(Path.tempAvatar(name_)))
 
 	def _showSharedSources(self):
 		self.progressBar.show()
@@ -102,8 +107,9 @@ class Box(QtGui.QWidget):
 					item_ = self.userList.item(i)
 					if str(item_.data(QtCore.Qt.AccessibleTextRole).toList()[0].toString()) == \
 								str(itemValue[1][1] + ':' + itemValue[1][2]) :
-						item_.setIcon(QtGui.QIcon(Path.tempAvatar(itemValue[1][4])))
+						self.setAvatar.emit(item_, itemValue[1][4])
 						break
+				break
 		if previousState != '' : DelFromCache(previousState)
 		self.showSharedSources(path)
 
@@ -128,7 +134,6 @@ class Box(QtGui.QWidget):
 		if pathExist[0] :
 			#print 'cached'
 			self.showSharedSources(pathExist[1])
-			#item.setIcon(QtGui.QIcon(QtCore.QString(Path.tempAvatar(serverState))))
 			return None
 		""" run the getting new structure in QThread """
 		if 'clientThread' in dir(self) :

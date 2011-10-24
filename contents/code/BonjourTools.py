@@ -51,7 +51,9 @@ class AvahiBrowser(QtCore.QThread):
 				if _str.rfind('State=') > -1 :
 					__str_state = self.getRecord(_str)
 
-			self.obj.addNewContact(unicode(__str_name, 'utf-8'), __str_addr, __str_port, __str_encode, __str_state)
+			self.obj.addNewContact(unicode(__str_name, 'utf-8'), __str_addr, __str_port, \
+								   __str_encode, __str_state, \
+								   fullname.partition('._')[1].partition('.')[1])
 
 	def getRecord(self, str_):
 		_str_ = string.split(str_, '=')
@@ -113,6 +115,7 @@ class AvahiService(QtCore.QThread):
 		self.address = getIP()
 		self.port = port
 		unicalName = False
+		_encode, _state = description.split('.')
 
 		while not unicalName :
 			try :
@@ -120,11 +123,11 @@ class AvahiService(QtCore.QThread):
 									 regtype = self.regtype,
 									 port = self.port,
 									 txtRecord = pybonjour.TXTRecord(
-														{'Encoding' : description + ';',
+														{'Encoding' : _encode.split('=')[1] + ';',
 														 'Address' : self.address + ';',
 														 'Port' : str(self.port) + ';',
 														 'Name' : self.name + ';',
-														 'State' : self.obj.Obj.serverState + ';'}
+														 'State' : _state.split('=')[1] + ';'}
 																	),
 									 callBack = self.register_callback)
 			except pybonjour.BonjourError, err :
@@ -144,7 +147,9 @@ class AvahiService(QtCore.QThread):
 			if self.sdRef in ready[0] :
 				pybonjour.DNSServiceProcessResult(self.sdRef)
 			if not self.RUN :
-				if 'sdRef' in dir(self) : self.sdRef.close()
+				if 'sdRef' in dir(self) :
+					self.sdRef.close()
+					break
 
 	def register_callback(self, sdRef, flags, errorCode, name, regtype, domain):
 		if errorCode == pybonjour.kDNSServiceErr_NoError :

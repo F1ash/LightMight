@@ -18,6 +18,7 @@ class xr_client:
 			self.Obj.currentRemoteServerAddr = addr
 			self.Obj.currentRemoteServerPort = port
 			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', Path.Temp))
+			if not os.path.isdir(self.downLoadPath) : self.downLoadPath = Path.Temp
 			#print '	run for get structure only '
 
 	def run(self):

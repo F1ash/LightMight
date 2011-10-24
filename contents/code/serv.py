@@ -18,7 +18,7 @@ class ServerDaemon():
 			self._srv = ThreadServer(serveraddr, DocXMLRPCRequestHandler, allow_none = True, \
 									TLS = TLS, certificatePath = cert)
 		except socket.error, err :
-			print err
+			print err, 'server init Error'
 			exceptin = True
 			self.Parent.reinitServer.emit()
 		if not exception :

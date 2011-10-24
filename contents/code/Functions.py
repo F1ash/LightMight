@@ -45,15 +45,16 @@ def InitConfigValue(Settings = None, key = None, default = None):
 
 def getIP():
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	error = False
 	msg = ''
 	for i in xrange(5) :
 		try :
+			error = False
 			#s.connect(("gmail.com", 80))
-			s.connect(('255.255.255.240', 34001))
+			s.connect(('0.0.0.0', 34001))
 		except socket.gaierror, err:
 			print err
 			error = True
+		except : error = True
 		finally : pass
 		if not error : break
 	addr = s.getsockname()[0]

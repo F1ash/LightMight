@@ -84,7 +84,7 @@ class DataCache(QThread):
 						item_ = self.Obj.menuTab.userList.item(i)
 						if str(item_.data(Qt.AccessibleTextRole).toList()[0].toString()) == \
 									str(itemValue[1][1] + ':' + itemValue[1][2]) :
-							item_.setIcon(QIcon(Path.tempAvatar(itemValue[1][4])))
+							self.Obj.menuTab.setAvatar.emit(item_, itemValue[1][4])
 			elif self.Key is False :
 				#print 'cache key is locked...'
 				break
