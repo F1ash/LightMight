@@ -52,11 +52,10 @@ class PathToTree(QtCore.QObject):
 
 	def listPrepare(self):
 		str_path = self.path
-		entryItem = TreeItem(str_path, self.typePath, self.rootItem)
+		entryItem = TreeItem(str_path, self.typePath, self.rootItem, first = True)
 		entryItem.checkState = QtCore.Qt.Checked
 		self.rootItem.appendChild(entryItem)
 		self._proceed_dir(str_path, entryItem)
-
 
 class SharedSourceTree2XMLFile:
 	def __init__(self, fileName = 'resultXML', obj = None, parent = None):
@@ -87,15 +86,16 @@ class SharedSourceTree2XMLFile:
 	def treeSharedDataToXML(self, obj, prefix = '', tab = '\t'):
 		_str = obj.data(1)
 		_name = obj.data(0)
-		#print tab, prefix, unicode(_name), 'parent'
 		node = self.doc.createElement(_str)
 		node.setAttribute('name', QtCore.QString(_name).toUtf8().data())
 		node.setAttribute('size', ' dir')
+		#print tab, prefix, unicode(_name), 'parent'
 		i = 0
 		while i < obj.childCount() :
 			item = obj.child(i)
 			str_ = item.data(1)
 			name_ = item.data(0)
+			if hasattr(item, 'Root') : name_ = os.path.join(item.Root, name_)
 			if item.checkState == QtCore.Qt.Checked :
 				#print tab, str_, prefix + unicode(_name), unicode(name_), 'check'
 				path_ = os.path.join(unicode(prefix) + unicode(_name), unicode(name_))
@@ -127,8 +127,9 @@ class SharedSourceTree2XMLFile:
 							new_item = TreeItem(_path, str__, item)
 							new_item.checkState = QtCore.Qt.Checked
 							item.appendChild(new_item)
+					if hasattr(item, 'Root') : prefix_ = os.path.join(item.Root, '')
 					if len(listChild) > 0 :
-						elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
+						elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '\t')
 					else :
 						""" not create the node for empty directory """
 						i += 1
@@ -145,10 +146,11 @@ class SharedSourceTree2XMLFile:
 				else :
 					prefix_ = prefix + _name + self.SEP
 				#print tab, str_, prefix, name_, 'pref'
-				elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '	')
+				elem = self.treeSharedDataToXML(item, prefix_, tab = tab + '\t')
 			else :
 				i += 1
 				continue
+			if hasattr(item, 'Root') : elem.setAttribute('xRoot', item.Root)
 			node.appendChild(elem)
 			i += 1
 

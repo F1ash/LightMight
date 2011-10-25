@@ -85,8 +85,8 @@ class xr_client:
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
-		finally :
-			pass
+		#finally :
+		#	pass
 
 	def getSharedSourceStructFile(self, caching = False):
 		# get Shared Sources Structure
@@ -116,6 +116,7 @@ class xr_client:
 		except IOError, err :
 			print '[in getSharedSourceStructFile()] IOError : ', err
 			if 'previousState' not in dir(self) : self.previousState = ''
+		#finally : pass
 		return self.structFileName, self.previousState
 
 	def getAvatar(self):
@@ -148,6 +149,7 @@ class xr_client:
 		except IOError, err :
 			print '[in getAvatar()]IOError : ', err
 			pass
+		#finally : pass
 		return self.avatarFileName
 
 	def getSharedData(self, maskSet, downLoadPath, emitter, previousRemoteServerState = 'NOTHING'):
@@ -168,7 +170,11 @@ class xr_client:
 				path = os.path.dirname(_path)
 				#print _path, i, ' clnt'
 				if not os.path.exists(path) :
-					os.makedirs(path)
+					try :
+						os.makedirs(path)
+					except IOError, err:
+						print '[in getSharedData()]IOError : ', err
+						continue
 				with open(_path, "wb") as handle:
 					try :
 						handle.write(self.s.python_file(str(i)).data)

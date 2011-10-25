@@ -46,20 +46,25 @@ def InitConfigValue(Settings = None, key = None, default = None):
 def getIP():
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	msg = ''
-	for i in xrange(5) :
-		try :
-			error = False
-			#s.connect(("gmail.com", 80))
-			s.connect(('0.0.0.0', 34001))
-		except socket.gaierror, err:
-			print err
-			error = True
-		except : error = True
-		finally : pass
-		if not error : break
-	addr = s.getsockname()[0]
-	s.close()
-	return addr
+	Addr = '127.0.0.1'
+	addressList = [("gmail.com", 80), ('0.0.0.0', 34001)]
+	for address in addressList :
+		for i in xrange(5) :
+			try :
+				error = False
+				s.connect(address)
+				addr = s.getsockname()[0]
+				s.close()
+			except socket.gaierror, err:
+				print err
+				error = True
+			except : error = True
+			finally : pass
+			if not error :
+				Addr = addr
+				break
+		if Addr not in ['', '0.0.0.0', '127.0.0.1'] : break
+	return Addr
 
 def getFreePort(minValue, maxValue):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

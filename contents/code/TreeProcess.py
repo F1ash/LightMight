@@ -52,17 +52,18 @@ class TreeProcessing:
 					#print tab, 'name :', name_, \
 					#		'attr :', node.attributes.item(0).value, node.attributes.item(1).value
 					#_ddata = [node.attributes.item(0).value, node.attributes.item(1).value]  ##name_ + ' , ' +
-					fileName = node.attributes.item(0).value
-					fileSize = node.attributes.item(1).value
+					fileName = node.attributes['name'].value
+					fileSize = node.attributes['size'].value
 					if name_ == 'file' :
 						count += 1
 						_str = string.split(fileSize, ' ')
 						if len(_str) > 1 : downLoads += int(_str[0])
 				else :
 					#_ddata = [node.attributes.item(0).value, name_] ## временно для заполнения дерева в клиенте
-					fileName = node.attributes.item(0).value
+					fileName = node.attributes['name'].value
 					fileSize = name_
 				_newobj = TreeItem(fileName, fileSize, parent_obj)
+				if node.attributes.length == 3 : _newobj.Root = node.attributes['xRoot'].value
 				parent_obj.appendChild(_newobj)
 				if name_ == 'dir':
 					_count, _downLoads = self.parseFile_(node.childNodes, _newobj, tab + '\t')
@@ -72,7 +73,7 @@ class TreeProcessing:
 		return count, downLoads
 
 	def getCommonSetOfSharedSource(self, obj, commonSet, pref = '', \
-									j = 0, tab = '	', checkItem = False, f = None):
+									j = 0, tab = '\t', checkItem = False, f = None):
 		downLoadSize = 0
 		i = 0
 		while i < obj.childCount() :
@@ -80,32 +81,34 @@ class TreeProcessing:
 			str_ = item.data(1)
 			name_ = item.data(0)
 			#print tab, pref + name_
+			if hasattr(item, 'Root') : _name = os.path.join(item.Root, name_)
+			else : _name = os.path.join(pref, name_)
 			if str_ != ' dir' and str_ != 'no_regular_file' :
 				if not checkItem :
-					commonSet[j] = pref + name_
+					commonSet[j] = _name
 					#print commonSet[j]
 				if checkItem and item.checkState == QtCore.Qt.Checked :
 					size_ = string.split(str_, ' ')[0]
 					downLoadSize += int(size_)
-					f.write(('1<||>' + pref + name_ + '<||>' + size_ + '<||>' + str(j) + '\n').encode('UTF-8'))
+					f.write(('1<||>' + _name + '<||>' + size_ + '<||>' + str(j) + '\n').encode('UTF-8'))
 				j += 1
 				i += 1
 				continue
 			elif str_ == ' dir' :
 				j, _downLoadSize = self.getCommonSetOfSharedSource(\
-										item, commonSet, pref + name_ + '/', \
-										j, tab + '	', checkItem, f)
+										item, commonSet, os.path.join(_name, ''), \
+										j, tab + '\t', checkItem, f)
 				downLoadSize += _downLoadSize
 			if not checkItem :
-				commonSet[j] = pref + name_
+				commonSet[j] = _name
 				#print commonSet[j]
 			if checkItem : f.write('0<||><||><||>\n')
 			j += 1
 			i += 1
 		return j, downLoadSize
 
-	def debugPrintObj(self, some_obj, tab = '	'):
+	def debugPrintObj(self, some_obj, tab = '\t'):
 		return
 		print "obj->%s", tab, some_obj.data(0)
 		for child in some_obj.childItems:
-			self.debugPrintObj(child, tab + '	')
+			self.debugPrintObj(child, tab + '\t')

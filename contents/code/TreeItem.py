@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtGui, QtCore
-import os
+import os, os.path
 
 class TreeItem(QtCore.QObject):
-	def __init__(self, name_ = '_not_define_', size_ = '_not_define_', parentItem = None, parent = None):
+	def __init__(self, name_ = '_not_define_', size_ = '_not_define_', parentItem = None, parent = None, first = False):
 		QtCore.QObject.__init__(self, parent)
 		self.SEP = os.sep
 		self.parentItem = parentItem
-		self.fileNameItemData = name_
+		if first :
+			self.Root, self.fileNameItemData = os.path.split(unicode(name_))
+		else : self.fileNameItemData = name_
 		self.fileSizeItemData = size_
 		self.childItems = []
 		self.checkState = QtCore.Qt.Unchecked
