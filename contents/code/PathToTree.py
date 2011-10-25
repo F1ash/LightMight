@@ -103,6 +103,7 @@ class SharedSourceTree2XMLFile:
 				if os.path.isfile(path_) :
 					#print 'path exist & file'
 					elem = self.doc.createElement(str_)
+					if hasattr(item, 'Root') : name_ = name_.split(os.path.join(item.Root, ''))[1]
 					elem.setAttribute('name', QtCore.QString(name_).toUtf8().data())
 					elem.setAttribute('size', str(os.path.getsize(path_)) + ' Byte(s)' + ' file')
 				elif os.path.isdir(path_) :

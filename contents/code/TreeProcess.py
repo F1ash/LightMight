@@ -73,7 +73,8 @@ class TreeProcessing:
 		return count, downLoads
 
 	def getCommonSetOfSharedSource(self, obj, commonSet, pref = '', \
-									j = 0, tab = '\t', checkItem = False, f = None):
+									j = 0, tab = '\t', checkItem = False, \
+									f = None, diff = ''):
 		downLoadSize = 0
 		i = 0
 		while i < obj.childCount() :
@@ -81,8 +82,11 @@ class TreeProcessing:
 			str_ = item.data(1)
 			name_ = item.data(0)
 			#print tab, pref + name_
-			if hasattr(item, 'Root') : _name = os.path.join(item.Root, name_)
-			else : _name = os.path.join(pref, name_)
+			if hasattr(item, 'Root') :
+				_name = os.path.join(item.Root, name_)
+				diff = os.path.join(item.Root, '')
+			else :
+				_name = os.path.join(pref, name_)
 			if str_ != ' dir' and str_ != 'no_regular_file' :
 				if not checkItem :
 					commonSet[j] = _name
@@ -90,14 +94,15 @@ class TreeProcessing:
 				if checkItem and item.checkState == QtCore.Qt.Checked :
 					size_ = string.split(str_, ' ')[0]
 					downLoadSize += int(size_)
-					f.write(('1<||>' + _name + '<||>' + size_ + '<||>' + str(j) + '\n').encode('UTF-8'))
+					name = _name.split(diff)[1]
+					f.write(('1<||>' + name + '<||>' + size_ + '<||>' + str(j) + '\n').encode('UTF-8'))
 				j += 1
 				i += 1
 				continue
 			elif str_ == ' dir' :
 				j, _downLoadSize = self.getCommonSetOfSharedSource(\
 										item, commonSet, os.path.join(_name, ''), \
-										j, tab + '\t', checkItem, f)
+										j, tab + '\t', checkItem, f, diff)
 				downLoadSize += _downLoadSize
 			if not checkItem :
 				commonSet[j] = _name

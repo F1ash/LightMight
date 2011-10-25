@@ -167,8 +167,8 @@ class xr_client:
 		for i in maskSet.iterkeys() :
 			if maskSet[i][0] == 1 :
 				_path = os.path.join(downLoadPath, maskSet[i][1])
-				path = os.path.dirname(_path)
-				#print _path, i, ' clnt'
+				path, tail = os.path.split(_path)
+				#print downLoadPath, _path, i, ' clnt', path, tail
 				if not os.path.exists(path) :
 					try :
 						os.makedirs(path)
