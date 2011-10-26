@@ -67,12 +67,13 @@ def getIP():
 	return Addr
 
 def getFreePort(minValue, maxValue):
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	number_ = -1
 	for i in xrange(maxValue - minValue) :
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try :
 			s.bind(('127.0.0.1', minValue + i))
 		except socket.error, x :
+			s.close()
 			#print x
 			continue
 		number_ = i

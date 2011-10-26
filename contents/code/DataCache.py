@@ -15,10 +15,10 @@ class DataCache(QThread):
 		self.runState = False
 		self.USERS = userList
 		self.newItem.connect(self.refillCache)
-		self.timer = QTimer()
-		self.timer.timeout.connect(self.initRefill)
 
 	def run(self):
+		self.timer = QTimer()
+		self.timer.timeout.connect(self.initRefill)
 		self.setPriority(QThread.LowPriority)
 		self.timer.start(10000)
 
