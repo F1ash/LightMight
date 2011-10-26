@@ -191,8 +191,10 @@ class MainWindow(QtGui.QMainWindow):
 				for item_ in item :
 					data = item_.data(QtCore.Qt.AccessibleTextRole).toList()
 					if data[1].toBool() :
-						if domain in data[2:] : data.remove(domain)
-						if data[2:] in ([], [None]) :
+						#if domain in data[2:] : data.remove(domain)
+						#if data[2:] in ([], [None]) :
+						# because avahi & broadcasr reinit together
+						if domain in data[2:] :
 							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
 							key = str(data[0].toString())
 							if key in self.USERS :
@@ -265,14 +267,16 @@ class MainWindow(QtGui.QMainWindow):
 			self.udpClient.stop()
 		else : self.initAvahiBrowser()
 
+	@QtCore.pyqtSlot(name = 'CHOP')
 	def cacheS(self):
 		print 'Cache down signal received'
 
 	def initAvahiBrowser(self, *args):
 		if self.Settings.value('AvahiDetect', True).toBool() and 'avahiBrowser' not in dir(self):
 			print 'Use Avahi'
-			self.avahiBrowser = AvahiBrowser(self.menuTab)
-			self.avahiBrowser.start()
+			if 'avahiBrowser' not in dir(self) :
+				self.avahiBrowser = AvahiBrowser(self.menuTab)
+				self.avahiBrowser.start()
 		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :
 			print 'Use Cache'
 			self.cachingThread = DataCache(self.USERS, self)
@@ -462,11 +466,12 @@ class MainWindow(QtGui.QMainWindow):
 		self.serverDown[str].disconnect(_ServerSettingsShield.preInitServer)
 
 	def stopServices(self):
+		if hasattr(self, 'END') and self.END : return None
+		if 'avahiBrowser' in dir(self) :
+			if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__(); self.avahiBrowser = None
 		if 'avahiService' in dir(self) :
 			if '__del__' in dir(self.avahiService) : self.avahiService.__del__()
 			self.avahiService = None
-		if 'avahiBrowser' in dir(self) :	## multiply contact
-			if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__(); self.avahiBrowser = None
 		# stopping caching
 		if 'cachingThread' in dir(self) :
 			self.cachingThread._shutdown()
@@ -474,7 +479,20 @@ class MainWindow(QtGui.QMainWindow):
 			del self.cachingThread
 		if 'udpClient' in dir(self) :
 			self.udpClient.stop()
+		if 'contactMessage' in dir(self) :
+			self.contactMessage.disconnect(self.receiveBroadcastMessage)
+		if 'changeConnectState' in dir(self) :
+			self.changeConnectState.disconnect(self.initAvahiBrowser)
+		if 'initServeR' in dir(self) :
+			self.initServeR.disconnect(self.initServer)
+		if 'reinitServer' in dir(self) :
+			self.reinitServer.disconnect(self.initServer)
+		if 'serverDown' in dir(self) :
+			self.serverDown[str].disconnect(self.menuTab.preInitServer)
+		if 'serverThread' in dir(self) :
+			self.serverThread._terminate()
 		self.menuTab.sentOfflinePost()
+		self.END = True
 
 	def saveCache(self):
 		Once = True
