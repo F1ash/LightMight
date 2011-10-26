@@ -260,12 +260,17 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def ok(self):
 		if 'serverThread' in dir(self.Obj) :
-			self.Obj.serverThread._terminate()
+			self.Obj.serverThread._terminate('reINIT')
 			#self.Obj.serverThread.exit()
 		else : self.preInitServer()
 
-	def preInitServer(self):
-		print 'serverDown signal received'
+	@QtCore.pyqtSlot(str, name = 'preInitServer')
+	def preInitServer(self, str_):
+		if str_ == 'reINIT' :
+			print 'serverDown signal received'
+		else :
+			print 'alien signal'
+			return None
 		self.sentOfflinePost()
 		self.saveData()
 		self.Obj.initServeR.emit(self.treeModel, '', self.Obj.serverState)

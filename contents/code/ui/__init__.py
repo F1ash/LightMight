@@ -33,7 +33,7 @@ class MainWindow(QtGui.QMainWindow):
 	contactMessage = QtCore.pyqtSignal(QtCore.QString, QtCore.QString)
 	changeConnectState = QtCore.pyqtSignal()
 	cacheDown = QtCore.pyqtSignal()
-	serverDown = QtCore.pyqtSignal()
+	serverDown = QtCore.pyqtSignal(str)
 	initServeR = QtCore.pyqtSignal(TreeModel, str, str)
 	reinitServer = QtCore.pyqtSignal()
 	def __init__(self, parent = None):
@@ -122,6 +122,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.cacheDown.connect(self.cacheS)
 		self.initServeR.connect(self.initServer)
 		self.reinitServer.connect(self.initServer)
+		self.serverDown[str].connect(self.menuTab.preInitServer)
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
 		self.timer.timeout.connect(self.initServer)
@@ -456,9 +457,9 @@ class MainWindow(QtGui.QMainWindow):
 
 	def showServerSettingsShield(self):
 		_ServerSettingsShield = ServerSettingsShield(self)
-		self.serverDown.connect(_ServerSettingsShield.preInitServer)
+		self.serverDown[str].connect(_ServerSettingsShield.preInitServer)
 		_ServerSettingsShield.exec_()
-		self.serverDown.disconnect(_ServerSettingsShield.preInitServer)
+		self.serverDown[str].disconnect(_ServerSettingsShield.preInitServer)
 
 	def saveCache(self):
 		Once = True

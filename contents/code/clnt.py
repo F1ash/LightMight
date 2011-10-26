@@ -198,7 +198,7 @@ class xr_client:
 					emitter.nextfile.emit(size_)
 		emitter.complete.emit()
 
-	def _shutdown(self):
+	def _shutdown(self, str_= ''):
 		#self.shutdown()		# method not exist
 		pass
 

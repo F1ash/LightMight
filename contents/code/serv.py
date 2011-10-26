@@ -61,10 +61,10 @@ class ServerDaemon():
 	def run(self):
 		self._srv.serve_forever()
 
-	def _shutdown(self):
+	def _shutdown(self, str_ = ''):
 		self._srv.shutdown()
 		print ' server terminated'
-		self.Parent.serverDown.emit()
+		self.Parent.serverDown.emit(str_)
 
 if __name__ == '__main__':
 

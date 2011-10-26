@@ -9,8 +9,10 @@ from TreeBox import TreeBox
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
-from Functions import InCache, Path, moveFile, DelFromCache
+from Functions import InCache, Path, moveFile, DelFromCache, InitConfigValue
 from os.path import basename as BaseName
+from mcastSender import _send_mcast as Sender
+import os
 
 class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
@@ -56,9 +58,9 @@ class Box(QtGui.QWidget):
 		self.buttonLayout.addWidget(self.treeButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.refreshButton = QtGui.QPushButton(QtCore.QString('&R'))
-		self.refreshButton.setToolTip('Refresh own Avahi service')
+		self.refreshButton.setToolTip('Reinit Server')
 		self.refreshButton.setMaximumWidth(65)
-		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.Obj.preinitAvahiBrowser)
+		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.reinitServer)
 		self.buttonLayout.addWidget(self.refreshButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.layout.addItem(self.buttonLayout, 0, 2)
@@ -176,3 +178,34 @@ class Box(QtGui.QWidget):
 										  currentIdx = currentIdx)
 			self.sharedTree.setToolTip(toolTip)
 			self.sharedTree.show()
+
+	def reinitServer(self):
+		if 'serverThread' in dir(self.Obj) :
+			self.Obj.serverThread._terminate('reinit')
+			#self.Obj.serverThread.exit()
+		else : self.preInitServer()
+
+	@QtCore.pyqtSlot(str, name = 'preInitServer')
+	def preInitServer(self, str_):
+		if str_ == 'reinit' :
+			print 'serverDown signal received'
+		else :
+			print 'alien signal'
+			return None
+		self.sentOfflinePost()
+		self.Obj.initServeR.emit(self.treeModel, '', self.Obj.serverState)
+
+	def sentOfflinePost(self):
+		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
+			key = str(self.Obj.server_addr + ':' + str(self.Obj.server_port))
+			if key in self.Obj.USERS :
+				#print 'key :', key, ' in USERS'
+				data = QtCore.QString('0' + '<||>' + \
+									InitConfigValue(self.Obj.Settings, 'ServerName', \
+											os.getenv('USER', '') + ' LightMight Server') + '<||>' + \
+									self.Obj.USERS[key][1] + '<||>' + \
+									self.Obj.USERS[key][2] + '<||>' + \
+									'' + '<||>' + \
+									'' + '<||>' + \
+									'*infoShare*')
+				Sender(data)

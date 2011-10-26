@@ -26,5 +26,5 @@ class ToolsThread(QThread):
 											'DownLoadTo', Path.Temp))
 		self.Obj.getSharedData(self.maskSet, downLoadPath, self, self.Parent.currentRemoteServerState)
 
-	def _terminate(self):
-		self.Obj._shutdown()
+	def _terminate(self, str_ = ''):
+		self.Obj._shutdown(str_)
