@@ -461,6 +461,21 @@ class MainWindow(QtGui.QMainWindow):
 		_ServerSettingsShield.exec_()
 		self.serverDown[str].disconnect(_ServerSettingsShield.preInitServer)
 
+	def stopServices(self):
+		if 'avahiService' in dir(self) :
+			if '__del__' in dir(self.avahiService) : self.avahiService.__del__()
+			self.avahiService = None
+		if 'avahiBrowser' in dir(self) :	## multiply contact
+			if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__(); self.avahiBrowser = None
+		# stopping caching
+		if 'cachingThread' in dir(self) :
+			self.cachingThread._shutdown()
+			self.cachingThread.quit()
+			del self.cachingThread
+		if 'udpClient' in dir(self) :
+			self.udpClient.stop()
+		self.menuTab.sentOfflinePost()
+
 	def saveCache(self):
 		Once = True
 		limitCache = int(InitConfigValue(self.Settings, 'CacheSize', '100')) * 10000
@@ -493,6 +508,7 @@ class MainWindow(QtGui.QMainWindow):
 									 str(limitCache))
 
 	def _close(self):
+		self.stopServices()
 		#print Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), ' close'
 		if InitConfigValue(self.Settings, 'UseCache', 'True') == 'True' : self.saveCache()
 		if InitConfigValue(self.Settings, 'SaveLastStructure', 'True') == 'True' :
