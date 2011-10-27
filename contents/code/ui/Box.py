@@ -5,7 +5,6 @@ from TreeProc import TreeModel
 from TreeItem import TreeItem
 from TreeProcess import TreeProcessing
 from TreeBox import TreeBox
-#from IconBox import IconBox
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
@@ -37,7 +36,8 @@ class Box(QtGui.QWidget):
 		self.userList.setToolTip('Users in Web')
 		self.userList.setMaximumWidth(250)
 		#self.userList.setMinimumSize(100, 75)
-		self.userList.sortItems()
+		self.userList.setSortingEnabled(True)
+		self.userList.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 		self.userList.itemDoubleClicked.connect(self.itemSharedSourceQuired)
 		self.layout.addWidget(self.userList, 0, 0)
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from xmlrpclib import ServerProxy, ProtocolError, Fault
+from xmlrpclib import ProtocolError, Fault
 from SSLOverloadClass import SSLServerProxy
 from httplib import HTTPException
 from Functions import *
@@ -27,7 +27,7 @@ class xr_client:
 
 			# self.methods = self.s.system.listMethods()
 			# get session Id & server State
-			self.randomFileName = Path.tempStruct(randomString(24))
+			self.randomFileName = Path.tempStruct(randomString(DIGITS_LENGTH))
 			#print self.randomFileName, '   clnt random string'
 			with open(self.randomFileName, "wb") as handle:
 				handle.write(self.s.sessionID().data)
@@ -88,7 +88,7 @@ class xr_client:
 		#finally :
 		#	pass
 
-	def getSharedSourceStructFile(self, caching = False):
+	def getSharedSourceStructFile(self, caching = False, sessionID = ''):
 		# get Shared Sources Structure
 		self.structFileName = Path.tempCache(self.serverState)
 		#print self.structFileName, ' struct'
@@ -119,7 +119,7 @@ class xr_client:
 		#finally : pass
 		return self.structFileName, self.previousState
 
-	def getAvatar(self):
+	def getAvatar(self, sessionID = ''):
 		self.avatarFileName = Path.tempAvatar(self.serverState)
 		#print self.avatarFileName, ' avatarFileName'
 		try :
@@ -152,7 +152,9 @@ class xr_client:
 		#finally : pass
 		return self.avatarFileName
 
-	def getSharedData(self, maskSet, downLoadPath, emitter, previousRemoteServerState = 'NOTHING'):
+	def getSharedData(self, maskSet, downLoadPath, emitter, \
+					  previousRemoteServerState = 'NOTHING', \
+					  sessionID = ''):
 		""" check remote server state """
 		#print previousRemoteServerState, ' <state> ', self.serverState
 		if previousRemoteServerState != self.serverState or previousRemoteServerState == '' :
@@ -198,7 +200,42 @@ class xr_client:
 					emitter.nextfile.emit(size_)
 		emitter.complete.emit()
 
+	def sessionClose(self, sessionID = ''):
+		try :
+			s.sessionClose(self.sessionID)
+		except ProtocolError, err :
+			"""print "A protocol error occurred"
+			print "URL: %s" % err.url
+			print "HTTP/HTTPS headers: %s" % err.headers
+			print "Error code: %d" % err.errcode
+			print "Error message: %s" % err.errmsg"""
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.Obj.errorString.emit(str(err))
+		except Fault, err:
+			"""print "A fault occurred"
+			print "Fault code: %d" % err.faultCode
+			print "Fault string: %s" % err.faultString"""
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.Obj.errorString.emit(str(err))
+		except HTTPException, err :
+			print 'HTTPLibError : ', err
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.Obj.errorString.emit(str(err))
+		except socket.error, err :
+			print 'SocetError : ', err
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.Obj.errorString.emit(str(err))
+
 	def _shutdown(self, str_= ''):
+		self.sessionClose(self.sessionID)
 		#self.shutdown()		# method not exist
 		pass
 

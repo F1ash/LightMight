@@ -191,14 +191,14 @@ class MainWindow(QtGui.QMainWindow):
 				for item_ in item :
 					data = item_.data(QtCore.Qt.AccessibleTextRole).toList()
 					if data[1].toBool() :
-						#if domain in data[2:] : data.remove(domain)
-						#if data[2:] in ([], [None]) :
 						# because avahi & broadcasr reinit together
 						if domain in data[2:] :
 							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
 							key = str(data[0].toString())
 							if key in self.USERS :
 								del self.USERS[key]
+								str_ = key.split(':')
+								self.delContact(None, str_[0], str_[1], None, None)
 								#print key, 'deleted'
 		#print 'DEL down'
 
@@ -395,7 +395,7 @@ class MainWindow(QtGui.QMainWindow):
 			""" посчитать объём загрузок, создать файл с данными соответствия путей
 				и ключей в self.commonSetOfSharedSource сервера
 			"""
-			nameMaskFile = randomString(24)
+			nameMaskFile = randomString(DIGITS_LENGTH)
 			with open(Path.multiPath(Path.tempStruct, 'client', nameMaskFile), 'a') as handler :
 				downLoadSize = \
 					TreeProcessing().getCommonSetOfSharedSource(self.menuTab.treeModel.rootItem, \

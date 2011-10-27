@@ -2,13 +2,13 @@
 
 import ssl, socket
 from xmlrpclib import ServerProxy
-from DocXMLRPCServer import DocXMLRPCServer, DocXMLRPCRequestHandler
+from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SocketServer import ThreadingMixIn
 
-class ThreadServer(ThreadingMixIn, DocXMLRPCServer):
+class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 	#ThreadingMixIn.daemon_threads = True
-	def __init__(self, serveraddr, RequestHandlerClass, allow_none = False, TLS = False, certificatePath = ''):
-		DocXMLRPCServer.__init__(self, serveraddr, RequestHandlerClass)
+	def __init__(self, serveraddr, allow_none = False, TLS = False, certificatePath = ''):
+		SimpleXMLRPCServer.__init__(self, serveraddr)
 
 		if TLS :
 			self.socket = ssl.wrap_socket(\
@@ -26,6 +26,7 @@ class ThreadServer(ThreadingMixIn, DocXMLRPCServer):
 		#self.funcs = {}
 		self.logRequests = False		## disable logging """
 		self.allow_none = allow_none
+		self.timeout = 15
 		self.server_bind()
 		self.server_activate()
 

@@ -13,29 +13,34 @@ class TreeProcessing:
 		print 'Создание отображения...'
 		count = 0; downLoads = 0
 		for path in pathList :
-			with open(path, 'rb') as datasource :
-
-				try :
+			try :
+				if not os.path.isfile(path) :
+					print '[in TreeProcessing.setupItemData : File not found] :', path, '.'
+					continue
+				with open(path, 'rb') as datasource :
 					dom2 = parse(datasource, bufsize = 65536)
-					print 'dom2 открыт'   # parse an open file
+					#print 'dom2 открыт'   # parse an open file
 					## *.childNodes[0].childNodes for ignoring rootItem_node
 					count, downLoads = self.parseFile_(dom2.childNodes[0].childNodes, rootItem)
-					print 'парсинг завершён'   # parse
+					#print 'парсинг завершён'   # parse
 					dom2.unlink()
 					dom2 = None
-					print 'dom2 -- deleted'
-				except xml.parsers.expat.ExpatError , x:
-					#возникает при неправильной кодировке имени файла (временно устранено)
-					print x, '\nОшибка в пути к файлу.'
-					showHelp = ListingText("MSG: Наличие некорректного имени каталога\файла.\nПриложение будет завершено.", main)
-					showHelp.exec_()
-					print "App exit."
-					app.exit(0)
-				except xml.sax._exceptions.SAXParseException, err :
-					##
-					print 'SAXParseException :', str(err)
-				finally :
-					datasource.close()
+					#print 'dom2 -- deleted'
+			except xml.parsers.expat.ExpatError , x:
+				datasource.close()
+				#возникает при неправильной кодировке имени файла (временно устранено)
+				print x, '\nОшибка в пути к файлу.'
+				showHelp = ListingText("MSG: Наличие некорректного имени каталога\файла.\nПриложение будет завершено.", main)
+				showHelp.exec_()
+				print "App exit."
+				#app.exit(0)
+			except xml.sax._exceptions.SAXParseException, err :
+				print '[SAXParseException] :', str(err)
+				datasource.close()
+			except IOError, err :
+				print '[in TreeProcessing.setupItemData] IOError:', err
+			finally :
+				pass
 
 		print 'Создание отображения завершено.'
 		#self.debugPrintObj(rootItem)

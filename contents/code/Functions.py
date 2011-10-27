@@ -4,6 +4,7 @@ import os, os.path, string, random, socket, ssl, time, sys
 from Path import  Path
 
 char_set = string.ascii_letters + string.digits
+DIGITS_LENGTH = 24
 
 def createStructure():
 	for nameDir in [Path.TempAvatar, \
@@ -27,7 +28,7 @@ class DataRendering:
 		if os.path.isfile(path_) :
 			with open(path_, 'rb') as f :
 				while True :
-					s.append(f.readline(24))
+					s.append(f.readline(DIGITS_LENGTH))
 					if s[len(s) - 1] == '' : break
 		return s
 
