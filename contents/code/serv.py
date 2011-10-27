@@ -4,7 +4,6 @@ import xmlrpclib, string, os, os.path, ssl, socket
 from SSLOverloadClass import ThreadServer
 from Functions import *
 
-
 class ServerDaemon():
 	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, \
 				 parent = None, TLS = False, cert = ''):
@@ -29,6 +28,7 @@ class ServerDaemon():
 			self._srv.register_function(self.requestAvatar, 'requestAvatar')
 
 	def sessionID(self):
+		print self._srv.client_address, '--sessionID'
 		fileName = randomString(DIGITS_LENGTH)
 		_id = randomString(DIGITS_LENGTH)
 		list_ = [fileName, _id, self.serverState, self.Parent.previousState]
@@ -37,13 +37,16 @@ class ServerDaemon():
 			return xmlrpclib.Binary(handle.read())
 
 	def sessionClose(self, sessionID = ''):
+		print self._srv.client_address, '--sessionClose'
 		pass
 
 	def python_clean(self, name, sessionID = ''):
+		print self._srv.client_address, '--python_clean'
 		path_ = Path.tempStruct(name)
 		if os.path.isfile(path_) : os.remove(path_)
 
 	def python_file(self, id_, sessionID = ''):
+		print self._srv.client_address, '--python_file'
 		""" добавить обработчик ошибок соединения и существования файлов """
 		#print id_, type(id_), str(self.commonSetOfSharedSource[int(id_)]), '  serv'
 
@@ -52,12 +55,13 @@ class ServerDaemon():
 					return xmlrpclib.Binary(handle.read())
 
 	def requestSharedSourceStruct(self, name, sessionID = ''):
+		print self._srv.client_address, '--requestSharedSourceStruct'
 		#print Path.multiPath(Path.tempStruct, 'server', name), ' in requestSharedSourceStruct'
 		with open(Path.multiPath(Path.tempStruct, 'server', name), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
 	def requestAvatar(self, sessionID = ''):
-		#print self._srv.get_client_addr(), '--!!!'
+		print self._srv.client_address, '--requestAvatar'
 		with open(unicode(self.Parent.avatarPath), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
