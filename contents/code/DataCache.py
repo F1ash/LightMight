@@ -35,12 +35,28 @@ class DataCache(QThread):
 				else :
 					value = False
 				#print 'caching:', unicode(itemValue[1][1]), unicode(itemValue[1][2]), value, '--', itemValue[0]
-				clnt = xr_client(addr = unicode(itemValue[1][1]), \
+				currAddr = unicode(itemValue[1][1])
+				clnt = xr_client(addr = currAddr, \
 								 port = unicode(itemValue[1][2]), \
 								 parent = self, \
 								 TLS = value)
+				clnt.run()
+				# get session ID if don`t it
+				#print self.Obj.serverThread.Obj.currentSessionID, '\n', currAddr
+				if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
+					clnt.getSessionID(self.Obj.server_addr)
+				if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
+					self.USERS[itemValue[0]] = (itemValue[1][0], \
+												itemValue[1][1], \
+												itemValue[1][2], \
+												itemValue[1][3], \
+												'error', \
+												True)
+					self.Obj.menuTab.searchItem(itemValue[0])
+					continue
 				pathExist = InCache(itemValue[1][4])
 				names = ('', '')
+				sessionID = self.Obj.serverThread.Obj.currentSessionID[currAddr]
 				if pathExist[0] :
 					#print pathExist, 'in CacheData, inCache'
 					""" if data cached """
@@ -48,26 +64,26 @@ class DataCache(QThread):
 					if not moveFile(pathExist[1], \
 									Path.tempCache(tail), \
 									False) :
-						clnt.run()
-						names = clnt.getSharedSourceStructFile(True)
+						#clnt.run()
+						names = clnt.getSharedSourceStructFile(sessionID)
 						#print 'download struct'
 						if not moveFile(os.path.join(head, 'avatars', tail), \
 										Path.tempAvatar(tail), \
 										False) :
-							clnt.getAvatar()
+							clnt.getAvatar(sessionID)
 							#print ' download avatar'
 					elif not moveFile(os.path.join(head, 'avatars', tail), \
 									Path.tempAvatar(tail), \
 									False) :
-						clnt.run()
-						clnt.getAvatar()
+						#clnt.run()
+						clnt.getAvatar(sessionID)
 						#print ' download avatar only'
 				else :
 					""" if data not cached """
 					#print pathExist, 'in CacheData, not inCache'
-					clnt.run()
-					clnt.getAvatar()
-					names = clnt.getSharedSourceStructFile(True)
+					#clnt.run()
+					clnt.getAvatar(sessionID)
+					names = clnt.getSharedSourceStructFile(sessionID)
 					#print 'download all'
 				""" if remoteServerState is changed """
 				#print names, itemValue[0]

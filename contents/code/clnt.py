@@ -24,20 +24,33 @@ class xr_client:
 	def run(self):
 		try :
 			self.s = SSLServerProxy(self.servaddr, self.TLS)
-
 			# self.methods = self.s.system.listMethods()
+		except socket.error, err :
+			print 'SocetError : ', err
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.Obj.errorString.emit(str(err))
+
+	def getSessionID(self, ownIP = ''):
+		try :
 			# get session Id & server State
 			self.randomFileName = Path.tempStruct(randomString(DIGITS_LENGTH))
 			#print self.randomFileName, '   clnt random string'
-			with open(self.randomFileName, "wb") as handle:
-				handle.write(self.s.sessionID().data)
+			try :
+				with open(self.randomFileName, "wb") as handle :
+					handle.write(self.s.sessionID(ownIP).data)
+			except AttributeError, err :
+				print '[in getSessionID() AddressMissMatch]:', err
+				return None
 			self.listRandomString = DataRendering().fileToList(self.randomFileName)
 			#print self.listRandomString, ' list of randomStrings'
 			#print [self.listRandomString[0]]
-			self.s.python_clean(self.listRandomString[0])
+			sessionID = self.listRandomString[1]
+			#print sessionID, ' session ID'
+			self.s.python_clean(self.listRandomString[0], sessionID)
 			if os.path.exists(self.randomFileName) : os.remove(self.randomFileName)
-			self.sessionID = self.listRandomString[1]
-			#print self.sessionID, ' session ID'
+			self.Parent.Obj.serverThread.Obj.currentSessionID[self.servaddr.strip(':')[0]] = sessionID
 			self.serverState = self.listRandomString[2]
 			if len(self.listRandomString) > 3 :
 				self.previousState = self.listRandomString[3]
@@ -48,7 +61,7 @@ class xr_client:
 				self.Obj.currentRemoteServerState = self.serverState
 				print "Handshake succeeded."
 				""" caching avatar """
-				self.getAvatar()
+				#self.getAvatar()
 		except ProtocolError, err :
 			"""print "A protocol error occurred"
 			print "URL: %s" % err.url
@@ -73,12 +86,6 @@ class xr_client:
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
-		except socket.error, err :
-			print 'SocetError : ', err
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
 		except IOError, err :
 			print '[in run()] IOError : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
@@ -88,14 +95,18 @@ class xr_client:
 		#finally :
 		#	pass
 
-	def getSharedSourceStructFile(self, caching = False, sessionID = ''):
+	def getSharedSourceStructFile(self, sessionID = ''):
 		# get Shared Sources Structure
 		self.structFileName = Path.tempCache(self.serverState)
 		#print self.structFileName, ' struct'
 		try :
 			with open(self.structFileName, "wb") as handle:
 					try :
-						handle.write(self.s.requestSharedSourceStruct('sharedSource_' + self.serverState).data)
+						handle.write(self.s.requestSharedSourceStruct(\
+									'sharedSource_' + self.serverState, \
+									sessionID).data)
+					except AttributeError, err :
+						print '[in getSharedSourceStructFile() SessionMissMatch]:', err
 					except ProtocolError, err :
 						"""print "A protocol error occurred"
 						print "URL: %s" % err.url
@@ -121,11 +132,13 @@ class xr_client:
 
 	def getAvatar(self, sessionID = ''):
 		self.avatarFileName = Path.tempAvatar(self.serverState)
-		#print self.avatarFileName, ' avatarFileName'
+		#print self.avatarFileName, ' avatarFileName', sessionID
 		try :
 			with open(self.avatarFileName, "wb") as handle:
 					try :
-						handle.write(self.s.requestAvatar().data)
+						handle.write(self.s.requestAvatar(sessionID).data)
+					except AttributeError, err :
+						print '[in getAvatar() SessionMissMatch]:', err
 					except ProtocolError, err :
 						"""print "A protocol error occurred"
 						print "URL: %s" % err.url
@@ -179,8 +192,11 @@ class xr_client:
 						continue
 				with open(_path, "wb") as handle:
 					try :
-						handle.write(self.s.python_file(str(i)).data)
+						handle.write(self.s.python_file(str(i), sessionID).data)
 						#print 'Downloaded : ', maskSet[i][1]
+					except AttributeError, err :
+						print '[in getSharedData() SessionMissMatch]:', err
+						return None
 					except ProtocolError, err :
 						"""print "A protocol error occurred"
 						print "URL: %s" % err.url
@@ -202,7 +218,7 @@ class xr_client:
 
 	def sessionClose(self, sessionID = ''):
 		try :
-			s.sessionClose(self.sessionID)
+			self.s.sessionClose(sessionID)
 		except ProtocolError, err :
 			"""print "A protocol error occurred"
 			print "URL: %s" % err.url
@@ -212,7 +228,7 @@ class xr_client:
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.Obj.errorString.emit(str(err))
+				self.Parent.errorString.emit(str(err))
 		except Fault, err:
 			"""print "A fault occurred"
 			print "Fault code: %d" % err.faultCode
@@ -226,16 +242,15 @@ class xr_client:
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.Obj.errorString.emit(str(err))
+				self.Parent.errorString.emit(str(err))
 		except socket.error, err :
 			print 'SocetError : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.Obj.errorString.emit(str(err))
+				self.Parent.errorString.emit(str(err))
 
 	def _shutdown(self, str_= ''):
-		self.sessionClose(self.sessionID)
 		#self.shutdown()		# method not exist
 		pass
 

@@ -18,8 +18,8 @@ class ToolsThread(QThread):
 		self.Obj.run()
 		self.emit(SIGNAL('threadRunning'), self.Parent)
 
-	def getSharedSourceStructFile(self):
-		return self.Obj.getSharedSourceStructFile()
+	def getSharedSourceStructFile(self, str_ = ''):
+		return self.Obj.getSharedSourceStructFile(str_)
 
 	def getSharedData(self):
 		downLoadPath = unicode(InitConfigValue(QSettings('LightMight','LightMight'), \

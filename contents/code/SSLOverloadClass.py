@@ -33,11 +33,15 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 	def handle_request(self):
 		return SocketServer.TCPServer.handle_request(self)
 
+	def handle_error(self, request, client_address):
+		return SocketServer.TCPServer.handle_error(self, request, client_address)
+
 	def get_request(self):
 		return SimpleXMLRPCServer.get_request(self)
 
 	def verify_request(self, request, client_address):
 		self.client_address = client_address
+		#print repr(request), client_address
 		return SimpleXMLRPCServer.verify_request(self, request, client_address)
 
 	def process_request(self, request, client_address):

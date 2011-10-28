@@ -24,6 +24,7 @@ from PathToTree import SharedSourceTree2XMLFile
 from TreeProcess import TreeProcessing
 from mcastSender import _send_mcast as Sender
 from UdpClient import UdpClient
+from clnt import xr_client
 
 class MainWindow(QtGui.QMainWindow):
 	# custom signals
@@ -180,6 +181,8 @@ class MainWindow(QtGui.QMainWindow):
 						self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
 						if key in self.USERS :
 							del self.USERS[key]
+						if addr in self.serverThread.Obj.currentSessionID :
+							del self.serverThread.Obj.currentSessionID[addr]
 							#print key, 'deleted'
 						break
 		else :
@@ -489,6 +492,14 @@ class MainWindow(QtGui.QMainWindow):
 			self.reinitServer.disconnect(self.initServer)
 		if 'serverDown' in dir(self) :
 			self.serverDown[str].disconnect(self.menuTab.preInitServer)
+		for item in self.USERS.iterkeys() :
+			addr, port = item.split(':')
+			print addr, port
+			if addr in self.serverThread.Obj.currentSessionID :
+				print addr, self.serverThread.Obj.currentSessionID[addr]
+				clnt = xr_client(addr = addr, port = port, parent = self)
+				clnt.run()
+				clnt.sessionClose(self.serverThread.Obj.currentSessionID[addr])
 		if 'serverThread' in dir(self) :
 			self.serverThread._terminate()
 		self.menuTab.sentOfflinePost()

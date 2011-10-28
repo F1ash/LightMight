@@ -15,6 +15,14 @@ def createStructure():
 					Path.Avatar] :
 		if not os.path.isdir(nameDir):
 			os.makedirs(nameDir)
+	cwd = os.getcwd()
+	while os.path.basename(cwd) not in (os.sep, '', 'LightMight') :
+		head, tail = os.path.split(cwd)
+		cwd = head
+	if os.path.basename(cwd) == 'LightMight' :
+		moveFile(os.path.join(cwd, 'contents', 'icons', 'error.png'), \
+							  os.path.join(Path.TempAvatar, 'error'), \
+							  False)
 
 def randomString( j = 1):
 	return ''.join(random.sample(char_set, j))
@@ -47,9 +55,11 @@ def InitConfigValue(Settings = None, key = None, default = None):
 def getIP():
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	msg = ''
+	j = 0
 	Addr = '127.0.0.1'
-	addressList = [("gmail.com", 80), ('0.0.0.0', 34001)]
+	addressList = (("gmail.com", 80), ('0.0.0.0', 34001))
 	for address in addressList :
+		j += 1
 		for i in xrange(5) :
 			try :
 				error = False
@@ -57,14 +67,21 @@ def getIP():
 				addr = s.getsockname()[0]
 				s.close()
 			except socket.gaierror, err:
-				print err
+				print '[in getIP()]:', err
 				error = True
-			except : error = True
+			except :
+				print '[in getIP()]'
+				error = True
 			finally : pass
 			if not error :
 				Addr = addr
 				break
-		if Addr not in ['', '0.0.0.0', '127.0.0.1'] : break
+		if Addr not in ('', '0.0.0.0', '127.0.0.1') : break
+		elif j == 1 :
+			msg += 'Internet not available\n'
+		elif j == 2 :
+			msg += 'Local network not available'
+	print msg
 	return Addr
 
 def getFreePort(minValue, maxValue):

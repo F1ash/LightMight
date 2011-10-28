@@ -88,11 +88,27 @@ class Box(QtGui.QWidget):
 	def setContactAvatar(self, item_, name_):
 		item_.setIcon(QtGui.QIcon(Path.tempAvatar(name_)))
 
+	def searchItem(self, addr):
+		count = self.userList.count()
+		for i in xrange(count) :
+			item_ = self.userList.item(i)
+			if str(item_.data(QtCore.Qt.AccessibleTextRole).toList()[0].toString()) == addr :
+				self.setAvatar.emit(item_, self.Obj.USERS[addr][4])
+				break
+
 	def _showSharedSources(self):
 		self.progressBar.show()
 		#print 'not cached'
-		path, previousState = self.clientThread.getSharedSourceStructFile()
-		self.clientThread.Obj.getAvatar()
+		addr = self.clientThread.Obj.servaddr
+		key = addr.strip(':')[0]
+		if key in self.Obj.serverThread.Obj.currentSessionID :
+			sessionID = self.Obj.serverThread.Obj.currentSessionID[key]
+		else :
+			self.Obj.USERS[addr][4] = 'error'
+			self.Obj.USERS[addr][5] = True
+			self.searchItem(addr)
+		path, previousState = self.clientThread.getSharedSourceStructFile(sessionID)
+		self.clientThread.Obj.getAvatar(sessionID)
 		""" search USERS key with desired value for set it in "cached" """
 		Value = BaseName(path)
 		for itemValue in self.Obj.USERS.iteritems() :
@@ -104,13 +120,7 @@ class Box(QtGui.QWidget):
 												itemValue[1][3], \
 												itemValue[1][4], \
 												True)
-				count = self.userList.count()
-				for i in xrange(count) :
-					item_ = self.userList.item(i)
-					if str(item_.data(QtCore.Qt.AccessibleTextRole).toList()[0].toString()) == \
-								str(itemValue[1][1] + ':' + itemValue[1][2]) :
-						self.setAvatar.emit(item_, itemValue[1][4])
-						break
+				self.searchItem(str(itemValue[1][1] + ':' + itemValue[1][2]))
 				break
 		if previousState != '' : DelFromCache(previousState)
 		self.showSharedSources(path)
@@ -156,6 +166,9 @@ class Box(QtGui.QWidget):
 
 		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self._showSharedSources)
 		self.clientThread.start()
+		# get session ID if don`t it
+		if key not in self.Obj.serverThread.Obj.currentSessionID :
+			self.clientThread.Obj.getSessionID(self.Obj.server_addr)
 
 	def hide_n_showTree(self):
 		if self.sharedTree.isVisible():
