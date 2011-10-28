@@ -104,9 +104,7 @@ class Box(QtGui.QWidget):
 		if key in self.Obj.serverThread.Obj.currentSessionID :
 			sessionID = self.Obj.serverThread.Obj.currentSessionID[key]
 		else :
-			self.Obj.USERS[addr][4] = 'error'
-			self.Obj.USERS[addr][5] = True
-			self.searchItem(addr)
+			sessionID = ''
 		path, previousState = self.clientThread.getSharedSourceStructFile(sessionID)
 		self.clientThread.Obj.getAvatar(sessionID)
 		""" search USERS key with desired value for set it in "cached" """
