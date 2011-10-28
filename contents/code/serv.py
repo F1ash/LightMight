@@ -23,6 +23,7 @@ class ServerDaemon():
 		if not exception :
 			self._srv.register_introspection_functions()
 			self._srv.register_function(self.sessionID, 'sessionID')
+			self._srv.register_function(self.sessionClose, 'sessionClose')
 			self._srv.register_function(self.python_clean, 'python_clean')
 			self._srv.register_function(self.python_file, 'python_file')
 			self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
