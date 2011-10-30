@@ -3,6 +3,7 @@
 import shutil, os.path, string, sys, os
 from PyQt4 import QtGui, QtCore
 from Functions import *
+from Modules import ModuleExist
 from Box import Box
 from Wait import SetupTree
 from ServerSettingsShield import ServerSettingsShield
@@ -13,9 +14,11 @@ from DataCache import DataCache
 from StatusBar import StatusBar
 
 if Path.platform == 'win':
-	from BonjourTools import AvahiBrowser, AvahiService
+	if ModuleExist.AvahiAvailable :
+		from BonjourTools import AvahiBrowser, AvahiService
 else:
-	from AvahiTools import AvahiBrowser, AvahiService
+	if ModuleExist.AvahiAvailable :
+		from AvahiTools import AvahiBrowser, AvahiService
 
 from serv import ServerDaemon
 from ToolsThread import ToolsThread
@@ -194,7 +197,7 @@ class MainWindow(QtGui.QMainWindow):
 				for item_ in item :
 					data = item_.data(QtCore.Qt.AccessibleTextRole).toList()
 					if data[1].toBool() :
-						# because avahi & broadcasr reinit together
+						# because avahi & broadcast reinit together
 						if domain in data[2:] :
 							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
 							key = str(data[0].toString())
@@ -277,7 +280,7 @@ class MainWindow(QtGui.QMainWindow):
 	def initAvahiBrowser(self, *args):
 		if self.Settings.value('AvahiDetect', True).toBool() and 'avahiBrowser' not in dir(self):
 			print 'Use Avahi'
-			if 'avahiBrowser' not in dir(self) :
+			if ModuleExist.AvahiAvailable and 'avahiBrowser' not in dir(self) :
 				self.avahiBrowser = AvahiBrowser(self.menuTab)
 				self.avahiBrowser.start()
 		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :
@@ -299,7 +302,7 @@ class MainWindow(QtGui.QMainWindow):
 			encode = 'Yes'
 		else :
 			encode = 'No'
-		if self.Settings.value('AvahiDetect', True).toBool() :
+		if ModuleExist.AvahiAvailable and self.Settings.value('AvahiDetect', True).toBool() :
 			self.avahiService = AvahiService(self.menuTab, \
 								name = name_, \
 								port = self.server_port, \

@@ -7,6 +7,7 @@ from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
 from Functions import InitConfigValue, dateStamp, moveFile, randomString, Path
 from mcastSender import _send_mcast as Sender
+from Modules import ModuleExist
 import os, stat, os.path
 
 class ServerSettingsShield(QtGui.QDialog):
@@ -63,6 +64,7 @@ class ServerSettingsShield(QtGui.QDialog):
 			value = QtCore.Qt.Unchecked
 		self.useAvahiDetect.setToolTip('Avahi\Bonjour')
 		self.useAvahiDetect.setCheckState(value)
+		if not ModuleExist.AvahiAvailable : self.useAvahiDetect.Enabled(False)
 		self.detectionPanel.addWidget(self.useAvahiDetect, 0, alignment=QtCore.Qt.AlignLeft)
 
 		self.useBroadcastDetect = QtGui.QCheckBox()

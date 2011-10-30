@@ -3,7 +3,7 @@
 import dbus, gobject, avahi, time, string, os.path
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore
 from Functions import randomString  #, toolTipsHTMLWrap, InCache
 
 class AvahiBrowser():
