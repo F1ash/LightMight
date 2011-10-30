@@ -23,7 +23,6 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 		else :
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-		#self.funcs = {}
 		self.logRequests = False		## disable logging """
 		self.allow_none = allow_none
 		self.timeout = 15

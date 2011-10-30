@@ -11,7 +11,7 @@ from Wait import SetupTree
 from Functions import InCache, Path, moveFile, DelFromCache, InitConfigValue
 from os.path import basename as BaseName
 from mcastSender import _send_mcast as Sender
-import os
+import os, shutil
 
 class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
@@ -58,9 +58,9 @@ class Box(QtGui.QWidget):
 		self.buttonLayout.addWidget(self.treeButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.refreshButton = QtGui.QPushButton(QtCore.QString('&R'))
-		self.refreshButton.setToolTip('Reinit Server')
+		self.refreshButton.setToolTip('Restart Server')
 		self.refreshButton.setMaximumWidth(65)
-		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.reinitServer)
+		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.restartServer)
 		self.buttonLayout.addWidget(self.refreshButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.layout.addItem(self.buttonLayout, 0, 2)
@@ -190,21 +190,34 @@ class Box(QtGui.QWidget):
 			self.sharedTree.setToolTip(toolTip)
 			self.sharedTree.show()
 
-	def reinitServer(self):
+	def restartServer(self):
+		self.sentOfflinePost()
+		#print Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), ' close'
+		if InitConfigValue(self.Obj.Settings, 'UseCache', 'True') == 'True' : self.Obj.saveCache()
+		if InitConfigValue(self.Obj.Settings, 'SaveLastStructure', 'True') == 'True' :
+			#print True
+			if os.path.exists(Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.Obj.serverState)) :
+				#print 'Exist'
+				shutil.move(Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.Obj.serverState), \
+							Path.config('lastSharedSource'))
+				with open(Path.config('lastServerState'), 'wb') as f :
+					f.write(self.Obj.serverState)
+			else :
+				#print 'not Exist'
+				pass
 		if 'serverThread' in dir(self.Obj) :
-			self.Obj.serverThread._terminate('reinit')
+			self.Obj.serverThread._terminate('reStart')
 			#self.Obj.serverThread.exit()
-		else : self.preInitServer()
-
-	@QtCore.pyqtSlot(str, name = 'preInitServer')
-	def preInitServer(self, str_):
-		if str_ == 'reinit' :
+		else : self.preStartServer()
+ 
+	@QtCore.pyqtSlot(str, name = 'preStartServer')
+	def preStartServer(self, str_):
+		if str_ == 'reStart' :
 			print 'serverDown signal received'
 		else :
 			print 'alien signal'
 			return None
-		self.sentOfflinePost()
-		self.Obj.initServeR.emit(self.treeModel, '', self.Obj.serverState)
+		self.Obj.initServeR.emit(self.treeModel, '', 'reStart')
 
 	def sentOfflinePost(self):
 		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :

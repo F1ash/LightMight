@@ -123,7 +123,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.cacheDown.connect(self.cacheS)
 		self.initServeR.connect(self.initServer)
 		self.reinitServer.connect(self.initServer)
-		self.serverDown[str].connect(self.menuTab.preInitServer)
+		self.serverDown[str].connect(self.menuTab.preStartServer)
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
 		self.timer.timeout.connect(self.initServer)
@@ -318,7 +318,11 @@ class MainWindow(QtGui.QMainWindow):
 	def initServer(self, sharedSourceTree = None, loadFile = None, previousState = ''):
 		self.previousState = previousState
 		self.menuTab.progressBar.show()
-		if 'serverThread' in dir(self) :
+		if 'serverThread' in dir(self) and previousState == 'reStart' :
+			treeModel = sharedSourceTree
+			firstRun = True
+			self.serverThread = None
+		elif 'serverThread' in dir(self) :
 			treeModel = sharedSourceTree
 			firstRun = False
 			self.serverThread = None
@@ -491,7 +495,7 @@ class MainWindow(QtGui.QMainWindow):
 		if 'reinitServer' in dir(self) :
 			self.reinitServer.disconnect(self.initServer)
 		if 'serverDown' in dir(self) :
-			self.serverDown[str].disconnect(self.menuTab.preInitServer)
+			self.serverDown[str].disconnect(self.menuTab.preStartServer)
 		for item in self.USERS.iterkeys() :
 			addr, port = item.split(':')
 			print addr, port
