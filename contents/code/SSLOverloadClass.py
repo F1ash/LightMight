@@ -25,15 +25,15 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 
 		self.logRequests = False		## disable logging """
 		self.allow_none = allow_none
-		self.timeout = 15
+		self.socket.settimeout(15)
 		self.server_bind()
 		self.server_activate()
 
 	def handle_request(self):
-		return SocketServer.TCPServer.handle_request(self)
+		return SimpleXMLRPCServer.handle_request(self)
 
 	def handle_error(self, request, client_address):
-		return SocketServer.TCPServer.handle_error(self, request, client_address)
+		return SimpleXMLRPCServer.handle_error(self, request, client_address)
 
 	def get_request(self):
 		return SimpleXMLRPCServer.get_request(self)
@@ -77,3 +77,4 @@ class SSLServerProxy(ServerProxy):
 			#print '   TLS used on client ...'
 		else :
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.socket.settimeout(15)

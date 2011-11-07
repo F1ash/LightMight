@@ -64,7 +64,7 @@ class ServerSettingsShield(QtGui.QDialog):
 			value = QtCore.Qt.Unchecked
 		self.useAvahiDetect.setToolTip('Avahi\Bonjour')
 		self.useAvahiDetect.setCheckState(value)
-		if not ModuleExist.AvahiAvailable : self.useAvahiDetect.Enabled(False)
+		if not ModuleExist.AvahiAvailable : self.useAvahiDetect.setEnabled(False)
 		self.detectionPanel.addWidget(self.useAvahiDetect, 0, alignment=QtCore.Qt.AlignLeft)
 
 		self.useBroadcastDetect = QtGui.QCheckBox()

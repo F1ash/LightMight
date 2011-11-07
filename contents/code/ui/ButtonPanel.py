@@ -11,7 +11,8 @@ class ButtonPanel(QtGui.QWidget):
 	# custom signal
 	errorString = QtCore.pyqtSignal(str)
 	def __init__(self, name_ = '', downLoadSize = 0, jobNumber = -1, \
-					serverState = '', addr = '', port = '', info = '', TLS = 'False', parent = None):
+					serverState = '', addr = '', port = '', info = '', \
+					TLS = 'False', sessionID = '', parent = None):
 		QtGui.QWidget.__init__(self, parent)
 		self.Obj = self
 		self.SEP = os.sep
@@ -21,6 +22,7 @@ class ButtonPanel(QtGui.QWidget):
 		self.address = addr
 		self.port = port
 		self.currentRemoteServerState = serverState
+		self.sessionID = str(sessionID)
 		self.maskSet = {}
 		if 'True' == TLS :
 			self.TLS = True

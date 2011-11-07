@@ -34,8 +34,14 @@ class ServerDaemon():
 		if clientIP != self._srv.client_address[0] : return None
 		fileName = randomString(DIGITS_LENGTH)
 		_id = randomString(DIGITS_LENGTH)
-		self.currentSessionID[clientIP] = _id
+		if clientIP not in self.currentSessionID :
+			self.currentSessionID[clientIP] = _id
+		else :
+			return None
+			#self.currentSessionID[clientIP] = _id
+		#print 'current Sessions', self.currentSessionID
 		list_ = [fileName, _id, self.serverState, self.Parent.previousState]
+		#print list_
 		DataRendering().listToFile(list_, fileName)
 		with open(Path.tempStruct(fileName), "rb") as handle :
 			return xmlrpclib.Binary(handle.read())
@@ -56,7 +62,7 @@ class ServerDaemon():
 
 	def python_file(self, id_, sessionID = ''):
 		#print self._srv.client_address, '--python_file'
-		#print sessionID, self.currentSessionID[self._srv.client_address[0]]
+		#print [sessionID, self.currentSessionID[self._srv.client_address[0]]]
 		if sessionID != self.currentSessionID[self._srv.client_address[0]] : return None
 		""" добавить обработчик ошибок соединения и существования файлов """
 		#print id_, type(id_), str(self.commonSetOfSharedSource[int(id_)]), '  serv'

@@ -429,6 +429,9 @@ class MainWindow(QtGui.QMainWindow):
 					'\n\n!!!!', encoding, '  info'
 			"""
 			""" task run """
+			if serverAddr not in self.serverThread.Obj.currentSessionID :
+				self.showMSG('Session not exist.\nMay be remote server reinit or close.')
+				return None
 			pid, start = job.startDetached('python', \
 						 (QtCore.QStringList()	<< '.' + self.SEP + 'DownLoadClient.py' \
 												<< nameMaskFile \
@@ -438,7 +441,8 @@ class MainWindow(QtGui.QMainWindow):
 												<< serverAddr \
 												<< serverPort \
 												<< description \
-												<< encode), \
+												<< encode \
+												<< self.serverThread.Obj.currentSessionID[serverAddr]), \
 						 os.getcwd())
 
 	def show_n_hide(self):
@@ -477,6 +481,7 @@ class MainWindow(QtGui.QMainWindow):
 
 	def stopServices(self):
 		if hasattr(self, 'END') and self.END : return None
+		self.statusBar.showMessage('Restart Services')
 		if 'avahiBrowser' in dir(self) :
 			if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__(); self.avahiBrowser = None
 		if 'avahiService' in dir(self) :

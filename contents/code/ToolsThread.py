@@ -24,7 +24,9 @@ class ToolsThread(QThread):
 	def getSharedData(self):
 		downLoadPath = unicode(InitConfigValue(QSettings('LightMight','LightMight'), \
 											'DownLoadTo', Path.Temp))
-		self.Obj.getSharedData(self.maskSet, downLoadPath, self, self.Parent.currentRemoteServerState)
+		self.Obj.getSharedData(self.maskSet, downLoadPath, \
+							   self, self.Parent.currentRemoteServerState, \
+							   self.Parent.sessionID)
 
 	def _terminate(self, str_ = ''):
 		self.Obj._shutdown(str_)

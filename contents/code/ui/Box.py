@@ -5,6 +5,7 @@ from TreeProc import TreeModel
 from TreeItem import TreeItem
 from TreeProcess import TreeProcessing
 from TreeBox import TreeBox
+from AddContact import AddContact
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
@@ -51,6 +52,12 @@ class Box(QtGui.QWidget):
 		self.progressBar.hide()
 		self.buttonLayout.addWidget(self.progressBar, 0, QtCore.Qt.AlignHCenter)
 
+		self.addContactButton = QtGui.QPushButton(QtCore.QString('&Add'))
+		self.addContactButton.setToolTip('Add Contact')
+		self.addContactButton.setMaximumWidth(65)
+		self.connect(self.addContactButton, QtCore.SIGNAL('clicked()'), self.addContact)
+		self.buttonLayout.addWidget(self.addContactButton, 0, QtCore.Qt.AlignHCenter)
+
 		self.treeButton = QtGui.QPushButton(QtCore.QString('&Tree'))
 		self.treeButton.setToolTip('Show Tree \nof Shared Source')
 		self.treeButton.setMaximumWidth(65)
@@ -73,6 +80,10 @@ class Box(QtGui.QWidget):
 		self.tree.connect(self.showTree)
 		self.data.connect(self.changeViewMode)
 		self.setAvatar.connect(self.setContactAvatar)
+
+	def addContact(self):
+		_AddContact = AddContact(self)
+		_AddContact.exec_()
 
 	def showSharedSources(self, str_ = ''):
 		if not self.progressBar.isVisible() : self.progressBar.show()
@@ -100,7 +111,10 @@ class Box(QtGui.QWidget):
 		self.progressBar.show()
 		#print 'not cached'
 		addr = self.clientThread.Obj.servaddr
-		key = addr.strip(':')[0]
+		key = addr.split(':')[0]
+		# get session ID if don`t it
+		if key not in self.Obj.serverThread.Obj.currentSessionID :
+			self.clientThread.Obj.getSessionID(self.Obj.server_addr)
 		if key in self.Obj.serverThread.Obj.currentSessionID :
 			sessionID = self.Obj.serverThread.Obj.currentSessionID[key]
 		else :
@@ -164,9 +178,6 @@ class Box(QtGui.QWidget):
 
 		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self._showSharedSources)
 		self.clientThread.start()
-		# get session ID if don`t it
-		if key not in self.Obj.serverThread.Obj.currentSessionID :
-			self.clientThread.Obj.getSessionID(self.Obj.server_addr)
 
 	def hide_n_showTree(self):
 		if self.sharedTree.isVisible():

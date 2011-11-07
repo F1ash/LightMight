@@ -15,12 +15,18 @@ class DataCache(QThread):
 		self.runState = False
 		self.USERS = userList
 		self.newItem.connect(self.refillCache)
-		self.timer = QTimer()
-		self.timer.timeout.connect(self.initRefill)
+		if Path.platform != 'win' :
+			self.timer = QTimer()
+			self.timer.setInterval(10000)
+			self.timer.timeout.connect(self.initRefill)
 
 	def run(self):
 		self.setPriority(QThread.LowPriority)
-		self.timer.start(10000)
+		if Path.platform == 'win' :
+			self.timer = QTimer()
+			self.timer.setInterval(10000)
+			self.timer.timeout.connect(self.initRefill)
+		self.timer.start()
 
 	def initRefill(self):
 		if self.runState : print 'caching...'; return None
@@ -36,15 +42,16 @@ class DataCache(QThread):
 					value = False
 				#print 'caching:', unicode(itemValue[1][1]), unicode(itemValue[1][2]), value, '--', itemValue[0]
 				currAddr = unicode(itemValue[1][1])
-				clnt = xr_client(addr = currAddr, \
+				if hasattr(self, 'clnt') : self.clnt = None
+				self.clnt = xr_client(addr = currAddr, \
 								 port = unicode(itemValue[1][2]), \
 								 parent = self, \
 								 TLS = value)
-				clnt.run()
+				self.clnt.run()
 				# get session ID if don`t it
 				#print self.Obj.serverThread.Obj.currentSessionID, '\n', currAddr
 				if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
-					clnt.getSessionID(self.Obj.server_addr)
+					self.clnt.getSessionID(self.Obj.server_addr)
 				if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
 					self.USERS[itemValue[0]] = (itemValue[1][0], \
 												itemValue[1][1], \
@@ -64,26 +71,26 @@ class DataCache(QThread):
 					if not moveFile(pathExist[1], \
 									Path.tempCache(tail), \
 									False) :
-						#clnt.run()
-						names = clnt.getSharedSourceStructFile(sessionID)
+						#self.clnt.run()
+						names = self.clnt.getSharedSourceStructFile(sessionID)
 						#print 'download struct'
 						if not moveFile(os.path.join(head, 'avatars', tail), \
 										Path.tempAvatar(tail), \
 										False) :
-							clnt.getAvatar(sessionID)
+							self.clnt.getAvatar(sessionID)
 							#print ' download avatar'
 					elif not moveFile(os.path.join(head, 'avatars', tail), \
 									Path.tempAvatar(tail), \
 									False) :
-						#clnt.run()
-						clnt.getAvatar(sessionID)
+						#self.clnt.run()
+						self.clnt.getAvatar(sessionID)
 						#print ' download avatar only'
 				else :
 					""" if data not cached """
 					#print pathExist, 'in CacheData, not inCache'
-					#clnt.run()
-					clnt.getAvatar(sessionID)
-					names = clnt.getSharedSourceStructFile(sessionID)
+					#self.clnt.run()
+					self.clnt.getAvatar(sessionID)
+					names = self.clnt.getSharedSourceStructFile(sessionID)
 					#print 'download all'
 				""" if remoteServerState is changed """
 				#print names, itemValue[0]
@@ -118,4 +125,5 @@ class DataCache(QThread):
 		self.newItem.disconnect(self.refillCache)
 		self.timer.stop()
 		self.Key = False
+		if hasattr(self, 'clnt') : self.clnt._shutdown()
 		self.Obj.cacheDown.emit()
