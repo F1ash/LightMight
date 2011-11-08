@@ -58,7 +58,7 @@ class xr_client:
 			#print sessionID, ' session ID'
 			self.s.python_clean(self.listRandomString[0], sessionID)
 			if os.path.exists(self.randomFileName) : os.remove(self.randomFileName)
-			self.Parent.Obj.serverThread.Obj.currentSessionID[self.servaddr.split(':')[0]] = sessionID
+			self.Parent.Obj.serverThread.Obj.currentSessionID[str(self.servaddr.split(':')[0])] = sessionID
 			#print self.Parent.Obj.serverThread.Obj.currentSessionID , '\n^^^current Sessions'
 			self.serverState = self.listRandomString[2]
 			if len(self.listRandomString) > 3 :

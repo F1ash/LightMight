@@ -47,11 +47,12 @@ class ServerDaemon():
 			return xmlrpclib.Binary(handle.read())
 
 	def sessionClose(self, sessionID = ''):
-		print self._srv.client_address, '--sessionClose'
-		print sessionID, self.currentSessionID[self._srv.client_address[0]]
+		#print self._srv.client_address, '--sessionClose'
+		#print sessionID, self.currentSessionID[self._srv.client_address[0]]
 		addr = self._srv.client_address[0]
-		if sessionID != self.currentSessionID[addr] : return None
-		if addr in self.currentSessionID : del self.currentSessionID[addr]
+		if addr in self.currentSessionID :
+			if sessionID != self.currentSessionID[addr] : return None
+			del self.currentSessionID[addr]
 
 	def python_clean(self, name, sessionID = ''):
 		#print self._srv.client_address, '--python_clean'
@@ -62,14 +63,19 @@ class ServerDaemon():
 
 	def python_file(self, id_, sessionID = ''):
 		#print self._srv.client_address, '--python_file'
-		#print [sessionID, self.currentSessionID[self._srv.client_address[0]]]
-		if sessionID != self.currentSessionID[self._srv.client_address[0]] : return None
-		""" добавить обработчик ошибок соединения и существования файлов """
-		#print id_, type(id_), str(self.commonSetOfSharedSource[int(id_)]), '  serv'
+		controlID = self.currentSessionID[self._srv.client_address[0]]
+		#print [sessionID, controlID]
+		if sessionID != controlID : return None
+		#print id_, type(id_), str(self.commonSetOfSharedSource), '  serv'
 
 		if int(id_) in self.commonSetOfSharedSource :
-				with open(str(self.commonSetOfSharedSource[int(id_)]), "rb") as handle :
+			fileName = str(self.commonSetOfSharedSource[int(id_)])
+			if os.path.isfile(fileName) :
+				with open(fileName, "rb") as handle :
 					return xmlrpclib.Binary(handle.read())
+		# return empty data for not raising exception
+		# and not stopping download
+		return xmlrpclib.Binary('')
 
 	def requestSharedSourceStruct(self, name, sessionID = ''):
 		#print self._srv.client_address, '--requestSharedSourceStruct'

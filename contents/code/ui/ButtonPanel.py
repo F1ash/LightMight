@@ -22,7 +22,7 @@ class ButtonPanel(QtGui.QWidget):
 		self.address = addr
 		self.port = port
 		self.currentRemoteServerState = serverState
-		self.sessionID = str(sessionID)
+		self.sessionID = sessionID
 		self.maskSet = {}
 		if 'True' == TLS :
 			self.TLS = True
