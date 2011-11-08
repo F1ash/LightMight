@@ -15,18 +15,14 @@ class DataCache(QThread):
 		self.runState = False
 		self.USERS = userList
 		self.newItem.connect(self.refillCache)
-		if Path.platform != 'win' :
-			self.timer = QTimer()
-			self.timer.setInterval(10000)
-			self.timer.timeout.connect(self.initRefill)
+		self.timer = QTimer()
+		self.timer.setInterval(10000)
+		self.timer.timeout.connect(self.initRefill)
+		self.timer.start()
 
 	def run(self):
 		self.setPriority(QThread.LowPriority)
-		if Path.platform == 'win' :
-			self.timer = QTimer()
-			self.timer.setInterval(10000)
-			self.timer.timeout.connect(self.initRefill)
-		self.timer.start()
+		#print self.timer.isActive()
 
 	def initRefill(self):
 		if self.runState : print 'caching...'; return None

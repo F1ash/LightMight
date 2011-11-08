@@ -141,7 +141,7 @@ class xr_client:
 						print "Fault string: %s" % err.faultString"""
 						self.Parent.Obj.errorString.emit(str(err))
 					except socket.error, err :
-						#print 'SocetError : ', err
+						#print 'SocketError : ', err
 						self.Parent.Obj.errorString.emit(str(err))
 					finally :
 						pass
@@ -175,7 +175,7 @@ class xr_client:
 						#self.Parent.Obj.errorString.emit(str(err))
 						pass
 					except socket.error, err :
-						#print 'SocetError : ', err
+						#print 'SocketError : ', err
 						#self.Parent.Obj.errorString.emit(str(err))
 						pass
 					finally :
@@ -267,7 +267,7 @@ class xr_client:
 			else :
 				self.Parent.errorString.emit(str(err))
 		except socket.error, err :
-			print 'SocetError : ', err
+			print 'SocketError : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
@@ -279,7 +279,7 @@ class xr_client:
 			try :
 				self.s.socket.shutdown(socket.SHUT_RDWR)
 			except socket.error, err :
-				print '[in getSessionID()] SocketError : ', err
+				print '[in _shutdown()] SocketError : ', err
 			finally :
 				self.s.socket.close()
 

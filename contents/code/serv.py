@@ -57,7 +57,8 @@ class ServerDaemon():
 	def python_clean(self, name, sessionID = ''):
 		#print self._srv.client_address, '--python_clean'
 		#print sessionID, self.currentSessionID[self._srv.client_address[0]]
-		if sessionID != self.currentSessionID[self._srv.client_address[0]] : return None
+		if self._srv.client_address[0] not in self.currentSessionID or \
+				sessionID != self.currentSessionID[self._srv.client_address[0]] : return None
 		path_ = Path.tempStruct(name)
 		if os.path.isfile(path_) : os.remove(path_)
 
