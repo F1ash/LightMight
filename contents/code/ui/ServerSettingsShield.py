@@ -105,6 +105,7 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.sharedTree = QtGui.QTreeView()
+		self.sharedTree.setMinimumWidth(275)
 		self.sharedTree.setRootIsDecorated(True)
 		TreeProcessing().setupItemData([], self.treeModel.rootItem)
 		self.sharedTree.setToolTip("<font color=red><b>Select path<br>for share it !</b></font>")

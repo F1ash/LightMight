@@ -23,6 +23,7 @@ class Box(QtGui.QWidget):
 		QtGui.QWidget.__init__(self, parent)
 
 		self.Obj = Obj_
+		self.SEP = os.sep
 
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
 		self.treeProcessing = TreeProcessing()
@@ -52,21 +53,21 @@ class Box(QtGui.QWidget):
 		self.progressBar.hide()
 		self.buttonLayout.addWidget(self.progressBar, 0, QtCore.Qt.AlignHCenter)
 
-		self.addContactButton = QtGui.QPushButton(QtCore.QString('&Add'))
+		self.addContactIcon = QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'contact_new.png')
+		self.addContactButton = QtGui.QPushButton(self.addContactIcon, '')
 		self.addContactButton.setToolTip('Add Contact')
-		self.addContactButton.setMaximumWidth(65)
 		self.connect(self.addContactButton, QtCore.SIGNAL('clicked()'), self.addContact)
 		self.buttonLayout.addWidget(self.addContactButton, 0, QtCore.Qt.AlignHCenter)
 
-		self.treeButton = QtGui.QPushButton(QtCore.QString('&Tree'))
+		self.treeIcon = QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'tree.png')
+		self.treeButton = QtGui.QPushButton(self.treeIcon, '')
 		self.treeButton.setToolTip('Show Tree \nof Shared Source')
-		self.treeButton.setMaximumWidth(65)
 		self.connect(self.treeButton, QtCore.SIGNAL('clicked()'), self.hide_n_showTree)
 		self.buttonLayout.addWidget(self.treeButton, 0, QtCore.Qt.AlignHCenter)
 
-		self.refreshButton = QtGui.QPushButton(QtCore.QString('&R'))
+		self.refreshIcon = QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'restart.png')
+		self.refreshButton = QtGui.QPushButton(self.refreshIcon, '')
 		self.refreshButton.setToolTip('Restart Server')
-		self.refreshButton.setMaximumWidth(65)
 		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.restartServer)
 		self.buttonLayout.addWidget(self.refreshButton, 0, QtCore.Qt.AlignHCenter)
 
