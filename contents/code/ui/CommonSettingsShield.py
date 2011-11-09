@@ -127,19 +127,15 @@ class CommonSettingsShield(QtGui.QDialog):
 		createStructure()
 
 	def cleanAbsentParticipantData(self):
-		""" получить список состояний уд.серверов на данный момент;
-			если имя файла из кеша не входит в список состояний,
-			то файл удалить
-		"""
 		statesList = []
 		for item in self.Obj.USERS.values() : statesList.append(item[4]) 
-		print statesList
+		#print statesList
 		for name in os.listdir(Path.Cache) :
-			if os.path.isfile(Path.cache(name)) and name not in statesList :
-				os.remove(Path.cache(name))
-				os.remove(Path.avatar(name))
-				os.remove(Path.tempCache(name))
-				os.remove(Path.tempAvatar(name))
+			if name not in statesList :
+				if os.path.isfile(Path.cache(name)) : os.remove(Path.cache(name))
+				if os.path.isfile(Path.avatar(name)) : os.remove(Path.avatar(name))
+				if os.path.isfile(Path.tempCache(name)) : os.remove(Path.tempCache(name))
+				if os.path.isfile(Path.tempAvatar(name)) : os.remove(Path.tempAvatar(name))
 
 	def ok(self):
 		self.saveData()

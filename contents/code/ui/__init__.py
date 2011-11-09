@@ -145,6 +145,7 @@ class MainWindow(QtGui.QMainWindow):
 	def receiveBroadcastMessage(self, data, addr):
 		if data.count('<||>') != 6 : return None	## ignore non-standart packets
 		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
+		print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
 		''' check correct IP for local network '''
 		if addr == addr_in_data :
 			if   mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, None, False)
@@ -209,7 +210,7 @@ class MainWindow(QtGui.QMainWindow):
 		#print 'DEL down'
 
 	def addNewContact(self, name, addr, port, encode, state, domain, avahi_method = True):
-		#print name, addr, port, 'new contact'
+		print QtCore.QString().fromUtf8(name), addr, port, 'new contact'
 		key = str(addr + ':' + port)
 		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :

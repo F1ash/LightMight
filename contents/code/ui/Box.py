@@ -55,7 +55,7 @@ class Box(QtGui.QWidget):
 
 		self.addContactIcon = QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'contact_new.png')
 		self.addContactButton = QtGui.QPushButton(self.addContactIcon, '')
-		self.addContactButton.setToolTip('Add Contact')
+		self.addContactButton.setToolTip('Connect to New Contact')
 		self.connect(self.addContactButton, QtCore.SIGNAL('clicked()'), self.addContact)
 		self.buttonLayout.addWidget(self.addContactButton, 0, QtCore.Qt.AlignHCenter)
 

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtGui, QtCore
-from ListingText import ListingText
 from mcastSender import _send_mcast as Sender
-from Functions import InitConfigValue
+from Functions import InitConfigValue, differentIP, getExternalIP
 import os
 
 class AddContact(QtGui.QDialog):
@@ -19,6 +18,7 @@ class AddContact(QtGui.QDialog):
 		form = QtGui.QGridLayout()
 
 		self.addrString = QtGui.QLineEdit()
+		self.addrString.setToolTip('Enter IP of client')
 		form.addWidget(self.addrString, 1, 0, 2, 4)
 
 		self.okButton = QtGui.QPushButton('&Ok')
@@ -40,9 +40,24 @@ class AddContact(QtGui.QDialog):
 			encode = 'Yes'
 		else :
 			encode = 'No'
+		res = differentIP(addr)
+		if res == '' :
+			print 'Incorrect IP'
+			self.Parent.Obj.showMSG('Incorrect IP')
+			self.done(0)
+			return None
+		elif res == 'local' :
+			serverAddr = self.Parent.Obj.server_addr
+		else :
+			serverAddr = getExternalIP()
+			if serverAddr == '' :
+				print 'External IP not detected. Check connect to Internet.'
+				self.Parent.Obj.showMSG('External IP not detected. Check connect to Internet.')
+				self.done(0)
+				return None
 		data = QtCore.QString('1' + '<||>' + \
 							  name_ + '<||>' + \
-							  self.Parent.Obj.server_addr + '<||>' + \
+							  serverAddr + '<||>' + \
 							  str(self.Parent.Obj.server_port) + '<||>' + \
 							  encode + '<||>' + \
 							  self.Parent.Obj.serverState + '<||>' + \

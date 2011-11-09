@@ -39,7 +39,7 @@ class UdpClient(QThread):
 			addr = QHostAddress()
 			port = 0
 			(data, addr, port) = self.udp.readDatagram(1024)
-			#print "Datagram: [%s] from %s:%i" % (QString().fromUtf8(data), addr.toString(), port)
+			print "Datagram: [%s] from %s:%i" % (QString().fromUtf8(data), addr.toString(), port)
 			self.prnt.contactMessage.emit(QString().fromUtf8(data), addr.toString())
 
 if __name__ == '__main__':

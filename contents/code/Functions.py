@@ -1,10 +1,53 @@
 # -*- coding: utf-8 -*-
 
-import os, os.path, string, random, socket, ssl, time, sys
+import os, os.path, string, random, socket, ssl, time, sys, re, urllib2
 from Path import  Path
 
 char_set = string.ascii_letters + string.digits
 DIGITS_LENGTH = 24
+
+pattern = "[1-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?"
+ip_re = re.compile(pattern)
+CHECK_SERVICES = ('http://www.viewmyipaddress.com/', 'http://api.wipmania.com/', 'http://checkip.dyndns.org')
+
+def correct_ip(ip = ''):
+	findIP = ip_re.findall(ip)
+
+	if findIP == [] :
+		return False
+	else :
+		segment = findIP[0].split('.')
+	for i in segment :
+		dig = string.atoi(i)
+		if dig > 255 :
+			return False
+	return True
+
+def differentIP(ip = ''):
+	if not correct_ip(ip) : return ''
+	segment = ip.split('.')
+	if segment[0] in ('10', '127') : return 'local'
+	dig = string.atoi(segment[1])
+	if segment[0] == '172' and dig < 32 and dig > 15 : return 'local'
+	elif segment[0] == '192' and dig == 168 : return 'local'
+	elif segment[0] == '169' and dig == 254 : return 'local'
+	return ip
+
+def getExternalIP():
+	ip = ''
+	for addr in CHECK_SERVICES :
+		try :
+			f = urllib2.urlopen(urllib2.Request(addr))
+			response = f.read()
+			f.close()
+			ip_ = ip_re.findall(response)
+			if ip_ == [] : continue
+			ip = ip_[0]
+			break
+		except urllib2.URLError, err:
+			print err
+		finally : pass
+	return ip
 
 def createStructure():
 	for nameDir in [Path.TempAvatar, \
@@ -118,7 +161,7 @@ def moveFile(src, dst, delete = True):
 		with open(src, 'rb') as srcFile :
 			with open(dst, 'wb') as dstFile :
 				dstFile.write(srcFile.read())
-			if delete : os.remove(srcFile.name)
+			if delete and os.path.isfile(srcFile.name) : os.remove(srcFile.name)
 		return True
 	else :
 		return False
