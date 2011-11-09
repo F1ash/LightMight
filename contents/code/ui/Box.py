@@ -9,6 +9,7 @@ from AddContact import AddContact
 from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
+from ContactDataEditor import ContactDataEditor
 from Functions import InCache, Path, moveFile, DelFromCache, InitConfigValue
 from os.path import basename as BaseName
 from mcastSender import _send_mcast as Sender
@@ -41,6 +42,7 @@ class Box(QtGui.QWidget):
 		self.userList.setSortingEnabled(True)
 		self.userList.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 		self.userList.itemDoubleClicked.connect(self.itemSharedSourceQuired)
+		self.userList.customContextMenuRequested.connect(self.itemContextMenuQuired)
 		self.layout.addWidget(self.userList, 0, 0)
 
 		self.buttonLayout = QtGui.QVBoxLayout()
@@ -245,3 +247,12 @@ class Box(QtGui.QWidget):
 									'' + '<||>' + \
 									'*infoShare*')
 				Sender(data)
+
+	def itemContextMenuQuired(self, point):
+		item = self.userList.itemAt(point)
+		if item is not None :
+			#print point, 'clicked', QtCore.QString().fromUtf8(item.text())
+			Editor  = ContactDataEditor(item, self)
+			Editor.move(point)
+			Editor.exec_()
+
