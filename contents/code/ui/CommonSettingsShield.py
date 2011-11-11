@@ -6,10 +6,10 @@ from Functions import InitConfigValue, Path, createStructure
 import os, stat, os.path, shutil
 
 class CommonSettingsShield(QtGui.QDialog):
-	def __init__(self, obj = None, parent = None):
+	def __init__(self, parent = None):
 		QtGui.QDialog.__init__(self, parent)
 
-		self.Obj = obj
+		self.Obj = parent
 		self.SEP = os.sep
 
 		self.setWindowTitle('LightMight Common Settings')
@@ -73,15 +73,26 @@ class CommonSettingsShield(QtGui.QDialog):
 		self.connect(self.cleanAbsentButton, QtCore.SIGNAL('clicked()'), self.cleanAbsentParticipantData)
 		form.addWidget(self.cleanAbsentButton, 13, 2)
 
+		self.policyLabel = QtGui.QLabel('Common policy')
+		form.addWidget(self.policyLabel, 14, 0)
+
+		self.policySelect = QtGui.QComboBox()
+		currentCommonPolicy = InitConfigValue(self.Obj.Settings, 'CommonPolicy', 'Blocked')
+		self.policySelect.addItem(QtGui.QIcon(), 'Allowed')
+		self.policySelect.addItem(QtGui.QIcon(), 'Confirm')
+		self.policySelect.addItem(QtGui.QIcon(), 'Blocked')
+		self.policySelect.setCurrentIndex(self.policySelect.findText(currentCommonPolicy))
+		form.addWidget(self.policySelect, 14, 2)
+
 		self.okButton = QtGui.QPushButton('&Ok')
 		self.okButton.setMaximumWidth(75)
 		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
-		form.addWidget(self.okButton, 14, 2)
+		form.addWidget(self.okButton, 15, 2)
 
 		self.cancelButton = QtGui.QPushButton('&Cancel')
 		self.cancelButton.setMaximumWidth(75)
 		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-		form.addWidget(self.cancelButton, 14, 3)
+		form.addWidget(self.cancelButton, 15, 3)
 
 		self.useCacheCheck = QtGui.QCheckBox()
 		if InitConfigValue(self.Obj.Settings, 'UseCache', 'True') == 'True' :
@@ -157,6 +168,7 @@ class CommonSettingsShield(QtGui.QDialog):
 		else :
 			value = 'False'
 		self.Obj.Settings.setValue('UseCache', value)
+		self.Obj.Policy.setPolicy(self.policySelect.currentText())
 		self.Obj.Settings.sync()
 
 	def closeEvent(self, event):

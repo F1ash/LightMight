@@ -11,10 +11,10 @@ from Modules import ModuleExist
 import os, stat, os.path
 
 class ServerSettingsShield(QtGui.QDialog):
-	def __init__(self, obj = None, parent = None):
+	def __init__(self, parent = None):
 		QtGui.QDialog.__init__(self, parent)
 
-		self.Obj = obj
+		self.Obj = parent
 		self.SEP = os.sep
 
 		self.setWindowTitle('LightMight Server Settings')

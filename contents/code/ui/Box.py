@@ -119,10 +119,12 @@ class Box(QtGui.QWidget):
 		if key not in self.Obj.serverThread.Obj.currentSessionID :
 			self.clientThread.Obj.getSessionID(self.Obj.server_addr)
 		if key in self.Obj.serverThread.Obj.currentSessionID :
-			sessionID = self.Obj.serverThread.Obj.currentSessionID[key]
+			sessionID = self.Obj.serverThread.Obj.currentSessionID[key][0]
 		else :
 			sessionID = ''
-		path, previousState = self.clientThread.getSharedSourceStructFile(sessionID)
+		path, error = self.clientThread.getSharedSourceStructFile(sessionID)
+		if error : cached = False
+		else : cached = True
 		self.clientThread.Obj.getAvatar(sessionID)
 		""" search USERS key with desired value for set it in "cached" """
 		Value = BaseName(path)
@@ -134,10 +136,9 @@ class Box(QtGui.QWidget):
 												itemValue[1][2], \
 												itemValue[1][3], \
 												itemValue[1][4], \
-												True)
+												cached)
 				self.searchItem(str(itemValue[1][1] + ':' + itemValue[1][2]))
 				break
-		if previousState != '' : DelFromCache(previousState)
 		self.showSharedSources(path)
 
 	def hideProgressBar(self):
@@ -178,7 +179,7 @@ class Box(QtGui.QWidget):
 												self, \
 												self.currentTreeEncode), \
 										self)
-
+		self.clientThread.Obj.serverState = self.Obj.USERS[key][4]
 		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self._showSharedSources)
 		self.clientThread.start()
 

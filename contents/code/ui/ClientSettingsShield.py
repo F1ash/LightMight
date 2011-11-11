@@ -6,10 +6,10 @@ from Functions import InitConfigValue, Path
 import os
 
 class ClientSettingsShield(QtGui.QDialog):
-	def __init__(self, obj = None, parent = None):
+	def __init__(self, parent = None):
 		QtGui.QDialog.__init__(self, parent)
 
-		self.Obj = obj
+		self.Obj = parent
 		self.SEP = os.sep
 
 		self.setWindowTitle('LightMight Client Settings')
@@ -68,5 +68,3 @@ class ClientSettingsShield(QtGui.QDialog):
 	def closeEvent(self, event):
 		event.ignore()
 		self.done(0)
-
-

@@ -15,10 +15,10 @@ data =  0/1/A/R(offline/online/answer/reinit)<separator>
 '''
 
 def _send_mcast(data, address = QHostAddress.Broadcast):
-	print "Sending :", unicode(data)
+	#print "Sending :", unicode(data)
 	udpSocket = QUdpSocket()
 	addr = QHostAddress(address)
-	print addr.toString()
+	#print addr.toString()
 	return udpSocket.writeDatagram(QString(data).toUtf8().data(), addr, 34001)
 
 if __name__ == '__main__':

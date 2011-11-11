@@ -9,6 +9,7 @@ from Wait import SetupTree
 from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
 from CommonSettingsShield import CommonSettingsShield
+#from ColorSettingsShield import ColorSettingsShield
 from ListingText import ListingText
 from DataCache import DataCache
 from StatusBar import StatusBar
@@ -28,6 +29,8 @@ from TreeProcess import TreeProcessing
 from mcastSender import _send_mcast as Sender
 from UdpClient import UdpClient
 from clnt import xr_client
+from Policy  import Policy
+from ConfirmRequest import ConfirmRequest
 
 class MainWindow(QtGui.QMainWindow):
 	# custom signals
@@ -57,6 +60,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.setWindowIcon(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png'))
 
 		self.Settings = QtCore.QSettings('LightMight','LightMight')
+		self.Policy = Policy(self)
 		self.avatarPath = InitConfigValue(self.Settings, 'AvatarPath', '')
 
 		self.exit_ = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'exit.png'), '&Exit', self)
@@ -76,9 +80,13 @@ class MainWindow(QtGui.QMainWindow):
 		serverSettings.setStatusTip('Set shared source, encrypt, etc.')
 		self.connect(serverSettings, QtCore.SIGNAL('triggered()'), self.showServerSettingsShield)
 
-		clientSettings = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'&Client Settings', self)
+		clientSettings = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'C&lient Settings', self)
 		clientSettings.setStatusTip('Set the download path, etc.')
 		self.connect(clientSettings, QtCore.SIGNAL('triggered()'), self.showClientSettingsShield)
+
+		#colorSettings = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'Color&Font and Background', self)
+		#colorSettings.setStatusTip('Set font color & background.')
+		#self.connect(colorSettings, QtCore.SIGNAL('triggered()'), self.showColorSettingsShield)
 
 		self.statusBar = StatusBar(self)
 		self.setStatusBar(self.statusBar)
@@ -95,6 +103,7 @@ class MainWindow(QtGui.QMainWindow):
 		set_.addAction(commonSettings)
 		set_.addAction(serverSettings)
 		set_.addAction(clientSettings)
+		#set_.addAction(colorSettings)
 
 		help_ = menubar.addMenu('&Help')
 		help_.addAction(listHelp)
@@ -145,7 +154,7 @@ class MainWindow(QtGui.QMainWindow):
 	def receiveBroadcastMessage(self, data, addr):
 		if data.count('<||>') != 6 : return None	## ignore non-standart packets
 		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
-		print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
+		#print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
 		''' check correct IP for local network '''
 		if addr == addr_in_data :
 			if   mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, None, False)
@@ -210,7 +219,7 @@ class MainWindow(QtGui.QMainWindow):
 		#print 'DEL down'
 
 	def addNewContact(self, name, addr, port, encode, state, domain, avahi_method = True):
-		print QtCore.QString().fromUtf8(name), addr, port, 'new contact'
+		#print QtCore.QString().fromUtf8(name), addr, port, 'new contact'
 		key = str(addr + ':' + port)
 		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :
@@ -443,7 +452,7 @@ class MainWindow(QtGui.QMainWindow):
 												<< serverPort \
 												<< description \
 												<< encode \
-												<< self.serverThread.Obj.currentSessionID[serverAddr]), \
+												<< self.serverThread.Obj.currentSessionID[serverAddr][0]), \
 						 os.getcwd())
 
 	def show_n_hide(self):
@@ -480,6 +489,10 @@ class MainWindow(QtGui.QMainWindow):
 		_ServerSettingsShield.exec_()
 		self.serverDown[str].disconnect(_ServerSettingsShield.preInitServer)
 
+	'''def showColorSettingsShield(self):
+		_ColorSettingsShield = ColorSettingsShield(self)
+		_ColorSettingsShield.exec_()'''
+
 	def stopServices(self):
 		if hasattr(self, 'END') and self.END : return None
 		self.statusBar.showMessage('Restart Services')
@@ -509,14 +522,21 @@ class MainWindow(QtGui.QMainWindow):
 			addr, port = item.split(':')
 			print addr, port
 			if addr in self.serverThread.Obj.currentSessionID :
-				print addr, self.serverThread.Obj.currentSessionID[addr]
+				print addr, self.serverThread.Obj.currentSessionID[addr][0]
 				clnt = xr_client(addr = addr, port = port, parent = self)
 				clnt.run()
-				clnt.sessionClose(self.serverThread.Obj.currentSessionID[addr])
+				clnt.sessionClose(self.serverThread.Obj.currentSessionID[addr][0])
 		if 'serverThread' in dir(self) :
 			self.serverThread._terminate()
 		self.menuTab.sentOfflinePost()
 		self.END = True
+
+	def confirmAction(self):
+		confirm = 255
+		_ConfirmRequest = ConfirmRequest(self)
+		confirm = _ConfirmRequest.exec_()
+		print confirm, '-- confirm'
+		return confirm
 
 	def saveCache(self):
 		Once = True

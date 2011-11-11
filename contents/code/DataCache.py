@@ -2,7 +2,7 @@
 
 from PyQt4.QtCore import QThread, QTimer, pyqtSignal, Qt
 from PyQt4.QtGui import QIcon
-from Functions import InitConfigValue, Path, DelFromCache, InCache, moveFile
+from Functions import InitConfigValue, Path, DelFromCache, InCache, avatarInCache, moveFile
 from clnt import xr_client
 import os.path
 
@@ -38,17 +38,20 @@ class DataCache(QThread):
 					value = False
 				#print 'caching:', unicode(itemValue[1][1]), unicode(itemValue[1][2]), value, '--', itemValue[0]
 				currAddr = unicode(itemValue[1][1])
-				if hasattr(self, 'clnt') : self.clnt = None
+				if hasattr(self, 'clnt') : del self.clnt; self.clnt = None
 				self.clnt = xr_client(addr = currAddr, \
 								 port = unicode(itemValue[1][2]), \
 								 parent = self, \
 								 TLS = value)
+				self.clnt.serverState = itemValue[1][4]
+				#print itemValue[1][4], 'remote server state'
 				self.clnt.run()
 				# get session ID if don`t it
 				#print self.Obj.serverThread.Obj.currentSessionID, '\n', currAddr
 				if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
 					self.clnt.getSessionID(self.Obj.server_addr)
 				if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
+					''' brocken contact '''
 					self.USERS[itemValue[0]] = (itemValue[1][0], \
 												itemValue[1][1], \
 												itemValue[1][2], \
@@ -57,53 +60,48 @@ class DataCache(QThread):
 												True)
 					self.Obj.menuTab.searchItem(itemValue[0])
 					continue
-				pathExist = InCache(itemValue[1][4])
-				names = ('', '')
-				sessionID = self.Obj.serverThread.Obj.currentSessionID[currAddr]
-				if pathExist[0] :
-					#print pathExist, 'in CacheData, inCache'
-					""" if data cached """
-					head, tail = os.path.split(str(pathExist[1]))
+				sessionID = self.Obj.serverThread.Obj.currentSessionID[currAddr][0]
+				pathExist = avatarInCache(self.clnt.serverState)
+				possibleAvatarTempPath = Path.tempAvatar(self.clnt.serverState)
+				avatarTempOut = not os.path.isfile(possibleAvatarTempPath)
+				avatarLoad = False
+				#print 'avatarTempOut', avatarTempOut, ':', possibleAvatarTempPath
+				if avatarTempOut and pathExist[0] :
 					if not moveFile(pathExist[1], \
-									Path.tempCache(tail), \
+									possibleAvatarTempPath, \
 									False) :
-						#self.clnt.run()
-						names = self.clnt.getSharedSourceStructFile(sessionID)
-						#print 'download struct'
-						if not moveFile(os.path.join(head, 'avatars', tail), \
-										Path.tempAvatar(tail), \
-										False) :
-							self.clnt.getAvatar(sessionID)
-							#print ' download avatar'
-					elif not moveFile(os.path.join(head, 'avatars', tail), \
-									Path.tempAvatar(tail), \
-									False) :
-						#self.clnt.run()
-						self.clnt.getAvatar(sessionID)
-						#print ' download avatar only'
-				else :
-					""" if data not cached """
-					#print pathExist, 'in CacheData, not inCache'
-					#self.clnt.run()
-					self.clnt.getAvatar(sessionID)
-					names = self.clnt.getSharedSourceStructFile(sessionID)
-					#print 'download all'
-				""" if remoteServerState is changed """
-				#print names, itemValue[0]
-				if names[1] != '' : DelFromCache(names[1])
-				if itemValue[0] in self.USERS :
-					self.USERS[itemValue[0]] = (itemValue[1][0], \
-												itemValue[1][1], \
-												itemValue[1][2], \
-												itemValue[1][3], \
-												itemValue[1][4], \
-												True)
+						loadAvatarPath = self.clnt.getAvatar(sessionID)
+					avatarLoad = True
+				elif avatarTempOut :
+					loadAvatarPath = self.clnt.getAvatar(sessionID)
+					avatarLoad = True
+				#print 'avatarLoad', avatarLoad
+				if avatarLoad and os.path.isfile(possibleAvatarTempPath) :
 					count = self.Obj.menuTab.userList.count()
 					for i in xrange(count) :
 						item_ = self.Obj.menuTab.userList.item(i)
 						if str(item_.data(Qt.AccessibleTextRole).toList()[0].toString()) == \
 									str(itemValue[1][1] + ':' + itemValue[1][2]) :
 							self.Obj.menuTab.setAvatar.emit(item_, itemValue[1][4])
+				pathExist = InCache(self.clnt.serverState)
+				res = ('', False)
+				if pathExist[0] :
+					if not moveFile(pathExist[1], \
+									Path.tempCache(self.clnt.serverState), \
+									False) :
+						res = self.clnt.getSharedSourceStructFile(sessionID)
+				else : res = self.clnt.getSharedSourceStructFile(sessionID)
+				#print res, itemValue[0], 'res'
+				if res[1] : cached = False
+				else : cached = True
+				if itemValue[0] in self.USERS :
+					self.USERS[itemValue[0]] = (itemValue[1][0], \
+												itemValue[1][1], \
+												itemValue[1][2], \
+												itemValue[1][3], \
+												itemValue[1][4], \
+												cached)
+				self.clnt._shutdown()
 			elif self.Key is False :
 				#print 'cache key is locked...'
 				break

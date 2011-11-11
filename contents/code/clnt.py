@@ -43,34 +43,30 @@ class xr_client:
 		try :
 			success = True
 			# get session Id & server State
-			self.randomFileName = Path.tempStruct(randomString(DIGITS_LENGTH))
-			#print self.randomFileName, '   clnt random string'
-			with open(self.randomFileName, "wb") as handle :
-				try :
-					handle.write(self.s.sessionID(ownIP).data)
-				except AttributeError, err :
-					print '[in getSessionID() AddressMissMatch]:', err
-					return False
-			self.listRandomString = DataRendering().fileToList(self.randomFileName)
-			#print self.listRandomString, ' list of randomStrings'
-			#print [self.listRandomString[0]]
-			sessionID = self.listRandomString[1]
+			try :
+				randomString = self.s.sessionID(ownIP).data
+			except AttributeError, err :
+				print '[in getSessionID() AddressMissMatch]:', err
+				return False
+			if randomString.startswith('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY') :
+				if 'Obj' in dir(self) and self.Parent is None :
+					self.Obj.errorString.emit('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY')
+				else :
+					self.Parent.Obj.errorString.emit('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY')
+				return False
+			sessionID = randomString[ : DIGITS_LENGTH ]
+			self.serverState = randomString[DIGITS_LENGTH : 2*DIGITS_LENGTH ]
+			self.previousState = randomString[2*DIGITS_LENGTH : ]
+			#print randomString
 			#print sessionID, ' session ID'
-			self.s.python_clean(self.listRandomString[0], sessionID)
-			if os.path.exists(self.randomFileName) : os.remove(self.randomFileName)
-			self.Parent.Obj.serverThread.Obj.currentSessionID[str(self.servaddr.split(':')[0])] = sessionID
-			#print self.Parent.Obj.serverThread.Obj.currentSessionID , '\n^^^current Sessions'
-			self.serverState = self.listRandomString[2]
-			if len(self.listRandomString) > 3 :
-				self.previousState = self.listRandomString[3]
-			else :
-				self.previousState = ''
 			#print self.serverState, ' server State'
+			#print self.previousState, 'previous server State'
+			self.Parent.Obj.serverThread.Obj.currentSessionID[str(self.servaddr.split(':')[0])] = \
+					(sessionID, self.Parent.Obj.Policy.Current)
+			#print self.Parent.Obj.serverThread.Obj.currentSessionID , '\n^^^current Sessions'
 			if 'Obj' in dir(self) :
 				self.Obj.currentRemoteServerState = self.serverState
 				print "Handshake succeeded."
-				""" caching avatar """
-				#self.getAvatar()
 		except socket.error, err :
 			print '[in getSessionID()] SocketError : ', err
 			success = False
@@ -119,47 +115,57 @@ class xr_client:
 	def getSharedSourceStructFile(self, sessionID = ''):
 		# get Shared Sources Structure
 		self.structFileName = Path.tempCache(self.serverState)
-		#print self.structFileName, ' struct'
+		remoteSharedStruct = str('sharedSource_' + self.serverState)
+		#print [self.structFileName], ' get structFile from ', [remoteSharedStruct]
 		try :
+			error = False
 			with open(self.structFileName, "wb") as handle:
 					try :
 						handle.write(self.s.requestSharedSourceStruct(\
-									'sharedSource_' + self.serverState, \
+									remoteSharedStruct, \
 									sessionID).data)
 					except AttributeError, err :
 						print '[in getSharedSourceStructFile() SessionMismatch]:', err
+						handle.close()
+						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
+						error = True
 					except ProtocolError, err :
-						"""print "A protocol error occurred"
+						'''print "A protocol error occurred"
 						print "URL: %s" % err.url
 						print "HTTP/HTTPS headers: %s" % err.headers
 						print "Error code: %d" % err.errcode
-						print "Error message: %s" % err.errmsg"""
+						print "Error message: %s" % err.errmsg'''
+						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
 						self.Parent.Obj.errorString.emit(str(err))
 					except Fault, err:
-						"""print "A fault occurred"
+						'''print "A fault occurred"
 						print "Fault code: %d" % err.faultCode
-						print "Fault string: %s" % err.faultString"""
+						print "Fault string: %s" % err.faultString'''
+						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
 						self.Parent.Obj.errorString.emit(str(err))
 					except socket.error, err :
 						#print 'SocketError : ', err
+						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
 						self.Parent.Obj.errorString.emit(str(err))
 					finally :
 						pass
 		except IOError, err :
 			print '[in getSharedSourceStructFile()] IOError : ', err
-			if 'previousState' not in dir(self) : self.previousState = ''
+			error = True
 		#finally : pass
-		return self.structFileName, self.previousState
+		return self.structFileName, error
 
 	def getAvatar(self, sessionID = ''):
 		self.avatarFileName = Path.tempAvatar(self.serverState)
-		#print self.avatarFileName, ' avatarFileName', sessionID
+		#print self.avatarFileName, ' avatarFileName, sessionID:', sessionID
 		try :
 			with open(self.avatarFileName, "wb") as handle:
 					try :
 						handle.write(self.s.requestAvatar(sessionID).data)
 					except AttributeError, err :
 						print '[in getAvatar() SessionMismatch]:', err
+						handle.close()
+						if os.path.isfile(self.avatarFileName) : os.remove(self.avatarFileName)
 					except ProtocolError, err :
 						"""print "A protocol error occurred"
 						print "URL: %s" % err.url
@@ -200,6 +206,21 @@ class xr_client:
 			self.Parent.errorString.emit('Empty job. Upload canceled.')
 			emitter.complete.emit()
 			return None
+		# check access
+		access = self.s.checkAccess(sessionID).data
+		if access == 'ACCESS_ALLOWED' :
+			pass
+		elif access == 'ACCESS_DENIED' :
+			emitter.complete.emit()
+			self.Parent.errorString.emit('ACCESS_DENIED')
+			return None
+		elif access.startswith('TEMPORARILY_ALLOWED_ACCESS:') :
+			self.Parent.errorString.emit('TEMPORARILY_ALLOWED_ACCESS')
+			sessionID = access.split(':')[1]
+			print 'temporarySessionID', sessionID
+		else :
+			self.Parent.errorString.emit('ANSWER_INCORRECT')
+			return None
 		for i in maskSet.iterkeys() :
 			if maskSet[i][0] == 1 :
 				_path = os.path.join(downLoadPath, maskSet[i][1])
@@ -213,7 +234,7 @@ class xr_client:
 						continue
 				with open(_path, "wb") as handle:
 					try :
-						handle.write(self.s.python_file(str(i), sessionID).data)
+						handle.write(self.s.getSharedFile(str(i), sessionID).data)
 						#print 'Downloaded : ', maskSet[i][1]
 					except AttributeError, err :
 						print '[in getSharedData() SessionMismatch]:', err
@@ -237,6 +258,8 @@ class xr_client:
 					size_ = maskSet[i][2]
 					if size_ == 0 : size_ = 1
 					emitter.nextfile.emit(size_)
+		if self.s.getSharedFile('FINITA', sessionID).data != 'OK' :
+			self.Parent.errorString.emit('Loading was completed incorrectly.')
 		emitter.complete.emit()
 
 	def sessionClose(self, sessionID = ''):

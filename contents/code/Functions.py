@@ -157,7 +157,9 @@ def moveFile(src, dst, delete = True):
 			except OSError, err :
 				return False
 		#print src, dst
-		if src == dst : return True
+		if src == dst :
+			if delete and os.path.isfile(src) : os.remove(src)
+			return True
 		with open(src, 'rb') as srcFile :
 			with open(dst, 'wb') as dstFile :
 				dstFile.write(srcFile.read())
@@ -188,6 +190,13 @@ def InCache(str_ = ''):
 		return True, Path.tempCache(str_)
 	elif os.path.isfile(Path.cache(str_)) :
 		return True, Path.cache(str_)
+	return False, ''
+
+def avatarInCache(str_ = ''):
+	if os.path.isfile(Path.tempAvatar(str_)) :
+		return True, Path.tempAvatar(str_)
+	elif os.path.isfile(Path.avatar(str_)) :
+		return True, Path.avatar(str_)
 	return False, ''
 
 def DelFromCache(str_):
