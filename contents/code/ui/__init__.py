@@ -43,6 +43,7 @@ class MainWindow(QtGui.QMainWindow):
 	serverDown = QtCore.pyqtSignal(str)
 	initServeR = QtCore.pyqtSignal(TreeModel, str, str)
 	reinitServer = QtCore.pyqtSignal()
+	setAccess = QtCore.pyqtSignal(str)
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -136,6 +137,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.initServeR.connect(self.initServer)
 		self.reinitServer.connect(self.initServer)
 		self.serverDown[str].connect(self.menuTab.preStartServer)
+		self.setAccess.connect(self.confirmAction)
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
 		self.timer.timeout.connect(self.initServer)
@@ -531,12 +533,9 @@ class MainWindow(QtGui.QMainWindow):
 		self.menuTab.sentOfflinePost()
 		self.END = True
 
-	def confirmAction(self):
-		confirm = 255
-		_ConfirmRequest = ConfirmRequest(self)
+	def confirmAction(self, address):
+		_ConfirmRequest = ConfirmRequest(address, self)
 		confirm = _ConfirmRequest.exec_()
-		print confirm, '-- confirm'
-		return confirm
 
 	def saveCache(self):
 		Once = True

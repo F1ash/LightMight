@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import xmlrpclib, string, os, os.path, ssl, socket
+import xmlrpclib, string, os, os.path, ssl, socket, time
 from SSLOverloadClass import ThreadServer
 from Functions import *
 
@@ -52,15 +52,30 @@ class ServerDaemon():
 				del self.currentSessionID[addr]
 
 	def checkAccess(self, sessionID = ''):
-		item = self.currentSessionID[self._srv.client_address[0]]
+		address = self._srv.client_address[0]
+		item = self.currentSessionID[address]
 		if sessionID == item[0] :
 			if item[1] == self.Parent.Policy.Allowed :
 				return xmlrpclib.Binary('ACCESS_ALLOWED')
 			elif item[1] == self.Parent.Policy.Confirm :
-				temporarilySessionID = randomString(DIGITS_LENGTH)
-				newItem = (item[0], item[1], temporarilySessionID)
-				self.currentSessionID[self._srv.client_address[0]] = newItem
-				return xmlrpclib.Binary('TEMPORARILY_ALLOWED_ACCESS:' + temporarilySessionID)
+				self.Parent.setAccess.emit(address)
+				timer = self._srv.timeout - 1
+				i = 0
+				while i < timer \
+					  and (self.currentSessionID[address][1] >= self.Parent.Policy.Confirm) \
+					  and (len(self.currentSessionID[address]) < 3) :
+					time.sleep(0.2)
+					i += 0.2
+				item = self.currentSessionID[address]
+				if len(item) == 3 :
+					if item[2] != 'CANCEL' :
+						return xmlrpclib.Binary('TEMPORARILY_ALLOWED_ACCESS:' + item[2])
+					else :
+						newItem = (item[0], item[1])
+						if address in self.Parent.serverThread.Obj.currentSessionID :
+							self.currentSessionID[address] = newItem
+				elif item[1] < self.Parent.Policy.Confirm :
+					return xmlrpclib.Binary('ACCESS_ALLOWED')
 		return xmlrpclib.Binary('ACCESS_DENIED')
 
 	def getSharedFile(self, id_, sessionID = ''):
