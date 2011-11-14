@@ -40,6 +40,7 @@ class xr_client:
 				self.Parent.Obj.errorString.emit(str(err))
 
 	def getSessionID(self, ownIP = ''):
+		print [ownIP], ' own IP'
 		try :
 			success = True
 			# get session Id & server State
@@ -75,27 +76,27 @@ class xr_client:
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
 		except ProtocolError, err :
-			"""print "A protocol error occurred"
+			print "[in getSessionID()] A protocol error occurred"
 			print "URL: %s" % err.url
 			print "HTTP/HTTPS headers: %s" % err.headers
 			print "Error code: %d" % err.errcode
-			print "Error message: %s" % err.errmsg"""
+			print "Error message: %s" % err.errmsg
 			success = False
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
 		except Fault, err:
-			"""print "A fault occurred"
+			print "[in getSessionID()] A fault occurred"
 			print "Fault code: %d" % err.faultCode
-			print "Fault string: %s" % err.faultString"""
+			print "Fault string: %s" % err.faultString
 			success = False
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
 		except HTTPException, err :
-			print 'HTTPLibError : ', err
+			print '[in getSessionID()] HTTPLibError : ', err
 			success = False
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
@@ -167,28 +168,28 @@ class xr_client:
 						handle.close()
 						if os.path.isfile(self.avatarFileName) : os.remove(self.avatarFileName)
 					except ProtocolError, err :
-						"""print "A protocol error occurred"
+						print "[in getAvatar() A protocol error occurred"
 						print "URL: %s" % err.url
 						print "HTTP/HTTPS headers: %s" % err.headers
 						print "Error code: %d" % err.errcode
-						print "Error message: %s" % err.errmsg"""
+						print "Error message: %s" % err.errmsg
 						#self.Parent.Obj.errorString.emit(str(err))
 						pass
 					except Fault, err:
-						"""print "A fault occurred"
+						print "[in getAvatar() A fault occurred"
 						print "Fault code: %d" % err.faultCode
-						print "Fault string: %s" % err.faultString"""
+						print "Fault string: %s" % err.faultString
 						#self.Parent.Obj.errorString.emit(str(err))
 						pass
 					except socket.error, err :
-						#print 'SocketError : ', err
+						print '[in getAvatar() SocketError : ', err
 						#self.Parent.Obj.errorString.emit(str(err))
 						pass
 					finally :
 						pass
 		except IOError, err :
 			print '[in getAvatar()]IOError : ', err
-			pass
+			#self.Parent.Obj.errorString.emit(str(err))
 		#finally : pass
 		return self.avatarFileName
 

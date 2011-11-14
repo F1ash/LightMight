@@ -30,7 +30,7 @@ class ServerDaemon():
 			self._srv.register_function(self.requestAvatar, 'requestAvatar')
 
 	def sessionID(self, clientIP = ''):
-		#print self._srv.client_address, clientIP, '--sessionID'
+		#print [self._srv.client_address, clientIP], ' --sessionID'
 		if clientIP != self._srv.client_address[0] : return None
 		_id = randomString(DIGITS_LENGTH)
 		if clientIP not in self.currentSessionID :
@@ -38,9 +38,9 @@ class ServerDaemon():
 		else :
 			return xmlrpclib.Binary('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY')
 			#self.currentSessionID[clientIP] = _id
-		#print 'current Sessions', self.currentSessionID
-		data = ''.join((_id, self.serverState, self.Parent.previousState))
-		#print data
+		#print 'current Sessions', [self.currentSessionID, _id , self.serverState, self.Parent.previousState]
+		data = ''.join((_id, str(self.serverState), str(self.Parent.previousState)))
+		#print [data], ' data'
 		return xmlrpclib.Binary(data)
 
 	def sessionClose(self, sessionID = ''):

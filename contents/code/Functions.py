@@ -143,6 +143,7 @@ def getFreePort(minValue, maxValue):
 		addr, port = s.getsockname()
 		s.close()
 		return addr, port
+	s.close()
 	return '', 0
 
 def dateStamp():

@@ -156,7 +156,7 @@ class MainWindow(QtGui.QMainWindow):
 	def receiveBroadcastMessage(self, data, addr):
 		if data.count('<||>') != 6 : return None	## ignore non-standart packets
 		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
-		#print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
+		print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
 		''' check correct IP for local network '''
 		if addr == addr_in_data :
 			if   mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, None, False)
@@ -186,7 +186,7 @@ class MainWindow(QtGui.QMainWindow):
 		 pass
 
 	def delContact(self, name, addr, port, encode, state):
-		#print name, addr, port, encode, state , 'Must die!'
+		print name, addr, port, encode, state , 'Must die!'
 		if addr != None and port != None :
 			key = str(addr + ':' + port)
 			if key in self.USERS :
@@ -221,7 +221,7 @@ class MainWindow(QtGui.QMainWindow):
 		#print 'DEL down'
 
 	def addNewContact(self, name, addr, port, encode, state, domain, avahi_method = True):
-		#print QtCore.QString().fromUtf8(name), addr, port, 'new contact'
+		print QtCore.QString().fromUtf8(name), addr, port, 'new contact'
 		key = str(addr + ':' + port)
 		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :
@@ -270,7 +270,7 @@ class MainWindow(QtGui.QMainWindow):
 			has the status of remote server.
 		"""
 		self.USERS[key] = (name, addr, port, encode, state, False)
-		#print self.USERS
+		print self.USERS
 		return True
 
 	def preinitAvahiBrowser(self):
