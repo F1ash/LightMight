@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import ssl, socket
+import ssl, socket, socks
 from xmlrpclib import ServerProxy
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SocketServer import ThreadingMixIn
+
+#socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, 'localhost', 9050)
+#socket.socket = socks.socksocket
 
 class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 	#ThreadingMixIn.daemon_threads = True

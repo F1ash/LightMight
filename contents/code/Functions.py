@@ -164,7 +164,7 @@ def moveFile(src, dst, delete = True):
 		with open(src, 'rb') as srcFile :
 			with open(dst, 'wb') as dstFile :
 				dstFile.write(srcFile.read())
-			if delete and os.path.isfile(srcFile.name) : os.remove(srcFile.name)
+		if delete and os.path.isfile(srcFile.name) : os.remove(srcFile.name)
 		return True
 	else :
 		return False

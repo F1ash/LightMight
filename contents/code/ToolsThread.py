@@ -28,5 +28,5 @@ class ToolsThread(QThread):
 							   self, self.Parent.currentRemoteServerState, \
 							   self.Parent.sessionID)
 
-	def _terminate(self, str_ = ''):
-		self.Obj._shutdown(str_)
+	def _terminate(self, str_ = '', loadFile = ''):
+		self.Obj._shutdown(str_, loadFile)

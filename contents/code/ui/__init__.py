@@ -41,7 +41,8 @@ class MainWindow(QtGui.QMainWindow):
 	changeConnectState = QtCore.pyqtSignal()
 	cacheDown = QtCore.pyqtSignal()
 	serverDown = QtCore.pyqtSignal(str)
-	initServeR = QtCore.pyqtSignal(TreeModel, str, str)
+	serverDOWN = QtCore.pyqtSignal(str, str)
+	initServeR = QtCore.pyqtSignal(TreeModel, str, str, bool)
 	reinitServer = QtCore.pyqtSignal()
 	setAccess = QtCore.pyqtSignal(str)
 	def __init__(self, parent = None):
@@ -95,9 +96,6 @@ class MainWindow(QtGui.QMainWindow):
 		menubar = self.menuBar()
 
 		file_ = menubar.addMenu('&File')
-		"""file_.addAction(self.base_)
-		file_.addAction(self.create_struct)
-		"""
 		file_.addAction(self.exit_)
 
 		set_ = menubar.addMenu('&Settings')
@@ -136,7 +134,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.cacheDown.connect(self.cacheS)
 		self.initServeR.connect(self.initServer)
 		self.reinitServer.connect(self.initServer)
-		self.serverDown[str].connect(self.menuTab.preStartServer)
+		self.serverDown.connect(self.menuTab.preStartServer)
 		self.setAccess.connect(self.confirmAction)
 		self.timer = QtCore.QTimer()
 		self.timer.setSingleShot(True)
@@ -163,9 +161,6 @@ class MainWindow(QtGui.QMainWindow):
 			elif mark == '0' : self.delContact(name, addr_in_data, port, encode, state)
 			elif mark == 'A' : self.addNewContact(name, addr, port, encode, state, None, False)
 			elif mark == 'R' : self.reInitRequest(name, addr, port, encode, state)
-		else :
-			''' check correct IP for internet '''
-			pass
 
 	def sentAnswer(self, addr):
 		name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
@@ -186,7 +181,7 @@ class MainWindow(QtGui.QMainWindow):
 		 pass
 
 	def delContact(self, name, addr, port, encode, state):
-		print name, addr, port, encode, state , 'Must die!'
+		print QtCore.QString().fromUtf8(name), addr, port, encode, state , 'Must die!'
 		if addr != None and port != None :
 			key = str(addr + ':' + port)
 			if key in self.USERS :
@@ -196,9 +191,10 @@ class MainWindow(QtGui.QMainWindow):
 						self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
 						if key in self.USERS :
 							del self.USERS[key]
-						if addr in self.serverThread.Obj.currentSessionID :
-							del self.serverThread.Obj.currentSessionID[addr]
-							#print key, 'deleted'
+							print key, 'deleted'
+						#if addr in self.serverThread.Obj.currentSessionID :
+						#	del self.serverThread.Obj.currentSessionID[addr]
+						print key, 'deletedDD'
 						break
 		else :
 			item = self.menuTab.userList.findItems(name, \
@@ -270,7 +266,7 @@ class MainWindow(QtGui.QMainWindow):
 			has the status of remote server.
 		"""
 		self.USERS[key] = (name, addr, port, encode, state, False)
-		print self.USERS
+		#print self.USERS
 		return True
 
 	def preinitAvahiBrowser(self):
@@ -330,10 +326,12 @@ class MainWindow(QtGui.QMainWindow):
 								  '*infoShare*')
 			Sender(data)
 
-	def initServer(self, sharedSourceTree = None, loadFile = None, previousState = ''):
+	def initServer(self, sharedSourceTree = None, \
+						 loadFile = None, previousState = '', \
+						 restart = False):
 		self.previousState = previousState
 		self.menuTab.progressBar.show()
-		if 'serverThread' in dir(self) and previousState == 'reStart' :
+		if 'serverThread' in dir(self) and restart :
 			treeModel = sharedSourceTree
 			firstRun = True
 			self.serverThread = None
@@ -364,7 +362,8 @@ class MainWindow(QtGui.QMainWindow):
 													self.commonSetOfSharedSource, \
 													self, \
 													TLS = self.TLS, \
-													cert = str(certificatePath)), \
+													cert = str(certificatePath), \
+													restart = restart), \
 										parent = self)
 
 		""" должен сохранить результат как файл для передачи на запрос клиентов """
@@ -487,29 +486,19 @@ class MainWindow(QtGui.QMainWindow):
 
 	def showServerSettingsShield(self):
 		_ServerSettingsShield = ServerSettingsShield(self)
-		self.serverDown[str].connect(_ServerSettingsShield.preInitServer)
+		self.serverDOWN.connect(_ServerSettingsShield.preInitServer)
 		_ServerSettingsShield.exec_()
-		self.serverDown[str].disconnect(_ServerSettingsShield.preInitServer)
+		self.serverDOWN.disconnect(_ServerSettingsShield.preInitServer)
 
 	'''def showColorSettingsShield(self):
 		_ColorSettingsShield = ColorSettingsShield(self)
 		_ColorSettingsShield.exec_()'''
 
-	def stopServices(self):
-		if hasattr(self, 'END') and self.END : return None
-		self.statusBar.showMessage('Restart Services')
-		if 'avahiBrowser' in dir(self) :
-			if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__(); self.avahiBrowser = None
-		if 'avahiService' in dir(self) :
-			if '__del__' in dir(self.avahiService) : self.avahiService.__del__()
-			self.avahiService = None
-		# stopping caching
-		if 'cachingThread' in dir(self) :
-			self.cachingThread._shutdown()
-			self.cachingThread.quit()
-			del self.cachingThread
-		if 'udpClient' in dir(self) :
-			self.udpClient.stop()
+	def confirmAction(self, address):
+		_ConfirmRequest = ConfirmRequest(address, self)
+		confirm = _ConfirmRequest.exec_()
+
+	def disconnectSignals(self):
 		if 'contactMessage' in dir(self) :
 			self.contactMessage.disconnect(self.receiveBroadcastMessage)
 		if 'changeConnectState' in dir(self) :
@@ -519,23 +508,44 @@ class MainWindow(QtGui.QMainWindow):
 		if 'reinitServer' in dir(self) :
 			self.reinitServer.disconnect(self.initServer)
 		if 'serverDown' in dir(self) :
-			self.serverDown[str].disconnect(self.menuTab.preStartServer)
-		for item in self.USERS.iterkeys() :
-			addr, port = item.split(':')
-			print addr, port
-			if addr in self.serverThread.Obj.currentSessionID :
-				print addr, self.serverThread.Obj.currentSessionID[addr][0]
-				clnt = xr_client(addr = addr, port = port, parent = self)
-				clnt.run()
-				clnt.sessionClose(self.serverThread.Obj.currentSessionID[addr][0])
-		if 'serverThread' in dir(self) :
-			self.serverThread._terminate()
-		self.menuTab.sentOfflinePost()
-		self.END = True
+			self.serverDown.disconnect(self.menuTab.preStartServer)
 
-	def confirmAction(self, address):
-		_ConfirmRequest = ConfirmRequest(address, self)
-		confirm = _ConfirmRequest.exec_()
+	def stopServices(self, restart = False, loadFile = '', mode = ''):
+		if restart : self.statusBar.showMessage('Restart Services')
+		else : self.statusBar.showMessage('Stop Services')
+		# send offline packet
+		self.menuTab.sentOfflinePost()
+		# caching stop
+		if not restart and 'cachingThread' in dir(self) :
+			self.cachingThread._shutdown()
+			self.cachingThread.quit()
+			#del self.cachingThread
+		# stop services
+		if not restart and 'avahiBrowser' in dir(self) :
+			if '__del__' in dir(self.avahiBrowser) : self.avahiBrowser.__del__()
+			self.avahiBrowser = None
+		if not restart and 'avahiService' in dir(self) :
+			if '__del__' in dir(self.avahiService) : self.avahiService.__del__()
+			self.avahiService = None
+		if not restart and 'udpClient' in dir(self) :
+			self.udpClient.stop()
+		# send 'close session' request
+		try :
+			for item in self.USERS.iterkeys() :
+				addr, port = item.split(':') if item in self.USERS else ('', '')
+				print addr, port, ' send "close session" request'
+				if addr in self.serverThread.Obj.currentSessionID :
+					print addr, self.serverThread.Obj.currentSessionID[addr][0]
+					clnt = xr_client(addr = addr, port = port, parent = self)
+					clnt.run()
+					clnt.sessionClose(self.serverThread.Obj.currentSessionID[addr][0])
+					clnt._shutdown()
+		except RuntimeError, err :
+			print '[in stopServices() __init__]:', err
+			pass
+		if 'serverThread' in dir(self) :
+			self.serverThread._terminate(mode if restart and mode != '' else '', loadFile)
+		if not restart : self.END = True
 
 	def saveCache(self):
 		Once = True
@@ -568,9 +578,7 @@ class MainWindow(QtGui.QMainWindow):
 									 ' from ' + \
 									 str(limitCache))
 
-	def _close(self):
-		self.stopServices()
-		#print Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), ' close'
+	def saveTemporaryData(self):
 		if InitConfigValue(self.Settings, 'UseCache', 'True') == 'True' : self.saveCache()
 		if InitConfigValue(self.Settings, 'SaveLastStructure', 'True') == 'True' :
 			#print True
@@ -583,6 +591,13 @@ class MainWindow(QtGui.QMainWindow):
 			else :
 				#print 'not Exist'
 				pass
+
+	def _close(self):
+		if hasattr(self, 'END') and self.END : return None
+		self.disconnectSignals()
+		self.stopServices()
+		#print Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), ' close'
+		self.saveTemporaryData()
 		shutil.rmtree(Path.TempStruct, ignore_errors = True)
 		self.close()
 

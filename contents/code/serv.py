@@ -6,9 +6,9 @@ from Functions import *
 
 class ServerDaemon():
 	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, \
-				 parent = None, TLS = False, cert = ''):
-		self.serverState = randomString(DIGITS_LENGTH)
+				 parent = None, TLS = False, cert = '', restart = False):
 		self.Parent = parent
+		self.serverState = randomString(DIGITS_LENGTH) if not restart else self.Parent.previousState
 		self.Parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
 		self.currentSessionID = {}	## {remoteServerAddr : (sessionID, customPolicy, temporarilySessionID)}
@@ -123,11 +123,14 @@ class ServerDaemon():
 	def run(self):
 		self._srv.serve_forever()
 
-	def _shutdown(self, str_ = ''):
+	def _shutdown(self, str_ = '', loadFile = ''):
 		self.currentSessionID.clear()
 		self._srv.shutdown()
-		print ' server terminated'
-		self.Parent.serverDown.emit(str_)
+		print ' server terminated ...'
+		if str_.startswith('REINIT') :
+			self.Parent.serverDOWN.emit(self.serverState, loadFile)
+		else :
+			self.Parent.serverDown.emit(self.serverState)
 
 if __name__ == '__main__':
 

@@ -26,21 +26,21 @@ class xr_client:
 			self.s = SSLServerProxy(self.servaddr, self.TLS)
 			# self.methods = self.s.system.listMethods()
 		except socket.error, err :
-			print 'SocetError : ', err
+			print '[in run() clnt.py] SocketError : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
-		except :
-			err = 'UnknownError in init ServerProxy '
-			print err
+		except Exception, err :
+			print '[in run() clnt.py] :', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
+		finally : pass
 
 	def getSessionID(self, ownIP = ''):
-		print [ownIP], ' own IP'
+		#print [ownIP], ' own IP'
 		try :
 			success = True
 			# get session Id & server State
@@ -130,26 +130,27 @@ class xr_client:
 						handle.close()
 						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
 						error = True
-					except ProtocolError, err :
-						'''print "A protocol error occurred"
-						print "URL: %s" % err.url
-						print "HTTP/HTTPS headers: %s" % err.headers
-						print "Error code: %d" % err.errcode
-						print "Error message: %s" % err.errmsg'''
-						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
-						self.Parent.Obj.errorString.emit(str(err))
-					except Fault, err:
-						'''print "A fault occurred"
-						print "Fault code: %d" % err.faultCode
-						print "Fault string: %s" % err.faultString'''
-						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
-						self.Parent.Obj.errorString.emit(str(err))
-					except socket.error, err :
-						#print 'SocketError : ', err
-						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
-						self.Parent.Obj.errorString.emit(str(err))
-					finally :
-						pass
+		except ProtocolError, err :
+			'''print "A protocol error occurred"
+			print "URL: %s" % err.url
+			print "HTTP/HTTPS headers: %s" % err.headers
+			print "Error code: %d" % err.errcode
+			print "Error message: %s" % err.errmsg'''
+			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
+			self.Parent.Obj.errorString.emit(str(err))
+			error = True
+		except Fault, err:
+			'''print "A fault occurred"
+			print "Fault code: %d" % err.faultCode
+			print "Fault string: %s" % err.faultString'''
+			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
+			self.Parent.Obj.errorString.emit(str(err))
+			error = True
+		except socket.error, err :
+			#print 'SocketError : ', err
+			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
+			self.Parent.Obj.errorString.emit(str(err))
+			error = True
 		except IOError, err :
 			print '[in getSharedSourceStructFile()] IOError : ', err
 			error = True
@@ -254,6 +255,10 @@ class xr_client:
 						print "Fault code: %d" % err.faultCode
 						print "Fault string: %s" % err.faultString"""
 						self.Parent.errorString.emit(str(err))
+					except socket.error, err :
+						print '[in getSharedData()] SocketError : ', err
+						self.Parent.errorString.emit(str(err))
+						pass
 					finally :
 						pass
 					size_ = maskSet[i][2]
@@ -285,19 +290,20 @@ class xr_client:
 			else :
 				self.Parent.errorString.emit(str(err))
 		except HTTPException, err :
-			print 'HTTPLibError : ', err
+			print '[in sessionClose()] HTTPLibError : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.errorString.emit(str(err))
 		except socket.error, err :
-			print 'SocketError : ', err
+			print '[in sessionClose()] SocketError : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.errorString.emit(str(err))
+		finally : pass
 
-	def _shutdown(self, str_= ''):
+	def _shutdown(self, str_= '', nothing = ''):
 		#print 'socket closing...'
 		if hasattr(self, 's') :
 			try :

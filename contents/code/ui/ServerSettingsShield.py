@@ -226,30 +226,14 @@ class ServerSettingsShield(QtGui.QDialog):
 		else :
 			print 'Not select Item'
 
-	def sentOfflinePost(self):
-		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
-			key = str(self.Obj.server_addr + ':' + str(self.Obj.server_port))
-			if key in self.Obj.USERS :
-				#print 'key :', key, ' in USERS'
-				data = QtCore.QString('0' + '<||>' + \
-									self.defaultName + '<||>' + \
-									self.Obj.USERS[key][1] + '<||>' + \
-									self.Obj.USERS[key][2] + '<||>' + \
-									'' + '<||>' + \
-									'' + '<||>' + \
-									'*infoShare*')
-				Sender(data)
-
 	def loadTree(self):
 		fileName = QtGui.QFileDialog.getOpenFileName(self, 'Path_to_', Path.config('treeBackup'))
 		if fileName != '' :
+			self.Obj.saveTemporaryData()
 			if 'serverThread' in dir(self.Obj) :
-				self.Obj.serverThread.terminate()
-				self.Obj.serverThread.exit()
-			self.sentOfflinePost()
-			self.saveData()
-			self.Obj.initServer(loadFile = fileName)
-			self.done(0)
+				self.Obj.stopServices(True, fileName, 'REINIT')
+			else :
+				self.preInitServer('reINIT:', fileName)
 
 	def saveTree(self):
 		tmpFile = 'sharedSourceBackup_' + dateStamp()
@@ -263,22 +247,16 @@ class ServerSettingsShield(QtGui.QDialog):
 			showHelp.exec_()
 
 	def ok(self):
+		self.Obj.saveTemporaryData()
 		if 'serverThread' in dir(self.Obj) :
-			self.Obj.serverThread._terminate('reINIT')
-			#self.Obj.serverThread.exit()
-		else : self.preInitServer()
+			self.Obj.stopServices(True, '', 'REINIT')
+		else : self.preInitServer('REINIT:')
 
-	@QtCore.pyqtSlot(str, name = 'preInitServer')
-	def preInitServer(self, str_):
-		if str_ == 'reINIT' :
-			print 'serverDown signal received'
-		else :
-			print 'alien signal'
-			return None
-		self.sentOfflinePost()
+	@QtCore.pyqtSlot(str, str, name = 'preInitServer')
+	def preInitServer(self, str_ = '', fileName = ''):
+		print 'serverDown signal received'
 		self.saveData()
-		self.Obj.initServeR.emit(self.treeModel, '', self.Obj.serverState)
-		#self.Obj.initServer(self.treeModel, previousState = self.Obj.serverState)
+		self.Obj.initServeR.emit(self.treeModel, fileName, str_, False)
 		self.done(0)
 
 	def cancel(self):

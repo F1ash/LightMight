@@ -39,6 +39,9 @@ Application use 34000-34100 (TCP) ports by default.
 	For using Avahi\Bonjour detection in Windows you must install
 and run Bonjour service from :
 	http://support.apple.com/en_US/downloads/#bonjour%20for%20windows
+	OpenSSL for Win :
+	http://www.openssl.org/source/openssl-1.0.0e.tar.gz
+	http://www.slproweb.com/products/Win32OpenSSL.html
 
 Tested on :
 	Fedora 14/15/16

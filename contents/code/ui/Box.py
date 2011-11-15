@@ -122,23 +122,28 @@ class Box(QtGui.QWidget):
 			sessionID = self.Obj.serverThread.Obj.currentSessionID[key][0]
 		else :
 			sessionID = ''
+		self.clientThread.Obj.getAvatar(sessionID)
 		path, error = self.clientThread.getSharedSourceStructFile(sessionID)
+		self.clientThread._terminate()
 		if error : cached = False
 		else : cached = True
-		self.clientThread.Obj.getAvatar(sessionID)
 		""" search USERS key with desired value for set it in "cached" """
 		Value = BaseName(path)
 		for itemValue in self.Obj.USERS.iteritems() :
-			if itemValue[1][4] == Value :
-				#print Value, 'state found'
-				self.Obj.USERS[itemValue[0]] = (itemValue[1][0], \
-												itemValue[1][1], \
-												itemValue[1][2], \
-												itemValue[1][3], \
-												itemValue[1][4], \
-												cached)
-				self.searchItem(str(itemValue[1][1] + ':' + itemValue[1][2]))
-				break
+			try :
+				if itemValue[1][4] == Value :
+					#print Value, 'state found'
+					self.Obj.USERS[itemValue[0]] = (itemValue[1][0], \
+													itemValue[1][1], \
+													itemValue[1][2], \
+													itemValue[1][3], \
+													itemValue[1][4], \
+													cached)
+					self.searchItem(str(itemValue[1][1] + ':' + itemValue[1][2]))
+					break
+			except RuntimeError , err :
+				print '[in _showSharedSources() Box]:', err
+				continue
 		self.showSharedSources(path)
 
 	def hideProgressBar(self):
@@ -206,33 +211,15 @@ class Box(QtGui.QWidget):
 			self.sharedTree.show()
 
 	def restartServer(self):
-		self.sentOfflinePost()
-		#print Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), ' close'
-		if InitConfigValue(self.Obj.Settings, 'UseCache', 'True') == 'True' : self.Obj.saveCache()
-		if InitConfigValue(self.Obj.Settings, 'SaveLastStructure', 'True') == 'True' :
-			#print True
-			if os.path.exists(Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.Obj.serverState)) :
-				#print 'Exist'
-				shutil.move(Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.Obj.serverState), \
-							Path.config('lastSharedSource'))
-				with open(Path.config('lastServerState'), 'wb') as f :
-					f.write(self.Obj.serverState)
-			else :
-				#print 'not Exist'
-				pass
+		self.Obj.saveTemporaryData()
 		if 'serverThread' in dir(self.Obj) :
-			self.Obj.serverThread._terminate('reStart')
-			#self.Obj.serverThread.exit()
-		else : self.preStartServer()
- 
+			self.Obj.stopServices(True, '', 'reStart')
+		else : self.preStartServer('reStart:')
+
 	@QtCore.pyqtSlot(str, name = 'preStartServer')
-	def preStartServer(self, str_):
-		if str_ == 'reStart' :
-			print 'serverDown signal received'
-		else :
-			print 'alien signal'
-			return None
-		self.Obj.initServeR.emit(self.treeModel, '', 'reStart')
+	def preStartServer(self, str_ = ''):
+		print 'serverDown signal received'
+		self.Obj.initServeR.emit(self.treeModel, '', str_, True)
 
 	def sentOfflinePost(self):
 		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
