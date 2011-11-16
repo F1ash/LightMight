@@ -43,6 +43,12 @@ class xr_client:
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
+		except :
+			print '[in run() UnknownError] :'
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit('[in run() UnknownError]')
+			else :
+				self.Parent.Obj.errorString.emit('[in run() UnknownError]')
 		finally : pass
 
 	def getSessionID(self, ownIP = ''):
@@ -122,8 +128,8 @@ class xr_client:
 				self.Obj.errorString.emit(str(err))
 			else :
 				self.Parent.Obj.errorString.emit(str(err))
-		#finally :
-		#	pass
+		finally :
+			pass
 		return success
 
 	def getSharedSourceStructFile(self, sessionID = ''):
@@ -172,7 +178,7 @@ class xr_client:
 		except IOError, err :
 			print '[in getSharedSourceStructFile()] IOError : ', err
 			error = True
-		#finally : pass
+		finally : pass
 		return self.structFileName, error
 
 	def getAvatar(self, sessionID = ''):
@@ -213,7 +219,7 @@ class xr_client:
 		except IOError, err :
 			print '[in getAvatar()]IOError : ', err
 			#self.Parent.Obj.errorString.emit(str(err))
-		#finally : pass
+		finally : pass
 		return self.avatarFileName
 
 	def getSharedData(self, maskSet, downLoadPath, emitter, \
@@ -317,22 +323,22 @@ class xr_client:
 				self.Parent.errorString.emit(str(err))
 		except HTTPException, err :
 			print '[in sessionClose()] HTTPLibError : ', err
-			if 'Obj' in dir(self) and self.Parent is None :
+			'''if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.errorString.emit(str(err))
+				self.Parent.errorString.emit(str(err))'''
 		except socket.error, err :
 			print '[in sessionClose()] SocketError1 : ', err
-			if 'Obj' in dir(self) and self.Parent is None :
+			'''if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.errorString.emit(str(err))
+				self.Parent.errorString.emit(str(err))'''
 		except socket.timeout, err :
 			print '[in sessionClose()] SocketError2 : ', err
-			if 'Obj' in dir(self) and self.Parent is None :
+			'''if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
-				self.Parent.errorString.emit(str(err))
+				self.Parent.errorString.emit(str(err))'''
 		finally : pass
 
 	def _shutdown(self, str_= '', nothing = ''):

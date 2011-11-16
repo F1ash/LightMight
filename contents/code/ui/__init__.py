@@ -542,7 +542,7 @@ class MainWindow(QtGui.QMainWindow):
 					clnt._shutdown()
 		except RuntimeError, err :
 			print '[in stopServices() __init__]:', err
-			pass
+		finally : pass
 		if 'serverThread' in dir(self) :
 			self.serverThread._terminate(mode if restart and mode != '' else '', loadFile)
 		if not restart : self.END = True
