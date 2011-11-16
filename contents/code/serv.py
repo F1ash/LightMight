@@ -18,8 +18,12 @@ class ServerDaemon():
 									TLS = TLS, certificatePath = cert)
 		except socket.error, err :
 			print err, 'server init Error'
-			exceptin = True
-			self.Parent.reinitServer.emit()
+			exception = True
+			#self.Parent.reinitServer.emit()
+		except socket.timeout, err :
+			print err, 'server init Error'
+			exception = True
+			#self.Parent.reinitServer.emit()
 		if not exception :
 			self._srv.register_introspection_functions()
 			self._srv.register_function(self.sessionID, 'sessionID')
@@ -121,11 +125,11 @@ class ServerDaemon():
 			return xmlrpclib.Binary(handle.read())
 
 	def run(self):
-		self._srv.serve_forever()
+		if hasattr(self, '_srv') : self._srv.serve_forever()
 
 	def _shutdown(self, str_ = '', loadFile = ''):
 		self.currentSessionID.clear()
-		self._srv.shutdown()
+		if hasattr(self, '_srv') : self._srv.shutdown()
 		print ' server terminated ...'
 		if str_.startswith('REINIT') :
 			self.Parent.serverDOWN.emit(self.serverState, loadFile)

@@ -26,7 +26,13 @@ class xr_client:
 			self.s = SSLServerProxy(self.servaddr, self.TLS)
 			# self.methods = self.s.system.listMethods()
 		except socket.error, err :
-			print '[in run() clnt.py] SocketError : ', err
+			print '[in run() clnt.py] SocketError1 : ', err
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.Obj.errorString.emit(str(err))
+		except socket.timeout, err :
+			print '[in run() clnt.py] SocketError2 : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
@@ -69,7 +75,14 @@ class xr_client:
 				self.Obj.currentRemoteServerState = self.serverState
 				print "Handshake succeeded."
 		except socket.error, err :
-			print '[in getSessionID()] SocketError : ', err
+			print '[in getSessionID()] SocketError1 : ', err
+			success = False
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.Obj.errorString.emit(str(err))
+		except socket.timeout, err :
+			print '[in getSessionID()] SocketError2 : ', err
 			success = False
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
@@ -147,7 +160,12 @@ class xr_client:
 			self.Parent.Obj.errorString.emit(str(err))
 			error = True
 		except socket.error, err :
-			#print 'SocketError : ', err
+			#print 'SocketError1 : ', err
+			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
+			self.Parent.Obj.errorString.emit(str(err))
+			error = True
+		except socket.timeout, err :
+			#print 'SocketError2 : ', err
 			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
 			self.Parent.Obj.errorString.emit(str(err))
 			error = True
@@ -183,7 +201,11 @@ class xr_client:
 						#self.Parent.Obj.errorString.emit(str(err))
 						pass
 					except socket.error, err :
-						print '[in getAvatar() SocketError : ', err
+						print '[in getAvatar() SocketError1 : ', err
+						#self.Parent.Obj.errorString.emit(str(err))
+						pass
+					except socket.timeout, err :
+						print '[in getAvatar() SocketError2 : ', err
 						#self.Parent.Obj.errorString.emit(str(err))
 						pass
 					finally :
@@ -256,7 +278,11 @@ class xr_client:
 						print "Fault string: %s" % err.faultString"""
 						self.Parent.errorString.emit(str(err))
 					except socket.error, err :
-						print '[in getSharedData()] SocketError : ', err
+						print '[in getSharedData()] SocketError1 : ', err
+						self.Parent.errorString.emit(str(err))
+						pass
+					except socket.timeout, err :
+						print '[in getSharedData()] SocketError2 : ', err
 						self.Parent.errorString.emit(str(err))
 						pass
 					finally :
@@ -296,7 +322,13 @@ class xr_client:
 			else :
 				self.Parent.errorString.emit(str(err))
 		except socket.error, err :
-			print '[in sessionClose()] SocketError : ', err
+			print '[in sessionClose()] SocketError1 : ', err
+			if 'Obj' in dir(self) and self.Parent is None :
+				self.Obj.errorString.emit(str(err))
+			else :
+				self.Parent.errorString.emit(str(err))
+		except socket.timeout, err :
+			print '[in sessionClose()] SocketError2 : ', err
 			if 'Obj' in dir(self) and self.Parent is None :
 				self.Obj.errorString.emit(str(err))
 			else :
@@ -309,7 +341,9 @@ class xr_client:
 			try :
 				self.s.socket.shutdown(socket.SHUT_RDWR)
 			except socket.error, err :
-				print '[in _shutdown()] SocketError : ', err
+				print '[in _shutdown()] SocketError1 : ', err
+			except socket.timeout, err :
+				print '[in _shutdown()] SocketError2 : ', err
 			finally :
 				self.s.socket.close()
 
