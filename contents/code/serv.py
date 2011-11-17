@@ -13,25 +13,27 @@ class ServerDaemon():
 		self.commonSetOfSharedSource = commonSetOfSharedSource
 		self.currentSessionID = {}	## {remoteServerAddr : (sessionID, customPolicy, temporarilySessionID)}
 		try :
-			exception = False
+			error = False
 			self._srv = ThreadServer(serveraddr, allow_none = True, \
 									TLS = TLS, certificatePath = cert)
 		except socket.error, err :
 			print err, 'server init Error'
-			exception = True
-			#self.Parent.reinitServer.emit()
+			error = True
 		except socket.timeout, err :
 			print err, 'server init Error'
-			exception = True
-			#self.Parent.reinitServer.emit()
-		if not exception :
+			error = True
+		finally : pass
+		if not error :
 			self._srv.register_introspection_functions()
 			self._srv.register_function(self.sessionID, 'sessionID')
 			self._srv.register_function(self.sessionClose, 'sessionClose')
 			self._srv.register_function(self.checkAccess, 'checkAccess')
+			self._srv.register_function(self.checkServerState, 'checkServerState')
 			self._srv.register_function(self.getSharedFile, 'getSharedFile')
 			self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
 			self._srv.register_function(self.requestAvatar, 'requestAvatar')
+			self.Parent.startServer.emit()
+		else : self.Parent.initServeR.emit(self.Parent.threadSetupTree.treeModel, '', 'reStart', True)
 
 	def sessionID(self, clientIP = ''):
 		#print [self._srv.client_address, clientIP], ' --sessionID'
@@ -57,6 +59,7 @@ class ServerDaemon():
 
 	def checkAccess(self, sessionID = ''):
 		address = self._srv.client_address[0]
+		if address not in self.currentSessionID : return xmlrpclib.Binary('ACCESS_DENIED')
 		item = self.currentSessionID[address]
 		if sessionID == item[0] :
 			if item[1] == self.Parent.Policy.Allowed :
@@ -66,7 +69,7 @@ class ServerDaemon():
 				timer = self._srv.timeout - 1
 				i = 0
 				while i < timer \
-					  and (self.currentSessionID[address][1] >= self.Parent.Policy.Confirm) \
+					  and (self.currentSessionID[address][1] == self.Parent.Policy.Confirm) \
 					  and (len(self.currentSessionID[address]) < 3) :
 					time.sleep(0.2)
 					i += 0.2
@@ -82,10 +85,21 @@ class ServerDaemon():
 					return xmlrpclib.Binary('ACCESS_ALLOWED')
 		return xmlrpclib.Binary('ACCESS_DENIED')
 
-	def getSharedFile(self, id_, sessionID = ''):
+	def checkServerState(self, sessionID = '', controlServerState = ''):
+		addr = self._srv.client_address[0]
+		if addr not in self.currentSessionID : return xmlrpclib.Boolean(False)
+		controlID = self.currentSessionID[addr][0]
+		if controlID != sessionID : return xmlrpclib.Boolean(False)
+		if controlServerState != self.serverState :
+			return xmlrpclib.Boolean(False)
+		else : return xmlrpclib.Boolean(True)
+
+	def getSharedFile(self, id_, sessionID = '', controlServerState = ''):
 		#print self._srv.client_address, '--python_file'
 		#print id_, type(id_), str(self.commonSetOfSharedSource), '  serv'
-		item = self.currentSessionID[self._srv.client_address[0]]
+		addr = self._srv.client_address[0]
+		if addr not in self.currentSessionID : return None
+		item = self.currentSessionID[addr]
 		if self.Parent.Policy.Blocked <= item[1] : return None
 		elif self.Parent.Policy.Confirm == item[1] :
 			if len(item) < 3 or sessionID != item[2] : return None

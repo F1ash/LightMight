@@ -36,6 +36,7 @@ class MainWindow(QtGui.QMainWindow):
 	# custom signals
 	errorString = QtCore.pyqtSignal(str)
 	commonSet = QtCore.pyqtSignal(dict)
+	startServer = QtCore.pyqtSignal()
 	uploadSignal = QtCore.pyqtSignal(QtCore.QString)
 	contactMessage = QtCore.pyqtSignal(QtCore.QString, QtCore.QString)
 	changeConnectState = QtCore.pyqtSignal()
@@ -49,9 +50,6 @@ class MainWindow(QtGui.QMainWindow):
 		QtGui.QMainWindow.__init__(self, parent)
 
 		self.serverState = ''
-		self.currentRemoteServerState = ''
-		self.currentRemoteServerAddr = ''
-		self.currentRemoteServerPort = ''
 		self.jobCount = 0
 		self.commonSetOfSharedSource = {}
 		self.USERS = {}
@@ -128,6 +126,7 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.errorString.connect(self.showMSG)
 		self.commonSet.connect(self.preProcessingComplete)
+		self.startServer.connect(self.initServerComplete)
 		self.uploadSignal.connect(self.uploadTask)
 		self.contactMessage.connect(self.receiveBroadcastMessage)
 		self.changeConnectState.connect(self.initAvahiBrowser)
@@ -333,17 +332,20 @@ class MainWindow(QtGui.QMainWindow):
 		self.menuTab.progressBar.show()
 		if 'serverThread' in dir(self) and restart :
 			treeModel = sharedSourceTree
-			firstRun = True
+			firstRun = False
+			del self.serverThread
 			self.serverThread = None
 		elif 'serverThread' in dir(self) :
 			treeModel = sharedSourceTree
 			firstRun = False
+			del self.serverThread
 			self.serverThread = None
 		else :
 			treeModel = TreeModel('Name', 'Description')
 			firstRun = True
 		self.statusBar.clearMessage()
 		self.statusBar.showMessage('Server offline')
+		self.serverReady = 0
 
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
@@ -356,7 +358,6 @@ class MainWindow(QtGui.QMainWindow):
 		else :
 			self.TLS = False
 		#print self.TLS, '  <--- using TLS'
-		if 'serverThread' in dir(self) : del self.serverThread
 		self.serverThread = ToolsThread(\
 										ServerDaemon( ('', self.server_port), \
 													self.commonSetOfSharedSource, \
@@ -366,15 +367,13 @@ class MainWindow(QtGui.QMainWindow):
 													restart = restart), \
 										parent = self)
 
-		""" должен сохранить результат как файл для передачи на запрос клиентов """
+		""" create file of SharedResurces Structure """
 		if firstRun :
-			path_ = Path.config('lastServerState')
-			if os.path.exists(path_) :
-				with open(path_, 'rb') as f :
-					self.serverState = f.read()
-					self.serverThread.Obj.serverState = self.serverState
+			lastServerState = str(InitConfigValue(self.Settings, 'LastServerState', ''))
+			#print [lastServerState]
 			path_ = Path.config('lastSharedSource')
-			if os.path.exists(path_) :
+			if lastServerState != '' and os.path.exists(path_) :
+				self.serverState = lastServerState
 				shutil.move(path_, Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState))
 			else :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
@@ -392,7 +391,7 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.threadSetupTree = SetupTree(TreeProcessing(), \
 										[Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState)], \
-										treeModel.rootItem, \
+										treeModel, \
 										self, \
 										True, \
 										self)
@@ -403,6 +402,15 @@ class MainWindow(QtGui.QMainWindow):
 		#print len(self.commonSetOfSharedSource), ' commonSet.count '
 		""" this for server commonSet """
 		self.serverThread.Obj.commonSetOfSharedSource = commonSet
+		self.serverReady += 1
+		if self.serverReady == 2 : self.serverStart()
+
+	def initServerComplete(self):
+		self.serverReady += 1
+		if self.serverReady == 2 : self.serverStart()
+
+	def serverStart(self):
+		if self.serverState != '' : self.serverThread.Obj.serverState = self.serverState
 		self.serverThread.start()
 		self.statusBar.clearMessage()
 		self.statusBar.showMessage('Server online')
@@ -581,16 +589,12 @@ class MainWindow(QtGui.QMainWindow):
 	def saveTemporaryData(self):
 		if InitConfigValue(self.Settings, 'UseCache', 'True') == 'True' : self.saveCache()
 		if InitConfigValue(self.Settings, 'SaveLastStructure', 'True') == 'True' :
-			#print True
 			if os.path.exists(Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState)) :
-				#print 'Exist'
 				shutil.move(Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState), \
 							Path.config('lastSharedSource'))
-				with open(Path.config('lastServerState'), 'wb') as f :
-					f.write(self.serverState)
+				self.Settings.setValue('LastServerState', self.serverState)
 			else :
-				#print 'not Exist'
-				pass
+				self.Settings.setValue('LastServerState', '')
 
 	def _close(self):
 		if hasattr(self, 'END') and self.END : return None

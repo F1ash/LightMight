@@ -64,6 +64,7 @@ class ConfirmRequest(QDialog):
 		self.done(0)
 
 	def setPermanentAccess(self, access):
+		item = self.Parent.serverThread.Obj.currentSessionID[self.address]
 		if access == self.Parent.Policy.Allowed :
 			newItem = (item[0], self.Parent.Policy.Allowed)
 		elif access == self.Parent.Policy.Blocked :

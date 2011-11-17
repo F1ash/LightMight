@@ -15,57 +15,49 @@ class xr_client:
 		#print self.servaddr, ' clnt '
 		if obj is not None :
 			self.Obj = obj
-			self.Obj.currentRemoteServerAddr = addr
-			self.Obj.currentRemoteServerPort = port
 			self.downLoadPath = unicode(InitConfigValue(self.Obj.Settings, 'DownLoadTo', Path.Temp))
 			if not os.path.isdir(self.downLoadPath) : self.downLoadPath = Path.Temp
-			#print '	run for get structure only '
 
 	def run(self):
 		try :
+			str_ = ''
 			self.s = SSLServerProxy(self.servaddr, self.TLS)
 			# self.methods = self.s.system.listMethods()
 		except socket.error, err :
-			print '[in run() clnt.py] SocketError1 : ', err
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
+			str_ = '[in run() clnt.py] SocketError1 : ' + err
 		except socket.timeout, err :
-			print '[in run() clnt.py] SocketError2 : ', err
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
+			str_ = '[in run() clnt.py] SocketError2 : ' + err
 		except Exception, err :
-			print '[in run() clnt.py] :', err
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
+			str_ = '[in run() clnt.py] :' + err
 		except :
-			print '[in run() UnknownError] :'
+			str_ = '[in run() UnknownError] '
+		finally :
+			self.sendErrorString(str_)
+
+	def sendErrorString(self, str_ = '', fileName = None):
+		if str_ != '' :
+			print str_
+			if fileName is not None and os.path.isfile(fileName) :
+				os.remove(fileName)
 			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit('[in run() UnknownError]')
+				self.Obj.errorString.emit(str_)
+			elif 'Obj' in dir(self.Parent) and self.Parent.Obj is not None :
+				self.Parent.Obj.errorString.emit(str_)
 			else :
-				self.Parent.Obj.errorString.emit('[in run() UnknownError]')
-		finally : pass
+				self.Parent.errorString.emit(str_)
 
 	def getSessionID(self, ownIP = ''):
 		#print [ownIP], ' own IP'
 		try :
-			success = True
+			str_ = ''
 			# get session Id & server State
 			try :
 				randomString = self.s.sessionID(ownIP).data
 			except AttributeError, err :
-				print '[in getSessionID() AddressMissMatch]:', err
+				self.sendErrorString('[in getSessionID() AddressMissMatch]:' + err)
 				return False
 			if randomString.startswith('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY') :
-				if 'Obj' in dir(self) and self.Parent is None :
-					self.Obj.errorString.emit('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY')
-				else :
-					self.Parent.Obj.errorString.emit('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY')
+				self.sendErrorString('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY')
 				return False
 			sessionID = randomString[ : DIGITS_LENGTH ]
 			self.serverState = randomString[DIGITS_LENGTH : 2*DIGITS_LENGTH ]
@@ -81,56 +73,28 @@ class xr_client:
 				self.Obj.currentRemoteServerState = self.serverState
 				print "Handshake succeeded."
 		except socket.error, err :
-			print '[in getSessionID()] SocketError1 : ', err
-			success = False
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
+			str_ = '[in getSessionID()] SocketError1 : ' + err
 		except socket.timeout, err :
-			print '[in getSessionID()] SocketError2 : ', err
-			success = False
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
+			str_ = '[in getSessionID()] SocketError2 : ' + err
 		except ProtocolError, err :
-			print "[in getSessionID()] A protocol error occurred"
+			'''print "[in getSessionID()] A protocol error occurred"
 			print "URL: %s" % err.url
 			print "HTTP/HTTPS headers: %s" % err.headers
 			print "Error code: %d" % err.errcode
-			print "Error message: %s" % err.errmsg
-			success = False
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
-		except Fault, err:
-			print "[in getSessionID()] A fault occurred"
+			print "Error message: %s" % err.errmsg'''
+			str_ = '[in getSessionID()] ProtocolError: ' + str(err)
+		except Fault, err :
+			'''print "[in getSessionID()] A fault occurred"
 			print "Fault code: %d" % err.faultCode
-			print "Fault string: %s" % err.faultString
-			success = False
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
+			print "Fault string: %s" % err.faultString'''
+			str_ = '[in getSessionID()] FaultError: ' + str(err)
 		except HTTPException, err :
-			print '[in getSessionID()] HTTPLibError : ', err
-			success = False
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
+			str_ = '[in getSessionID()] HTTPLibError : ' + err
 		except IOError, err :
-			print '[in getSessionID()] IOError : ', err
-			success = False
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.Obj.errorString.emit(str(err))
+			str_ = '[in getSessionID()] IOError : ' + err
 		finally :
-			pass
-		return success
+			self.sendErrorString(str_)
+		return True if str_ == '' else False
 
 	def getSharedSourceStructFile(self, sessionID = ''):
 		# get Shared Sources Structure
@@ -138,118 +102,98 @@ class xr_client:
 		remoteSharedStruct = str('sharedSource_' + self.serverState)
 		#print [self.structFileName], ' get structFile from ', [remoteSharedStruct]
 		try :
-			error = False
-			with open(self.structFileName, "wb") as handle:
+			str_ = ''
+			with open(self.structFileName, "wb") as handle :
 					try :
 						handle.write(self.s.requestSharedSourceStruct(\
 									remoteSharedStruct, \
 									sessionID).data)
 					except AttributeError, err :
-						print '[in getSharedSourceStructFile() SessionMismatch]:', err
 						handle.close()
-						if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
-						error = True
+						str_ = '[in getSharedSourceStructFile() SessionMismatch' + str(err)
 		except ProtocolError, err :
 			'''print "A protocol error occurred"
 			print "URL: %s" % err.url
 			print "HTTP/HTTPS headers: %s" % err.headers
 			print "Error code: %d" % err.errcode
 			print "Error message: %s" % err.errmsg'''
-			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
-			self.Parent.Obj.errorString.emit(str(err))
-			error = True
-		except Fault, err:
+			str_ = '[in getSharedSourceStructFile()] ProtocolError: ' + str(err)
+		except Fault, err :
 			'''print "A fault occurred"
 			print "Fault code: %d" % err.faultCode
 			print "Fault string: %s" % err.faultString'''
-			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
-			self.Parent.Obj.errorString.emit(str(err))
-			error = True
+			str_ = '[in getSharedSourceStructFile()] FaultError: ' + str(err)
 		except socket.error, err :
-			#print 'SocketError1 : ', err
-			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
-			self.Parent.Obj.errorString.emit(str(err))
-			error = True
+			str_ = '[in getSharedSourceStructFile()] SocketError1 : ' + err
 		except socket.timeout, err :
-			#print 'SocketError2 : ', err
-			if os.path.isfile(self.structFileName) : os.remove(self.structFileName)
-			self.Parent.Obj.errorString.emit(str(err))
-			error = True
+			str_ = '[in getSharedSourceStructFile()] SocketError2 : ' + err
 		except IOError, err :
-			print '[in getSharedSourceStructFile()] IOError : ', err
-			error = True
-		finally : pass
-		return self.structFileName, error
+			str_ = '[in getSharedSourceStructFile()] IOError : ' + err
+		finally :
+			self.sendErrorString(str_, self.structFileName)
+		return self.structFileName, False if str_ == '' else True
 
 	def getAvatar(self, sessionID = ''):
 		self.avatarFileName = Path.tempAvatar(self.serverState)
 		#print self.avatarFileName, ' avatarFileName, sessionID:', sessionID
 		try :
-			with open(self.avatarFileName, "wb") as handle:
+			str_ = ''
+			with open(self.avatarFileName, "wb") as handle :
 					try :
 						handle.write(self.s.requestAvatar(sessionID).data)
 					except AttributeError, err :
-						print '[in getAvatar() SessionMismatch]:', err
 						handle.close()
-						if os.path.isfile(self.avatarFileName) : os.remove(self.avatarFileName)
+						str_ = '[in getAvatar() SessionMismatch]:' + err
 					except ProtocolError, err :
-						print "[in getAvatar() A protocol error occurred"
+						'''print "[in getAvatar() A protocol error occurred"
 						print "URL: %s" % err.url
 						print "HTTP/HTTPS headers: %s" % err.headers
 						print "Error code: %d" % err.errcode
-						print "Error message: %s" % err.errmsg
-						#self.Parent.Obj.errorString.emit(str(err))
-						pass
-					except Fault, err:
-						print "[in getAvatar() A fault occurred"
+						print "Error message: %s" % err.errmsg'''
+						str_ = '[in getAvatar() ProtocolError : ' + str(err)
+					except Fault, err :
+						'''print "[in getAvatar() A fault occurred"
 						print "Fault code: %d" % err.faultCode
-						print "Fault string: %s" % err.faultString
-						#self.Parent.Obj.errorString.emit(str(err))
-						pass
+						print "Fault string: %s" % err.faultString'''
+						str_ = '[in getAvatar() FaultError : ' + str(err)
 					except socket.error, err :
-						print '[in getAvatar() SocketError1 : ', err
-						#self.Parent.Obj.errorString.emit(str(err))
-						pass
+						str_ = '[in getAvatar() SocketError1 : ' + err
 					except socket.timeout, err :
-						print '[in getAvatar() SocketError2 : ', err
-						#self.Parent.Obj.errorString.emit(str(err))
-						pass
-					finally :
-						pass
+						str_ = '[in getAvatar() SocketError2 : ' + err
+					finally : pass
 		except IOError, err :
-			print '[in getAvatar()]IOError : ', err
-			#self.Parent.Obj.errorString.emit(str(err))
-		finally : pass
+			str_ = '[in getAvatar()] IOError : ' + err
+		finally :
+			self.sendErrorString(str_, self.avatarFileName)
 		return self.avatarFileName
 
 	def getSharedData(self, maskSet, downLoadPath, emitter, \
-					  previousRemoteServerState = 'NOTHING', \
+					  remoteServerState = 'NOTHING', \
 					  sessionID = ''):
-		""" check remote server state """
-		#print previousRemoteServerState, ' <state> ', self.serverState
-		'''if previousRemoteServerState != self.serverState or previousRemoteServerState == '' :
-			str_ = 'Status of the remote server has changed or not defined.\nUpdate his. Upload canceled.'
-			self.Parent.errorString.emit(str_)
-			emitter.complete.emit()
-			return None'''
 		if len(maskSet) == 0 :
-			self.Parent.errorString.emit('Empty job. Upload canceled.')
+			self.sendErrorString('Empty job. Upload canceled.')
 			emitter.complete.emit()
 			return None
+		# check remote server state
+		if not self.s.checkServerState(sessionID, remoteServerState) :
+			str_ = 'Status of the remote server is changed or server is refused.\n Upload canceled.'
+			self.sendErrorString(str_)
+			emitter.complete.emit()
+			return None 
 		# check access
 		access = self.s.checkAccess(sessionID).data
 		if access == 'ACCESS_ALLOWED' :
 			pass
 		elif access == 'ACCESS_DENIED' :
 			emitter.complete.emit()
-			self.Parent.errorString.emit('ACCESS_DENIED')
+			self.sendErrorString('ACCESS_DENIED')
 			return None
 		elif access.startswith('TEMPORARILY_ALLOWED_ACCESS:') :
-			self.Parent.errorString.emit('TEMPORARILY_ALLOWED_ACCESS')
+			self.sendErrorString('TEMPORARILY_ALLOWED_ACCESS')
 			sessionID = access.split(':')[1]
 			print 'temporarySessionID', sessionID
 		else :
-			self.Parent.errorString.emit('ANSWER_INCORRECT')
+			self.sendErrorString('ANSWER_INCORRECT')
 			return None
 		for i in maskSet.iterkeys() :
 			if maskSet[i][0] == 1 :
@@ -260,86 +204,67 @@ class xr_client:
 					try :
 						os.makedirs(path)
 					except IOError, err:
-						print '[in getSharedData()]IOError : ', err
+						self.sendErrorString('[in getSharedData()] IOError : ' + err)
 						continue
-				with open(_path, "wb") as handle:
+				with open(_path, "wb") as handle :
 					try :
+						str_ = ''
 						handle.write(self.s.getSharedFile(str(i), sessionID).data)
 						#print 'Downloaded : ', maskSet[i][1]
 					except AttributeError, err :
-						print '[in getSharedData() SessionMismatch]:', err
+						str_ = '[in getSharedData() SessionMismatch] : ' + err
 						emitter.complete.emit()
-						self.Parent.errorString.emit('in getSharedData() SessionMismatch')
+						self.sendErrorString(str_)
 						return None
 					except ProtocolError, err :
+						str_ = '[in getSharedData()] ProtocolError : ' + str(err)
 						"""print "A protocol error occurred"
 						print "URL: %s" % err.url
 						print "HTTP/HTTPS headers: %s" % err.headers
 						print "Error code: %d" % err.errcode
 						print "Error message: %s" % err.errmsg"""
-						self.Parent.errorString.emit(str(err))
-					except Fault, err:
+					except Fault, err :
+						str_ = '[in getSharedData()] FaultError : ' + str(err)
 						"""print "A fault occurred"
 						print "Fault code: %d" % err.faultCode
 						print "Fault string: %s" % err.faultString"""
-						self.Parent.errorString.emit(str(err))
 					except socket.error, err :
-						print '[in getSharedData()] SocketError1 : ', err
-						self.Parent.errorString.emit(str(err))
-						pass
+						str_ = '[in getSharedData()] SocketError1 : ' + str(err)
 					except socket.timeout, err :
-						print '[in getSharedData()] SocketError2 : ', err
-						self.Parent.errorString.emit(str(err))
-						pass
+						str_ = '[in getSharedData()] SocketError2 : ' + str(err)
 					finally :
-						pass
+						self.sendErrorString(str_)
 					size_ = maskSet[i][2]
 					if size_ == 0 : size_ = 1
 					emitter.nextfile.emit(size_)
 		if self.s.getSharedFile('FINITA', sessionID).data != 'OK' :
-			self.Parent.errorString.emit('Loading was completed incorrectly.')
+			self.sendErrorString('Loading was completed incorrectly.')
 		emitter.complete.emit()
 
 	def sessionClose(self, sessionID = ''):
 		try :
+			str_ = ''
 			self.s.sessionClose(sessionID)
 		except ProtocolError, err :
-			"""print "A protocol error occurred"
+			str_ = '[in sessionClose()] ProtocolErrorError : ' + str(err)
+			"""print "[in sessionClose()] A protocol error occurred"
 			print "URL: %s" % err.url
 			print "HTTP/HTTPS headers: %s" % err.headers
 			print "Error code: %d" % err.errcode
 			print "Error message: %s" % err.errmsg"""
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.errorString.emit(str(err))
-		except Fault, err:
-			"""print "A fault occurred"
+		except Fault, err :
+			str_ = '[in sessionClose()] FaultError : ' + str(err)
+			"""print "[in sessionClose()] A fault occurred"
 			print "Fault code: %d" % err.faultCode
 			print "Fault string: %s" % err.faultString"""
-			if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.errorString.emit(str(err))
 		except HTTPException, err :
-			print '[in sessionClose()] HTTPLibError : ', err
-			'''if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.errorString.emit(str(err))'''
+			str_ = '[in sessionClose()] HTTPLibError : ' + str(err)
 		except socket.error, err :
-			print '[in sessionClose()] SocketError1 : ', err
-			'''if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.errorString.emit(str(err))'''
+			str_ = '[in sessionClose()] SocketError1 : ' + str(err)
 		except socket.timeout, err :
-			print '[in sessionClose()] SocketError2 : ', err
-			'''if 'Obj' in dir(self) and self.Parent is None :
-				self.Obj.errorString.emit(str(err))
-			else :
-				self.Parent.errorString.emit(str(err))'''
-		finally : pass
+			str_ = '[in sessionClose()] SocketError2 : ' + str(err)
+		finally :
+			self.sendErrorString(str_)
 
 	def _shutdown(self, str_= '', nothing = ''):
 		#print 'socket closing...'

@@ -93,7 +93,7 @@ class Box(QtGui.QWidget):
 		path = str_
 		#print path, ' representation structure file'
 		self.treeModel = TreeModel('Name', 'Description', parent = self)
-		#self.threadSetupTree = SetupTree(self.treeProcessing, [path], self.treeModel.rootItem, self, False, self)
+		#self.threadSetupTree = SetupTree(self.treeProcessing, [path], self.treeModel, self, False, self)
 		#self.threadSetupTree.start()
 		count, downLoads = self.treeProcessing.setupItemData([path], self.treeModel.rootItem)
 		self.hideProgressBar()
