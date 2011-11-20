@@ -183,7 +183,7 @@ class Box(QtGui.QWidget):
 												self.Obj, \
 												self, \
 												self.currentTreeEncode), \
-										self)
+										parent = self)
 		self.clientThread.Obj.serverState = self.Obj.USERS[key][4]
 		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self._showSharedSources)
 		self.clientThread.start()

@@ -2,7 +2,9 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from Functions import InitConfigValue
+from Functions import InitConfigValue, avatarInCache, InCache
+from clnt import xr_client
+from ToolsThread import ToolsThread
 
 class ContactDataEditor(QDialog):
 	def __init__(self, obj = None, parent = None):
@@ -11,18 +13,32 @@ class ContactDataEditor(QDialog):
 		self.Parent = parent
 		self.Obj = obj
 		self.setWindowTitle('Contact Editor')
-		self.setModal(False)
+		self.setModal(True)
 
 		self.layout = QVBoxLayout()
 
 		self.nameLabel = QLabel(self.Obj.text())
 		self.layout.addWidget(self.nameLabel)
 
-		self.addressLabel = QLabel(self.Obj.data(Qt.AccessibleTextRole).toList()[0].toString())
+		self.key = str(self.Obj.data(Qt.AccessibleTextRole).toList()[0].toString())
+		self.addressLabel = QLabel(self.key)
 		self.layout.addWidget(self.addressLabel)
 
-		self.domainLabel = QLabel(self.Obj.data(Qt.AccessibleTextRole).toList()[2].toString())
-		self.layout.addWidget(self.domainLabel)
+		encode = self.Parent.Obj.USERS[self.key][3]
+		self.encryptLabel = QLabel('Encoding: ' + encode)
+		self.layout.addWidget(self.encryptLabel)
+
+		self.myAccessLabel = QLabel('My access in :')
+		self.layout.addWidget(self.myAccessLabel)
+
+		self.serverState = str(self.Parent.Obj.USERS[self.key][4])
+		self.cachedLabel = QLabel('Cached :')
+		self.setCachedStatus(self.serverState)
+		self.layout.addWidget(self.cachedLabel)
+
+		self.refreshButton = QPushButton('&Info Refresh')
+		self.refreshButton.clicked.connect(self.infoRefresh)
+		self.layout.addWidget(self.refreshButton)
 
 		self.policyLabel = QLabel('Custom policy')
 		self.layout.addWidget(self.policyLabel)
@@ -31,7 +47,7 @@ class ContactDataEditor(QDialog):
 		self.policySelect.addItem(QIcon(), 'Allowed')
 		self.policySelect.addItem(QIcon(), 'Confirm')
 		self.policySelect.addItem(QIcon(), 'Blocked')
-		key = str(self.addressLabel.text().split(':')[0])
+		key = str(self.key.split(':')[0])
 		#print [self.Parent.Obj.serverThread.Obj.currentSessionID, key]
 		if key in self.Parent.Obj.serverThread.Obj.currentSessionID :
 			policy = self.Parent.Obj.serverThread.Obj.currentSessionID[key][1]
@@ -64,6 +80,18 @@ class ContactDataEditor(QDialog):
 
 		self.setLayout(self.layout)
 
+	def setCachedStatus(self, serverState = ''):
+		structCached = InCache(serverState)[0]
+		avatarCached = avatarInCache(serverState)[0]
+		if structCached and avatarCached :
+			status = 'Full'
+		elif structCached :
+			status = 'Stucture'
+		elif avatarCached :
+			status = 'Avatar'
+		else : status = 'None'
+		self.cachedLabel.setText('Cached : ' + status)
+
 	def customPolicyEnable(self, special):
 		if special == 'Non-special' :
 			self.policySelect.setEnabled(True)
@@ -73,6 +101,56 @@ class ContactDataEditor(QDialog):
 		elif special == 'To BlackList' :
 			self.policySelect.setCurrentIndex(self.policySelect.findText('Blocked'))
 		self.policySelect.setEnabled(False)
+
+	def enabled_Change(self, status = False):
+		self.refreshButton.setEnabled(status)
+		self.policySelect.setEnabled(status)
+		self.specialListSelect.setEnabled(status)
+		self.okButton.setEnabled(status)
+		self.cancelButton.setEnabled(status)
+
+	def infoRefresh(self):
+		self.enabled_Change(False)
+		if 'clientThread' in dir(self) :
+			del self.clientThread
+			self.clientThread = None
+		if self.Parent.Obj.USERS[self.key][3] == 'Yes' :
+			encode = True
+		else :
+			encode = False
+		addr, port = self.key.split(':')
+		self.clientThread = ToolsThread(\
+										xr_client(\
+												addr, \
+												port, \
+												self.Parent.Obj, \
+												self.Parent, \
+												encode), \
+										parent = self)
+		self.clientThread.Obj.serverState = self.serverState
+		self.connect(self.clientThread, SIGNAL('threadRunning'), self.refreshRun)
+		self.clientThread.start()
+
+	def refreshRun(self):
+		self.disconnect(self.clientThread, SIGNAL('threadRunning'), self.refreshRun)
+		addr = str(self.key.split(':')[0])
+		# get session ID if don`t it
+		if addr not in self.Parent.Obj.serverThread.Obj.currentSessionID :
+			self.clientThread.Obj.getSessionID(self.Parent.Obj.server_addr)
+		if addr in self.Parent.Obj.serverThread.Obj.currentSessionID :
+			sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[addr][0]
+		else :
+			sessionID = ''
+		#print 'session:', sessionID
+		access = self.clientThread.Obj.getAccess(sessionID)
+		self.clientThread._terminate()
+		if access > -1 :
+			text = 'My access in : ' + self.Parent.Obj.Policy.PolicyName[access]
+		else :
+			text = 'My access in : Unknown'
+		self.myAccessLabel.setText(text)
+		self.setCachedStatus(self.serverState)
+		self.enabled_Change(True)
 
 	def ok(self):
 		#print 'ok'
@@ -94,5 +172,5 @@ class ContactDataEditor(QDialog):
 		event.ignore()
 		self.done(0)
 
-	def closeEvent():
+	def closeEvent(self):
 		self.done(0)

@@ -153,7 +153,7 @@ class MainWindow(QtGui.QMainWindow):
 	def receiveBroadcastMessage(self, data, addr):
 		if data.count('<||>') != 6 : return None	## ignore non-standart packets
 		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
-		print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
+		#print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
 		''' check correct IP for local network '''
 		if addr == addr_in_data :
 			if   mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, None, False)
@@ -180,7 +180,7 @@ class MainWindow(QtGui.QMainWindow):
 		 pass
 
 	def delContact(self, name, addr, port, encode, state):
-		print QtCore.QString().fromUtf8(name), addr, port, encode, state , 'Must die!'
+		#print [QtCore.QString().fromUtf8(name), addr, port, encode, state] , 'Must die!'
 		if addr != None and port != None :
 			key = str(addr + ':' + port)
 			if key in self.USERS :
@@ -190,10 +190,11 @@ class MainWindow(QtGui.QMainWindow):
 						self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
 						if key in self.USERS :
 							del self.USERS[key]
-							print key, 'deleted'
-						#if addr in self.serverThread.Obj.currentSessionID :
-						#	del self.serverThread.Obj.currentSessionID[addr]
-						print key, 'deletedDD'
+							#print key, 'deleted'
+						_addr = str(addr)
+						if _addr in self.serverThread.Obj.currentSessionID :
+							del self.serverThread.Obj.currentSessionID[_addr]
+							#print _addr, 'deletedDD'
 						break
 		else :
 			item = self.menuTab.userList.findItems(name, \
@@ -216,7 +217,7 @@ class MainWindow(QtGui.QMainWindow):
 		#print 'DEL down'
 
 	def addNewContact(self, name, addr, port, encode, state, domain, avahi_method = True):
-		print QtCore.QString().fromUtf8(name), addr, port, 'new contact'
+		#print QtCore.QString().fromUtf8(name), addr, port, 'new contact'
 		key = str(addr + ':' + port)
 		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :
@@ -540,16 +541,17 @@ class MainWindow(QtGui.QMainWindow):
 		# send 'close session' request
 		try :
 			for item in self.USERS.iterkeys() :
-				addr, port = item.split(':') if item in self.USERS else ('', '')
-				print addr, port, ' send "close session" request'
-				if addr in self.serverThread.Obj.currentSessionID :
-					print addr, self.serverThread.Obj.currentSessionID[addr][0]
+				_addr, _port = item.split(':') if item in self.USERS else ('', '')
+				addr = str(_addr); port = str(_port)
+				if addr in self.serverThread.Obj.currentSessionID and addr != self.server_addr :
+					sessionID = self.serverThread.Obj.currentSessionID[addr][0]
+					print addr, sessionID, ' send "close session" request'
 					clnt = xr_client(addr = addr, port = port, parent = self)
 					clnt.run()
-					clnt.sessionClose(self.serverThread.Obj.currentSessionID[addr][0])
+					clnt.sessionClose(sessionID)
 					clnt._shutdown()
 		except RuntimeError, err :
-			print '[in stopServices() __init__]:', err
+			print '[in stopServices() __init__] RuntimeError :', err
 		finally : pass
 		if 'serverThread' in dir(self) :
 			self.serverThread._terminate(mode if restart and mode != '' else '', loadFile)

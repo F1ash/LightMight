@@ -33,19 +33,22 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 		self.server_bind()
 		self.server_activate()
 
-	def handle_request(self):
+	def verify_request(self, request, client_address):
+		self.client_address = client_address
+		#print repr(request), client_address
+		return SimpleXMLRPCServer.verify_request(self, request, client_address)
+
+	'''def handle_request(self):
 		return SimpleXMLRPCServer.handle_request(self)
 
 	def handle_error(self, request, client_address):
 		return SimpleXMLRPCServer.handle_error(self, request, client_address)
 
+	def handle_timeout(self):
+		return SimpleXMLRPCServer.handle_timeout(self)
+
 	def get_request(self):
 		return SimpleXMLRPCServer.get_request(self)
-
-	def verify_request(self, request, client_address):
-		self.client_address = client_address
-		#print repr(request), client_address
-		return SimpleXMLRPCServer.verify_request(self, request, client_address)
 
 	def process_request(self, request, client_address):
 		return SimpleXMLRPCServer.process_request(self, request, client_address)
@@ -63,7 +66,7 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 		return SimpleXMLRPCServer.server_bind(self)
 
 	def server_activate(self):
-		return SimpleXMLRPCServer.server_activate(self)
+		return SimpleXMLRPCServer.server_activate(self)'''
 
 class SSLServerProxy(ServerProxy):
 	def __init__(self, _servaddr, TLS = False):
