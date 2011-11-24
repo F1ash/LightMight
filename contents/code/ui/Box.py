@@ -138,6 +138,7 @@ class Box(QtGui.QWidget):
 			self.Obj.showMSG('Error at getting data.')
 			self.progressBar.hide()
 		self.clientThread._terminate()
+		self.userList.itemDoubleClicked.connect(self.itemSharedSourceQuired)
 
 	def hideProgressBar(self):
 		self.progressBar.hide()
@@ -161,28 +162,28 @@ class Box(QtGui.QWidget):
 			#print 'cached'
 			self.showSharedSources(pathExist[1])
 			return None
+		#print 'not cached'
+		self.userList.itemDoubleClicked.disconnect(self.itemSharedSourceQuired)
 		""" run the getting new structure in QThread """
 		if 'clientThread' in dir(self) :
-			self.disconnect(self.clientThread, QtCore.SIGNAL('threadRunning'), self.showSharedSources)
 			self.clientThread = None
 		if self.Obj.USERS[key][3] == 'Yes' :
-			self.currentTreeEncode = True
+			encode = True
 		else :
-			self.currentTreeEncode = False
+			encode = False
 		self.clientThread = ToolsThread(\
 										xr_client(\
 												str(self.Obj.USERS[key][1]), \
 												str(self.Obj.USERS[key][2]), \
 												self.Obj, \
 												self, \
-												self.currentTreeEncode), \
+												encode), \
 										parent = self)
 		self.clientThread.Obj.serverState = self.Obj.USERS[key][4]
 		self.cachedData.connect(self._showSharedSources)
 		self.clientThread.flag = 'cache_now'
 		self.clientThread.start()
 		self.progressBar.show()
-		#print 'not cached'
 
 	def hide_n_showTree(self):
 		if self.sharedTree.isVisible():
