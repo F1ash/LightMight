@@ -237,7 +237,7 @@ class xr_client:
 		elif access.startswith('TEMPORARILY_ALLOWED_ACCESS:') :
 			self.sendErrorString('TEMPORARILY_ALLOWED_ACCESS')
 			sessionID = access.split(':')[1]
-			print 'temporarySessionID', sessionID
+			#print 'temporarySessionID', sessionID
 		else :
 			self.sendErrorString('ANSWER_INCORRECT')
 			return None
@@ -323,6 +323,9 @@ class xr_client:
 				print '[in _shutdown() SocketError2] : ', err
 			finally :
 				self.s.socket.close()
+
+	def __del__(self):
+		self._shutdown()
 
 if __name__ == '__main__':
 	t = xr_client()

@@ -10,16 +10,17 @@ from clnt import xr_client
 from ToolsThread import ToolsThread
 from Wait import SetupTree
 from ContactDataEditor import ContactDataEditor
-from Functions import InCache, Path, moveFile, DelFromCache, InitConfigValue
+from Functions import InCache, Path, moveFile, DelFromCache, InitConfigValue, avatarInCache
 from os.path import basename as BaseName
 from mcastSender import _send_mcast as Sender
-import os, shutil
+import os, shutil, os.path
 
 class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
 	tree = QtCore.pyqtSignal(TreeItem, int, int)
 	data = QtCore.pyqtSignal(TreeBox)
 	setAvatar = QtCore.pyqtSignal(QtGui.QListWidgetItem, str)
+	cachedData = QtCore.pyqtSignal(str, bool)
 	def __init__(self, Obj_, parent = None):
 		QtGui.QWidget.__init__(self, parent)
 
@@ -110,21 +111,9 @@ class Box(QtGui.QWidget):
 				self.setAvatar.emit(item_, self.Obj.USERS[addr][4])
 				break
 
-	def _showSharedSources(self):
-		self.progressBar.show()
-		#print 'not cached'
-		addr = self.clientThread.Obj.servaddr
-		key = addr.split(':')[0]
-		# get session ID if don`t it
-		if key not in self.Obj.serverThread.Obj.currentSessionID :
-			self.clientThread.Obj.getSessionID(self.Obj.server_addr)
-		if key in self.Obj.serverThread.Obj.currentSessionID :
-			sessionID = self.Obj.serverThread.Obj.currentSessionID[key][0]
-		else :
-			sessionID = ''
-		self.clientThread.Obj.getAvatar(sessionID)
-		path, error = self.clientThread.getSharedSourceStructFile(sessionID)
-		self.clientThread._terminate()
+	def _showSharedSources(self, path_, error):
+		self.cachedData.disconnect(self._showSharedSources)
+		path = str(path_)
 		if error : cached = False
 		else : cached = True
 		""" search USERS key with desired value for set it in "cached" """
@@ -144,7 +133,11 @@ class Box(QtGui.QWidget):
 			except RuntimeError , err :
 				print '[in _showSharedSources() Box]:', err
 				continue
-		self.showSharedSources(path)
+		if os.path.isfile(path) : self.showSharedSources(path)
+		else :
+			self.Obj.showMSG('Error at getting data.')
+			self.progressBar.hide()
+		self.clientThread._terminate()
 
 	def hideProgressBar(self):
 		self.progressBar.hide()
@@ -185,8 +178,11 @@ class Box(QtGui.QWidget):
 												self.currentTreeEncode), \
 										parent = self)
 		self.clientThread.Obj.serverState = self.Obj.USERS[key][4]
-		self.connect(self.clientThread, QtCore.SIGNAL('threadRunning'), self._showSharedSources)
+		self.cachedData.connect(self._showSharedSources)
+		self.clientThread.flag = 'cache_now'
 		self.clientThread.start()
+		self.progressBar.show()
+		#print 'not cached'
 
 	def hide_n_showTree(self):
 		if self.sharedTree.isVisible():

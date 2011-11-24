@@ -168,8 +168,11 @@ class ServerDaemon():
 		print ' server terminated ...'
 		if str_.startswith('REINIT') :
 			self.Parent.serverDOWN.emit(self.serverState, loadFile)
-		else :
+		elif str_.startswith('reStart') :
 			self.Parent.serverDown.emit(self.serverState)
+
+	def __del__(self):
+		self._shutdown()
 
 if __name__ == '__main__':
 

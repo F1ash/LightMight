@@ -16,7 +16,7 @@ class DataCache(QThread):
 		self.USERS = userList
 		self.newItem.connect(self.refillCache)
 		self.timer = QTimer()
-		self.timer.setInterval(10000)
+		self.timer.setInterval(30000)
 		self.timer.timeout.connect(self.initRefill)
 		self.timer.start()
 

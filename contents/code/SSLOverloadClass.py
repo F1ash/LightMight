@@ -28,7 +28,7 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 
 		self.logRequests = False		## disable logging """
 		self.allow_none = allow_none
-		self.timeout = 15.0
+		self.timeout = 0.0
 		self.socket.settimeout(self.timeout)
 		self.server_bind()
 		self.server_activate()
@@ -37,6 +37,14 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 		self.client_address = client_address
 		#print repr(request), client_address
 		return SimpleXMLRPCServer.verify_request(self, request, client_address)
+
+	def handle_one_request(self):
+		#try :
+		#	res_ = SimpleXMLRPCServer.handle_one_request(self)
+		#except :
+		#	print 'UnknownError in SSLOverloadClass'
+		#	return None
+		return SimpleXMLRPCServer.handle_one_request(self)
 
 	'''def handle_request(self):
 		return SimpleXMLRPCServer.handle_request(self)
@@ -84,5 +92,5 @@ class SSLServerProxy(ServerProxy):
 			#print '   TLS used on client ...'
 		else :
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.timeout = 15.0
+		self.timeout = 0.0
 		self.socket.settimeout(self.timeout)

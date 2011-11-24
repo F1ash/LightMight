@@ -281,7 +281,6 @@ class MainWindow(QtGui.QMainWindow):
 			self.udpClient.stop()
 		else : self.initAvahiBrowser()
 
-	@QtCore.pyqtSlot(name = 'CHOP')
 	def cacheS(self):
 		print 'Cache down signal received'
 
@@ -316,6 +315,10 @@ class MainWindow(QtGui.QMainWindow):
 								port = self.server_port, \
 								description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
 			self.avahiService.start()
+		self.initBroadcast(name_, encode)
+
+	def initBroadcast(self, name_ = None, encode = None):
+		if name_ is None or encode is None : return None
 		if self.Settings.value('BroadcastDetect', True).toBool() :
 			data = QtCore.QString('1' + '<||>' + \
 								  name_ + '<||>' + \
@@ -390,6 +393,7 @@ class MainWindow(QtGui.QMainWindow):
 		""" creating match dictionary {number : fileName} """
 		treeModel = TreeModel('Name', 'Description')		## cleaned treeModel.rootItem
 
+		self.serverReinited = not restart
 		self.threadSetupTree = SetupTree(TreeProcessing(), \
 										[Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState)], \
 										treeModel, \
@@ -413,9 +417,16 @@ class MainWindow(QtGui.QMainWindow):
 	def serverStart(self):
 		if self.serverState != '' : self.serverThread.Obj.serverState = self.serverState
 		self.serverThread.start()
+		if self.serverReinited : self.preinitAvahiBrowser()
+		else :
+			name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
+			if self.TLS :
+				encode = 'Yes'
+			else :
+				encode = 'No'
+			self.initBroadcast(name_, encode)
 		self.statusBar.clearMessage()
 		self.statusBar.showMessage('Server online')
-		self.preinitAvahiBrowser()
 		self.menuTab.progressBar.hide()
 
 	def uploadTask(self, info):
@@ -543,13 +554,24 @@ class MainWindow(QtGui.QMainWindow):
 			for item in self.USERS.iterkeys() :
 				_addr, _port = item.split(':') if item in self.USERS else ('', '')
 				addr = str(_addr); port = str(_port)
+				if self.USERS[item][3] == 'Yes' :
+					encode = True
+				else :
+					encode = False
 				if addr in self.serverThread.Obj.currentSessionID and addr != self.server_addr :
 					sessionID = self.serverThread.Obj.currentSessionID[addr][0]
 					print addr, sessionID, ' send "close session" request'
-					clnt = xr_client(addr = addr, port = port, parent = self)
+					clnt = ToolsThread(\
+										xr_client(\
+												addr, \
+												port, \
+												self, \
+												self, \
+												encode), \
+										parent = self)
 					clnt.run()
-					clnt.sessionClose(sessionID)
-					clnt._shutdown()
+					clnt.Obj.sessionClose(sessionID)
+					clnt._terminate()
 		except RuntimeError, err :
 			print '[in stopServices() __init__] RuntimeError :', err
 		finally : pass
