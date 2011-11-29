@@ -82,13 +82,15 @@ class ContactDataEditor(QDialog):
 
 	def setCachedStatus(self, serverState = ''):
 		structCached = InCache(serverState)[0]
-		avatarCached = avatarInCache(serverState)[0]
+		avatarCached, name_ = avatarInCache(serverState)
 		if structCached and avatarCached :
 			status = 'Full'
+			self.Obj.setIcon(QIcon(name_))
 		elif structCached :
 			status = 'Stucture'
 		elif avatarCached :
 			status = 'Avatar'
+			self.Obj.setIcon(QIcon(name_))
 		else : status = 'None'
 		self.cachedLabel.setText('Cached : ' + status)
 
@@ -170,7 +172,4 @@ class ContactDataEditor(QDialog):
 
 	def closeEvent(self, event):
 		event.ignore()
-		self.done(0)
-
-	def closeEvent(self):
 		self.done(0)

@@ -20,8 +20,6 @@ class ServerDaemon():
 			if not self._srv.Ready :
 				print 'server init Error'
 				error = True
-			print self._srv.socket.getsockname(), ' bind addr'
-			#_addr, self.Parent.server_port = self._srv.socket.getsockname()
 		except socket.error, err :
 			print err, 'server init Error'
 			error = True
