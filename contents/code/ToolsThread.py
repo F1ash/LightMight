@@ -18,7 +18,8 @@ class ToolsThread(QThread):
 	def run(self):
 		self.Obj.run()
 		self.emit(SIGNAL('threadRunning'), self.Parent)
-		if self.flag == 'cache_now' :
+		self.runned = self.Obj.runned
+		if self.runned and self.flag == 'cache_now' :
 			self.cache_now()
 
 	def getSharedSourceStructFile(self, str_ = ''):

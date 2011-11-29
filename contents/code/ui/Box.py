@@ -13,7 +13,7 @@ from ContactDataEditor import ContactDataEditor
 from Functions import InCache, Path, moveFile, DelFromCache, InitConfigValue, avatarInCache
 from os.path import basename as BaseName
 from mcastSender import _send_mcast as Sender
-import os, shutil, os.path
+import os, shutil, os.path, threading
 
 class Box(QtGui.QWidget):
 	complete = QtCore.pyqtSignal()
@@ -131,7 +131,7 @@ class Box(QtGui.QWidget):
 					self.searchItem(str(itemValue[1][1] + ':' + itemValue[1][2]))
 					break
 			except RuntimeError , err :
-				print '[in _showSharedSources() Box]:', err
+				print '[in _showSharedSources() Box]: ', err
 				continue
 		if os.path.isfile(path) : self.showSharedSources(path)
 		else :
@@ -180,10 +180,13 @@ class Box(QtGui.QWidget):
 												encode), \
 										parent = self)
 		self.clientThread.Obj.serverState = self.Obj.USERS[key][4]
-		self.cachedData.connect(self._showSharedSources)
 		self.clientThread.flag = 'cache_now'
 		self.clientThread.start()
-		self.progressBar.show()
+		if hasattr(self.clientThread, 'runned') and self.clientThread.runned :
+			self.cachedData.connect(self._showSharedSources)
+			self.progressBar.show()
+		else :
+			self.userList.itemDoubleClicked.connect(self.itemSharedSourceQuired)
 
 	def hide_n_showTree(self):
 		if self.sharedTree.isVisible():
@@ -231,7 +234,9 @@ class Box(QtGui.QWidget):
 									'' + '<||>' + \
 									'' + '<||>' + \
 									'*infoShare*')
-				Sender(data)
+				#Sender(data)
+				s = threading.Thread(target = Sender,  args = (data,))
+				s.start()
 
 	def itemContextMenuQuired(self, point):
 		item = self.userList.itemAt(point)

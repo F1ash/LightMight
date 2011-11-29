@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import os, os.path, string, random, socket, ssl, time, sys, re, urllib2
+import os, os.path, string, random, socket, ssl, time, sys, re, urllib2, select
 from Path import  Path
 
 char_set = string.ascii_letters + string.digits
 DIGITS_LENGTH = 24
+TIMEOUT = 30.0
 
 pattern = "[1-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?"
 ip_re = re.compile(pattern)
@@ -48,6 +49,20 @@ def getExternalIP():
 			print err
 		finally : pass
 	return ip
+
+def readSocketReady(sock, timeout = TIMEOUT):
+	ready_to_read, ready_to_write, in_error = select.select([sock], [], [], timeout)
+	if sock in ready_to_read : return True
+	else :
+		sock.close()
+		return False
+
+def writeSocketReady(sock, timeout = TIMEOUT):
+	ready_to_read, ready_to_write, in_error = select.select([], [sock], [], timeout)
+	if sock in ready_to_write : return True
+	else :
+		sock.close()
+		return False
 
 def createStructure():
 	for nameDir in [Path.TempAvatar, \
@@ -127,12 +142,12 @@ def getIP():
 	print msg
 	return Addr
 
-def getFreePort(minValue, maxValue):
+def getFreePort(minValue, maxValue, addr = '127.0.0.1'):
 	number_ = -1
 	for i in xrange(maxValue - minValue) :
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try :
-			s.bind(('127.0.0.1', minValue + i))
+			s.bind((addr, minValue + i))
 		except socket.error, x :
 			s.close()
 			#print x

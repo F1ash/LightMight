@@ -47,8 +47,11 @@ class DataCache(QThread):
 					self.clnt.serverState = itemValue[1][4]
 					#print itemValue[1][4], 'remote server state'
 					self.clnt.run()
+					if not hasattr(self.clnt, 'runned') or not self.clnt.runned :
+						self.clnt._shutdown()
+						continue
 					# get session ID if don`t it
-					#print self.Obj.serverThread.Obj.currentSessionID, '\n', currAddr
+					#print self.Obj.serverThread.Obj.currentSessionID, '\n', currAddr, 'Runned:', runned
 					if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
 						self.clnt.getSessionID(self.Obj.server_addr)
 					if currAddr not in self.Obj.serverThread.Obj.currentSessionID :

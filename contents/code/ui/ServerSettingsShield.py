@@ -6,7 +6,6 @@ from TreeProcess import TreeProcessing
 from PathToTree import PathToTree, SharedSourceTree2XMLFile
 from ListingText import ListingText
 from Functions import InitConfigValue, dateStamp, moveFile, randomString, Path
-from mcastSender import _send_mcast as Sender
 from Modules import ModuleExist
 import os, stat, os.path
 

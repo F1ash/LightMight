@@ -134,15 +134,15 @@ class ContactDataEditor(QDialog):
 	def refreshRun(self):
 		self.disconnect(self.clientThread, SIGNAL('threadRunning'), self.refreshRun)
 		addr = str(self.key.split(':')[0])
-		# get session ID if don`t it
-		if addr not in self.Parent.Obj.serverThread.Obj.currentSessionID :
-			self.clientThread.Obj.getSessionID(self.Parent.Obj.server_addr)
-		if addr in self.Parent.Obj.serverThread.Obj.currentSessionID :
-			sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[addr][0]
-		else :
-			sessionID = ''
-		#print 'session:', sessionID
-		access = self.clientThread.Obj.getAccess(sessionID)
+		sessionID = ''; access = -1
+		if hasattr(self.clientThread, 'runned') and self.clientThread.runned :
+			# get session ID if don`t it
+			if addr not in self.Parent.Obj.serverThread.Obj.currentSessionID :
+				self.clientThread.Obj.getSessionID(self.Parent.Obj.server_addr)
+			if addr in self.Parent.Obj.serverThread.Obj.currentSessionID :
+				sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[addr][0]
+			#print 'session:', sessionID
+			access = self.clientThread.Obj.getAccess(sessionID)
 		self.clientThread._terminate()
 		if access > -1 :
 			text = 'My access in : ' + self.Parent.Obj.Policy.PolicyName[access]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import shutil, os.path, string, sys, os
+import shutil, os.path, string, sys, os, threading
 from PyQt4 import QtGui, QtCore
 from Functions import *
 from Modules import ModuleExist
@@ -174,7 +174,9 @@ class MainWindow(QtGui.QMainWindow):
 							  encode + '<||>' + \
 							  self.serverState + '<||>' + \
 							  '*infoShare*')
-		Sender(data, addr)
+		#Sender(data, addr)
+		s = threading.Thread(target = Sender,  args = (data, addr,))
+		s.start()
 
 	def reInitRequest(self, name, addr, port, encode, state):
 		 pass
@@ -192,7 +194,7 @@ class MainWindow(QtGui.QMainWindow):
 							del self.USERS[key]
 							#print key, 'deleted'
 						_addr = str(addr)
-						if _addr in self.serverThread.Obj.currentSessionID :
+						if self.serverThread is not None and _addr in self.serverThread.Obj.currentSessionID :
 							del self.serverThread.Obj.currentSessionID[_addr]
 							#print _addr, 'deletedDD'
 						break
@@ -327,7 +329,9 @@ class MainWindow(QtGui.QMainWindow):
 								  encode + '<||>' + \
 								  self.serverState + '<||>' + \
 								  '*infoShare*')
-			Sender(data)
+			#Sender(data)
+			s = threading.Thread(target = Sender, args = (data,))
+			s.start()
 
 	def initServer(self, sharedSourceTree = None, \
 						 loadFile = None, previousState = '', \
@@ -351,9 +355,10 @@ class MainWindow(QtGui.QMainWindow):
 		self.statusBar.showMessage('Server offline')
 		self.serverReady = 0
 
-		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
-										int(InitConfigValue(self.Settings, 'MaxPort', '34100')))[1]
 		self.server_addr = getIP()
+		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
+										int(InitConfigValue(self.Settings, 'MaxPort', '34100')), \
+										self.server_addr)[1]
 		print self.server_addr, self.server_port, 'free'
 		certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
 		#print str(certificatePath)
@@ -363,7 +368,7 @@ class MainWindow(QtGui.QMainWindow):
 			self.TLS = False
 		#print self.TLS, '  <--- using TLS'
 		self.serverThread = ToolsThread(\
-										ServerDaemon( ('', self.server_port), \
+										ServerDaemon( (self.server_addr, self.server_port), \
 													self.commonSetOfSharedSource, \
 													self, \
 													TLS = self.TLS, \

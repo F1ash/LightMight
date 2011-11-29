@@ -9,7 +9,8 @@ class ModuleExist():
 		try :
 			if Path.platform == 'win' : import pybonjour
 			else : import avahi, dbus
-		except :
+		except ImportError , err :
+			print '[in ModuleExist] ImportError: ', err
 			self.AvahiAvailable = False
 		finally : pass
 

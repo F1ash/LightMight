@@ -14,9 +14,14 @@ class ServerDaemon():
 		self.currentSessionID = {}	## {remoteServerAddr : (sessionID, customPolicy, temporarilySessionID)}
 		self.WAIT = []	## list of blocked IP for getting sessionID
 		try :
-			error = False
+			error = False; err = ''
 			self._srv = ThreadServer(serveraddr, allow_none = True, \
 									TLS = TLS, certificatePath = cert)
+			if not self._srv.Ready :
+				print 'server init Error'
+				error = True
+			print self._srv.socket.getsockname(), ' bind addr'
+			#_addr, self.Parent.server_port = self._srv.socket.getsockname()
 		except socket.error, err :
 			print err, 'server init Error'
 			error = True
@@ -35,7 +40,13 @@ class ServerDaemon():
 			self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
 			self._srv.register_function(self.requestAvatar, 'requestAvatar')
 			self.Parent.startServer.emit()
-		else : self.Parent.initServeR.emit(self.Parent.threadSetupTree.treeModel, '', 'reStart', True)
+		else :
+			self._shutdown()
+			self.Parent.showMSG(str(err) + '\nServer not runned.\nRestart it.')
+			if hasattr(self.Parent, 'threadSetupTree') :
+				self.Parent.initServeR.emit(self.Parent.threadSetupTree.treeModel, '', str(self.serverState), True)
+			else :
+				self.Parent.initServeR.emit(None, '', str(self.serverState), False)
 
 	def sessionID(self, clientIP = ''):
 		#print [self._srv.client_address, clientIP], ' --sessionID'
@@ -156,9 +167,12 @@ class ServerDaemon():
 
 	def run(self):
 		try :
+			self.runned = True
 			if hasattr(self, '_srv') : self._srv.serve_forever()
+			else : self.runned = False
 		except :
 			print '[in run() ServerDaemon]: UnknownError'
+			self.runned = False
 			self._shutdown()
 		finally : pass
 

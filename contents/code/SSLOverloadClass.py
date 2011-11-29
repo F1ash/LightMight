@@ -4,6 +4,7 @@ import ssl, socket, socks
 from xmlrpclib import ServerProxy
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SocketServer import ThreadingMixIn
+from Functions import readSocketReady, writeSocketReady, TIMEOUT
 
 #socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, 'localhost', 9050)
 #socket.socket = socks.socksocket
@@ -11,8 +12,25 @@ from SocketServer import ThreadingMixIn
 class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 	#ThreadingMixIn.daemon_threads = True
 	def __init__(self, serveraddr, allow_none = False, TLS = False, certificatePath = ''):
-		SimpleXMLRPCServer.__init__(self, serveraddr)
+		SimpleXMLRPCServer.__init__(self, serveraddr, bind_and_activate = False)
 
+		count = 0
+		self.Ready = True
+		while count < 10 :
+			self.socketInit(TLS, certificatePath = certificatePath)
+			if readSocketReady(self.socket, TIMEOUT) and writeSocketReady(self.socket, TIMEOUT) : break
+			count += 1
+		else :
+			self.Ready = False
+			return
+		self.logRequests = False		## disable logging """
+		self.allow_none = allow_none
+		self.timeout = TIMEOUT
+		self.socket.settimeout(self.timeout)
+		self.server_bind()
+		self.server_activate()
+
+	def socketInit(self, TLS = False, certificatePath = ''):
 		if TLS :
 			self.socket = ssl.wrap_socket(\
 							socket.socket(socket.AF_INET, socket.SOCK_STREAM), \
@@ -26,28 +44,35 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 		else :
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-		self.logRequests = False		## disable logging """
-		self.allow_none = allow_none
-		self.timeout = 0.0
-		self.socket.settimeout(self.timeout)
-		self.server_bind()
-		self.server_activate()
-
 	def verify_request(self, request, client_address):
-		self.client_address = client_address
-		#print repr(request), client_address
-		return SimpleXMLRPCServer.verify_request(self, request, client_address)
+		if readSocketReady(request, self.timeout) and writeSocketReady(request, self.timeout) :
+			self.client_address = client_address
+			return True
+		else : False
+
+	'''def single_request(self, request, client_address):
+		if readSocketReady(self.socket, self.timeout) :
+			return SimpleXMLRPCServer.single_request(self, request, client_address)
 
 	def handle_one_request(self):
-		#try :
-		#	res_ = SimpleXMLRPCServer.handle_one_request(self)
-		#except :
-		#	print 'UnknownError in SSLOverloadClass'
-		#	return None
-		return SimpleXMLRPCServer.handle_one_request(self)
+		if readSocketReady(self.socket, self.timeout) :
+			return SimpleXMLRPCServer.handle_one_request(self)
 
-	'''def handle_request(self):
-		return SimpleXMLRPCServer.handle_request(self)
+	def handle_request(self):
+		if readSocketReady(self.socket, self.timeout) :
+			return SimpleXMLRPCServer.handle_request(self)
+
+	def get_request(self):
+		if readSocketReady(self.socket, self.timeout) :
+			return SimpleXMLRPCServer.get_request(self)
+
+	def finish_request(self, request, client_address):
+		if readSocketReady(self.socket, self.timeout) :
+			return SimpleXMLRPCServer.finish_request(self, request, client_address)
+
+	def process_request(self, request, client_address):
+		if readSocketReady(self.socket, self.timeout) :
+			return SimpleXMLRPCServer.process_request(self, request, client_address)
 
 	def handle_error(self, request, client_address):
 		return SimpleXMLRPCServer.handle_error(self, request, client_address)
@@ -55,17 +80,8 @@ class ThreadServer(ThreadingMixIn, SimpleXMLRPCServer):
 	def handle_timeout(self):
 		return SimpleXMLRPCServer.handle_timeout(self)
 
-	def get_request(self):
-		return SimpleXMLRPCServer.get_request(self)
-
-	def process_request(self, request, client_address):
-		return SimpleXMLRPCServer.process_request(self, request, client_address)
-
 	def server_close(self):
 		return SimpleXMLRPCServer.server_close(self)
-
-	def finish_request(self, request, client_address):
-		return SimpleXMLRPCServer.finish_request(self, request, client_address)
 
 	def close_request(self, request_address):
 		return SimpleXMLRPCServer.close_request(self, request_address)
@@ -84,6 +100,19 @@ class SSLServerProxy(ServerProxy):
 			servaddr = 'http://' + _servaddr
 		ServerProxy.__init__(self, servaddr)
 
+		count = 0
+		self.Ready = True
+		while count < 10 :
+			self.socketInit(TLS)
+			if readSocketReady(self.socket, TIMEOUT) and writeSocketReady(self.socket, TIMEOUT) : break
+			count += 1
+		else :
+			self.Ready = False
+			return
+		self.timeout = TIMEOUT
+		self.socket.settimeout(self.timeout)
+
+	def socketInit(self, TLS = False):
 		if TLS :
 			self.socket = ssl.wrap_socket(\
 							socket.socket(socket.AF_INET, socket.SOCK_STREAM), \
@@ -92,5 +121,3 @@ class SSLServerProxy(ServerProxy):
 			#print '   TLS used on client ...'
 		else :
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.timeout = 0.0
-		self.socket.settimeout(self.timeout)
