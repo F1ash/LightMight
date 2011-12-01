@@ -139,6 +139,9 @@ class MainWindow(QtGui.QMainWindow):
 		self.timer.setSingleShot(True)
 		self.timer.timeout.connect(self.initServer)
 		self.timer.start(1000)
+		self.StandBy = QtCore.QTimer()
+		self.StandBy.timeout.connect(self.standByDown)
+		self.StandBy.setInterval(20000)
 
 	'''
 	data =  0/1/A/R(offline/online/answer/reinit)<separator>
@@ -230,6 +233,13 @@ class MainWindow(QtGui.QMainWindow):
 												 self.USERS[iter_][2]
 				'''
 				return False
+			addrExist = False
+			for item in self.USERS.iterkeys() :
+				if item.startswith(addr) :
+					addrExist = True
+					old_port = item.split(':')[1]
+					break
+			if addrExist : self.delContact(None, addr, old_port, None, None)
 		else :
 			''' check not uniqual name (avahi u. name > broadcast u. name) '''
 			if key in self.USERS :
@@ -333,6 +343,20 @@ class MainWindow(QtGui.QMainWindow):
 			s = threading.Thread(target = Sender, args = (data,))
 			s.start()
 
+	def standByDown(self):
+		ip, msg, onlineState = getIP()
+		if onlineState > 1 : return None
+		self.StandBy.stop()
+		self.trayIconPixmap = QtGui.QPixmap('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png')
+		self.trayIcon.setToolTip('LightMight')
+		self.trayIcon.setIcon(QtGui.QIcon(self.trayIconPixmap))
+		self.show()
+		# init server
+		self.initServer(self.restoredInitParameters[0], \
+						self.restoredInitParameters[1], \
+						self.restoredInitParameters[2], \
+						self.restoredInitParameters[3])
+
 	def initServer(self, sharedSourceTree = None, \
 						 loadFile = None, previousState = '', \
 						 restart = False):
@@ -355,11 +379,27 @@ class MainWindow(QtGui.QMainWindow):
 		self.statusBar.showMessage('Server offline')
 		self.serverReady = 0
 
-		self.server_addr = getIP()
+		self.server_addr, msg, onlineState = getIP()
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')), \
 										self.server_addr)[1]
 		print self.server_addr, self.server_port, 'free'
+		if onlineState > 1 :
+			st = str(msg + '\nStandBy?')
+			question = QtGui.QMessageBox.question(self, 'Message', st, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+			if question == QtGui.QMessageBox.No : sys.exit(0)
+			else :
+				## standby mode
+				if 'cachingThread' in dir(self) :
+					self.cachingThread._shutdown()
+					self.cachingThread.quit()
+					del self.cachingThread
+				self.restoredInitParameters = (sharedSourceTree, loadFile, previousState, restart)
+				self.trayIconPixmap = QtGui.QPixmap('..' + self.SEP + 'icons' + self.SEP + 'LightMight_standBy.png')
+				self.trayIcon.setToolTip('LightMight (StandBy)')
+				self.trayIcon.setIcon(QtGui.QIcon(self.trayIconPixmap))
+				self.StandBy.start()
+				return
 		certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
 		#print str(certificatePath)
 		if 'True' == InitConfigValue(self.Settings, 'UseTLS', 'False') and certificatePath != '' :
@@ -554,7 +594,7 @@ class MainWindow(QtGui.QMainWindow):
 			self.avahiService = None
 		if not restart and 'udpClient' in dir(self) :
 			self.udpClient.stop()
-		# send 'close session' request
+		'''# send 'close session' request
 		try :
 			for item in self.USERS.iterkeys() :
 				_addr, _port = item.split(':') if item in self.USERS else ('', '')
@@ -579,8 +619,8 @@ class MainWindow(QtGui.QMainWindow):
 					clnt._terminate()
 		except RuntimeError, err :
 			print '[in stopServices() __init__] RuntimeError :', err
-		finally : pass
-		if 'serverThread' in dir(self) :
+		finally : pass'''
+		if 'serverThread' in dir(self) and self.serverThread is not None :
 			self.serverThread._terminate(mode if restart and mode != '' else '', loadFile)
 		if not restart : self.END = True
 

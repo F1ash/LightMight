@@ -12,6 +12,9 @@ class ModuleExist():
 		except ImportError , err :
 			print '[in ModuleExist] ImportError: ', err
 			self.AvahiAvailable = False
+		except ImportError , err :
+			print '[in ModuleExist] InitiateError'
+			self.AvahiAvailable = False
 		finally : pass
 
 ModuleExist = ModuleExist()

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtCore import QThread, QTimer, pyqtSignal, Qt
+from PyQt4.QtCore import QThread, pyqtSignal, Qt
 from PyQt4.QtGui import QIcon
 from Functions import InitConfigValue, Path, DelFromCache, InCache, avatarInCache, moveFile
 from clnt import xr_client
-import os.path
+import os.path, threading
 
 class DataCache(QThread):
 	newItem = pyqtSignal(unicode)
@@ -14,17 +14,17 @@ class DataCache(QThread):
 		self.Obj = parent
 		self.runState = False
 		self.USERS = userList
-		self.newItem.connect(self.refillCache)
-		self.timer = QTimer()
-		self.timer.setInterval(30000)
-		self.timer.timeout.connect(self.initRefill)
-		self.timer.start()
 
 	def run(self):
 		self.setPriority(QThread.LowPriority)
-		#print self.timer.isActive()
+		self.Key = True
+		while self.Key :
+			t = threading.Thread(target = self.initRefill)
+			t.start()
+			self.msleep(30000)
 
 	def initRefill(self):
+		#print 'new cache loop'
 		if self.runState : print 'caching...'; return None
 		self.runState = True
 		self.Key = True
@@ -46,14 +46,21 @@ class DataCache(QThread):
 									TLS = value)
 					self.clnt.serverState = itemValue[1][4]
 					#print itemValue[1][4], 'remote server state'
-					self.clnt.run()
+					if self.Key : self.clnt.run()
+					else :
+						self.clnt._shutdown()
+						break
 					if not hasattr(self.clnt, 'runned') or not self.clnt.runned :
 						self.clnt._shutdown()
 						continue
 					# get session ID if don`t it
 					#print self.Obj.serverThread.Obj.currentSessionID, '\n', currAddr, 'Runned:', runned
-					if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
+					if self.Key and hasattr(self.Obj, 'serverThread') and self.Obj.serverThread is not None \
+								and currAddr not in self.Obj.serverThread.Obj.currentSessionID :
 						self.clnt.getSessionID(self.Obj.server_addr)
+					else :
+						self.clnt._shutdown()
+						break
 					if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
 						''' brocken contact '''
 						self.USERS[itemValue[0]] = (itemValue[1][0], \
@@ -71,15 +78,18 @@ class DataCache(QThread):
 					avatarTempOut = not os.path.isfile(possibleAvatarTempPath)
 					avatarLoad = False
 					#print 'avatarTempOut', avatarTempOut, ':', possibleAvatarTempPath
-					if avatarTempOut and pathExist[0] :
+					if self.Key and avatarTempOut and pathExist[0] :
 						if not moveFile(pathExist[1], \
 										possibleAvatarTempPath, \
 										False) :
 							loadAvatarPath = self.clnt.getAvatar(sessionID)
 						avatarLoad = True
-					elif avatarTempOut :
+					elif self.Key and avatarTempOut :
 						loadAvatarPath = self.clnt.getAvatar(sessionID)
 						avatarLoad = True
+					else :
+						self.clnt._shutdown()
+						break
 					#print 'avatarLoad', avatarLoad
 					if avatarLoad and os.path.isfile(possibleAvatarTempPath) :
 						count = self.Obj.menuTab.userList.count()
@@ -90,12 +100,15 @@ class DataCache(QThread):
 								self.Obj.menuTab.setAvatar.emit(item_, itemValue[1][4])
 					pathExist = InCache(self.clnt.serverState)
 					res = ('', False)
-					if pathExist[0] :
+					if self.Key and pathExist[0] :
 						if not moveFile(pathExist[1], \
 										Path.tempCache(self.clnt.serverState), \
 										False) :
 							res = self.clnt.getSharedSourceStructFile(sessionID)
-					else : res = self.clnt.getSharedSourceStructFile(sessionID)
+					elif self.Key : res = self.clnt.getSharedSourceStructFile(sessionID)
+					else :
+						self.clnt._shutdown()
+						break
 					#print res, itemValue[0], 'res'
 					if res[1] : cached = False
 					else : cached = True
@@ -116,16 +129,7 @@ class DataCache(QThread):
 		self.runState = False
 		#print 'caching down'
 
-	def refillCache(self, str_ = u''):
-		#print 'signal about newItem :', str_
-		if self.runState is False :
-			""" fill cache for new clients data """
-			pass
-
 	def _shutdown(self):
-		self.timer.timeout.disconnect(self.initRefill)
-		self.newItem.disconnect(self.refillCache)
-		self.timer.stop()
 		self.Key = False
 		if hasattr(self, 'clnt') : self.clnt._shutdown()
 		self.Obj.cacheDown.emit()

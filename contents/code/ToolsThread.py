@@ -36,13 +36,16 @@ class ToolsThread(QThread):
 		addr = self.Obj.servaddr
 		key = str(addr.split(':')[0])
 		# get session ID if don`t it
-		if key not in self.Parent.Obj.serverThread.Obj.currentSessionID :
+		if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
+				and key not in self.Parent.Obj.serverThread.Obj.currentSessionID :
 			self.Obj.getSessionID(self.Parent.Obj.server_addr)
-		if key in self.Parent.Obj.serverThread.Obj.currentSessionID :
+		if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
+				and key in self.Parent.Obj.serverThread.Obj.currentSessionID :
 			sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[key][0]
 		else :
 			sessionID = ''
-		if not avatarInCache(self.Parent.Obj.USERS[addr][4])[0] : self.Obj.getAvatar(sessionID)
+		if addr in self.Parent.Obj.USERS and not avatarInCache(self.Parent.Obj.USERS[addr][4])[0] :
+			self.Obj.getAvatar(sessionID)
 		path, error = self.getSharedSourceStructFile(sessionID)
 		self.Parent.cachedData.emit(path, error)
 

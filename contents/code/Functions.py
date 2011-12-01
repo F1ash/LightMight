@@ -54,6 +54,7 @@ def readSocketReady(sock, timeout = TIMEOUT):
 	ready_to_read, ready_to_write, in_error = select.select([sock], [], [], timeout)
 	if sock in ready_to_read : return True
 	else :
+		sock.shutdown(socket.SHUT_RD)
 		sock.close()
 		return False
 
@@ -61,6 +62,7 @@ def writeSocketReady(sock, timeout = TIMEOUT):
 	ready_to_read, ready_to_write, in_error = select.select([], [sock], [], timeout)
 	if sock in ready_to_write : return True
 	else :
+		sock.shutdown(socket.SHUT_WR)
 		sock.close()
 		return False
 
@@ -111,7 +113,6 @@ def InitConfigValue(Settings = None, key = None, default = None):
 	return Settings.value(key, default).toString()
 
 def getIP():
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	msg = ''
 	j = 0
 	Addr = '127.0.0.1'
@@ -121,16 +122,16 @@ def getIP():
 		for i in xrange(5) :
 			try :
 				error = False
-				s.connect(address)
+				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+				s.connect_ex(address)
 				addr = s.getsockname()[0]
-				s.close()
 			except socket.gaierror, err:
-				print '[in getIP()]:', err
+				#print '[in getIP()]:', err
 				error = True
-			except :
-				print '[in getIP()]'
+			except Exception, err:
+				#print '[in getIP()]:', err
 				error = True
-			finally : pass
+			finally : s.close()
 			if not error :
 				Addr = addr
 				break
@@ -139,8 +140,8 @@ def getIP():
 			msg += 'Internet not available\n'
 		elif j == 2 :
 			msg += 'Local network not available'
-	print msg
-	return Addr
+	#print msg, j
+	return Addr, msg, j
 
 def getFreePort(minValue, maxValue, addr = '127.0.0.1'):
 	number_ = -1

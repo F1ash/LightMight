@@ -49,7 +49,8 @@ class ContactDataEditor(QDialog):
 		self.policySelect.addItem(QIcon(), 'Blocked')
 		key = str(self.key.split(':')[0])
 		#print [self.Parent.Obj.serverThread.Obj.currentSessionID, key]
-		if key in self.Parent.Obj.serverThread.Obj.currentSessionID :
+		if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
+				and key in self.Parent.Obj.serverThread.Obj.currentSessionID :
 			policy = self.Parent.Obj.serverThread.Obj.currentSessionID[key][1]
 			self.policySelect.setCurrentIndex(policy)
 		else :
@@ -139,9 +140,11 @@ class ContactDataEditor(QDialog):
 		sessionID = ''; access = -1
 		if hasattr(self.clientThread, 'runned') and self.clientThread.runned :
 			# get session ID if don`t it
-			if addr not in self.Parent.Obj.serverThread.Obj.currentSessionID :
+			if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
+					and addr not in self.Parent.Obj.serverThread.Obj.currentSessionID :
 				self.clientThread.Obj.getSessionID(self.Parent.Obj.server_addr)
-			if addr in self.Parent.Obj.serverThread.Obj.currentSessionID :
+			if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
+					and addr in self.Parent.Obj.serverThread.Obj.currentSessionID :
 				sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[addr][0]
 			#print 'session:', sessionID
 			access = self.clientThread.Obj.getAccess(sessionID)
@@ -160,7 +163,8 @@ class ContactDataEditor(QDialog):
 		idx = self.Parent.Obj.Policy.PolicyName.index(customPolicyName)
 		key = str(self.addressLabel.text().split(':')[0])
 		#print [self.Parent.Obj.serverThread.Obj.currentSessionID, key]
-		if key in self.Parent.Obj.serverThread.Obj.currentSessionID :
+		if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
+				and key in self.Parent.Obj.serverThread.Obj.currentSessionID :
 			sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[key][0]
 			self.Parent.Obj.serverThread.Obj.currentSessionID[key] = (sessionID, idx)
 		else :

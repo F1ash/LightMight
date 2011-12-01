@@ -72,7 +72,7 @@ class xr_client:
 		try :
 			str_ = ''
 			try :
-				if readSocketReady(self.s.socket, self.s.timeout) and writeSocketReady(self.s.socket, self.s.timeout) :
+				if writeSocketReady(self.s.socket, self.s.timeout) :
 					randomString = self.s.sessionID(ownIP).data
 				else :
 					self.sendErrorString('[in getSessionID()] Socket_Not_Ready')
@@ -125,7 +125,7 @@ class xr_client:
 		try :
 			str_ = ''
 			with open(self.structFileName, "wb") as handle :
-				if readSocketReady(self.s.socket, self.s.timeout) and writeSocketReady(self.s.socket, self.s.timeout) :
+				if writeSocketReady(self.s.socket, self.s.timeout) :
 					try :
 						handle.write(self.s.requestSharedSourceStruct(\
 									remoteSharedStruct, \
@@ -164,7 +164,7 @@ class xr_client:
 		try :
 			str_ = ''
 			with open(self.avatarFileName, "wb") as handle :
-				if readSocketReady(self.s.socket, self.s.timeout) and writeSocketReady(self.s.socket, self.s.timeout) :
+				if writeSocketReady(self.s.socket, self.s.timeout) :
 					try :
 						handle.write(self.s.requestAvatar(sessionID).data)
 					except AttributeError, err :
@@ -198,7 +198,7 @@ class xr_client:
 	def getAccess(self, sessionID = ''):
 		try :
 			str_ = ''
-			if readSocketReady(self.s.socket, self.s.timeout) and writeSocketReady(self.s.socket, self.s.timeout) :
+			if writeSocketReady(self.s.socket, self.s.timeout) :
 				access = self.s.accessRequest(sessionID)
 			else : str_ == '[in getAccess()] Socket_Not_Ready'
 		except AttributeError, err :
@@ -239,7 +239,7 @@ class xr_client:
 			emitter.complete.emit()
 			return None
 		# check remote server state
-		if not(readSocketReady(self.s.socket, self.s.timeout) and writeSocketReady(self.s.socket, self.s.timeout)) :
+		if not hasattr(self, 's') or not writeSocketReady(self.s.socket, self.s.timeout) :
 			self.sendErrorString('[in getSharedData()] Socket_Not_Ready')
 			emitter.complete.emit()
 			return None
@@ -278,7 +278,7 @@ class xr_client:
 				with open(_path, "wb") as handle :
 					try :
 						str_ = ''
-						if not(readSocketReady(self.s.socket, self.s.timeout) and writeSocketReady(self.s.socket, self.s.timeout)) :
+						if not(writeSocketReady(self.s.socket, self.s.timeout)) :
 							handle.close()
 							continue
 						handle.write(self.s.getSharedFile(str(i), sessionID).data)
@@ -345,9 +345,7 @@ class xr_client:
 		#print 'socket closing...'
 		if hasattr(self, 's') :
 			try :
-				if writeSocketReady(self.s.socket, self.s.timeout) :
-					self.s.socket.shutdown(socket.SHUT_RDWR)
-				else : str_ = '[in _shutdown()] Socket_Not_Ready'
+				self.s.socket.shutdown(socket.SHUT_WR)
 			except socket.error, err :
 				print '[in _shutdown()] SocketError1 : ', err
 			except socket.timeout, err :
