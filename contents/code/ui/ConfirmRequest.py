@@ -18,6 +18,16 @@ class ConfirmRequest(QDialog):
 
 		form = QGridLayout()
 
+		self.addrLabel = QLabel('From : ' + self.address)
+		form.addWidget(self.addrLabel, 0, 0, 1, 2, Qt.AlignHCenter)
+		# find item & set tooltip
+		for i in xrange(self.Parent.menuTab.userList.count()) :
+			item_ = self.Parent.menuTab.userList.item(i)
+			key = str(item_.data(Qt.AccessibleTextRole).toList()[0].toString())
+			if key.startswith(self.address) :
+				self.setToolTip(item_.toolTip())
+				break
+
 		self.progressBar = QProgressBar()
 		self.progressBar.setOrientation(Qt.Horizontal)
 		self.progressBar.setAlignment(Qt.AlignHCenter)
@@ -25,27 +35,27 @@ class ConfirmRequest(QDialog):
 		self.range_ = int(self.Parent.serverThread.Obj._srv.timeout -1)
 		if self.range_ == 0 : self.range_ = 1
 		self.progressBar.setRange(0, self.range_)
-		form.addWidget(self.progressBar, 0, Qt.AlignHCenter)
+		form.addWidget(self.progressBar, 0, 3, 1, 5, Qt.AlignHCenter)
 
 		self.allowOnceButton = QPushButton('&Allow Once')
 		#self.allowOnce.setMaximumWidth(75)
 		self.connect(self.allowOnceButton, SIGNAL('clicked()'), self.setTemporarilyAccess)
-		form.addWidget(self.allowOnceButton, 1, 0)
+		form.addWidget(self.allowOnceButton, 2, 0)
 
 		self.allowSessionButton = QPushButton('&Allow Session')
 		#self.allowSessionButton.setMaximumWidth(75)
 		self.connect(self.allowSessionButton, SIGNAL('clicked()'), self.setAllowPolicy)
-		form.addWidget(self.allowSessionButton, 1, 1)
+		form.addWidget(self.allowSessionButton, 2, 1)
 
 		self.blockSessionButton = QPushButton('&Block Session')
 		#self.allowSessionButton.setMaximumWidth(75)
 		self.connect(self.blockSessionButton, SIGNAL('clicked()'), self.setBlockPolicy)
-		form.addWidget(self.blockSessionButton, 1, 2)
+		form.addWidget(self.blockSessionButton, 2, 2)
 
 		self.cancelButton = QPushButton('&Cancel')
 		#self.cancelButton.setMaximumWidth(75)
 		self.connect(self.cancelButton, SIGNAL('clicked()'), self.cancel)
-		form.addWidget(self.cancelButton, 1, 3)
+		form.addWidget(self.cancelButton, 2, 3)
 
 		self.setLayout(form)
 		self.Timer = QTimer()
