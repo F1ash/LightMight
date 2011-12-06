@@ -122,8 +122,8 @@ def getIP():
 		for i in xrange(5) :
 			try :
 				error = False
-				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-				s.connect_ex(address)
+				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				s.connect(address)
 				addr = s.getsockname()[0]
 			except socket.gaierror, err:
 				#print '[in getIP()]:', err

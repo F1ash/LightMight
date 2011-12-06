@@ -71,7 +71,7 @@ class Box(QtGui.QWidget):
 		self.refreshIcon = QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'restart.png')
 		self.refreshButton = QtGui.QPushButton(self.refreshIcon, '')
 		self.refreshButton.setToolTip('Restart Server')
-		self.connect(self.refreshButton, QtCore.SIGNAL('clicked()'), self.restartServer)
+		self.refreshButton.clicked.connect(self.restartServer)
 		self.buttonLayout.addWidget(self.refreshButton, 0, QtCore.Qt.AlignHCenter)
 
 		self.layout.addItem(self.buttonLayout, 0, 2)
@@ -246,3 +246,10 @@ class Box(QtGui.QWidget):
 			Editor.move(point)
 			Editor.exec_()
 
+	def enableRestartButton(self, on = False):
+		if on :
+			self.refreshButton.clicked.connect(self.restartServer)
+			self.refreshButton.setEnabled(True)
+		else :
+			self.refreshButton.clicked.disconnect(self.restartServer)
+			self.refreshButton.setEnabled(False)

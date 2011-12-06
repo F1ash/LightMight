@@ -1,5 +1,5 @@
 Name: LightMight
-Version: 0.10.22
+Version: 0.18.35
 Release: 1%{?dist}.R
 Summary: Programm for file`s resource publication and transmittion in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
@@ -85,6 +85,9 @@ fi
 
 %changelog
 
+* Mon Dec 5 2011 Fl@sh <kaperang07@gmail.com> - 0.18.35-1.R
+- version updated
+
 * Sun Oct 30 2011 Fl@sh <kaperang07@gmail.com> - 0.10.22-1
 - version updated
 
@@ -97,12 +100,12 @@ fi
 * Tue Oct 18 2011 Fl@sh <kaperang07@gmail.com> - 0.9.19-1
 - version updated
 
-* Fri Jun 24 2011 Fl@sh <kaperang07@gmail.com> -	0.5.10
+* Fri Jun 24 2011 Fl@sh <kaperang07@gmail.com> - 0.5.10-1
 - added avahi-compat-libdns_sd dependence
 	and python >= 3.0 conflict
 
-* Sun Jun 19 2011 Fl@sh <kaperang07@gmail.com> -	0.3.9
+* Sun Jun 19 2011 Fl@sh <kaperang07@gmail.com> - 0.3.9-1
 - added openssl dependence
 
-* Thu Jun 9 2011 Fl@sh <kaperang07@gmail.com> -	0.1.0
-- init build
+* Thu Jun 9 2011 Fl@sh <kaperang07@gmail.com> - 0.1.0-1
+- Initial build

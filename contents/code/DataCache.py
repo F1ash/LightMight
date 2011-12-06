@@ -97,7 +97,9 @@ class DataCache(QThread):
 							item_ = self.Obj.menuTab.userList.item(i)
 							if str(item_.data(Qt.AccessibleTextRole).toList()[0].toString()) == \
 										str(itemValue[1][1] + ':' + itemValue[1][2]) :
-								self.Obj.menuTab.setAvatar.emit(item_, itemValue[1][4])
+								if self.Key :
+									self.Obj.menuTab.setAvatar.emit(item_, itemValue[1][4])
+								else : break
 					pathExist = InCache(self.clnt.serverState)
 					res = ('', False)
 					if self.Key and pathExist[0] :

@@ -29,7 +29,8 @@ from TreeProcess import TreeProcessing
 from mcastSender import _send_mcast as Sender
 from UdpClient import UdpClient
 from clnt import xr_client
-from Policy  import Policy
+from Policy import Policy
+from NetworkCheck import NetworkCheck
 from ConfirmRequest import ConfirmRequest
 
 class MainWindow(QtGui.QMainWindow):
@@ -46,6 +47,7 @@ class MainWindow(QtGui.QMainWindow):
 	initServeR = QtCore.pyqtSignal(TreeModel, str, str, bool)
 	reinitServer = QtCore.pyqtSignal()
 	setAccess = QtCore.pyqtSignal(str)
+	netState = QtCore.pyqtSignal(str, str, int)
 	def __init__(self, parent = None):
 		QtGui.QMainWindow.__init__(self, parent)
 
@@ -131,17 +133,17 @@ class MainWindow(QtGui.QMainWindow):
 		self.contactMessage.connect(self.receiveBroadcastMessage)
 		self.changeConnectState.connect(self.initAvahiBrowser)
 		self.cacheDown.connect(self.cacheS)
-		self.initServeR.connect(self.initServer)
-		self.reinitServer.connect(self.initServer)
+		self.initServeR.connect(self.checkNetwork)
+		self.reinitServer.connect(self.checkNetwork)
 		self.serverDown.connect(self.menuTab.preStartServer)
 		self.setAccess.connect(self.confirmAction)
-		self.timer = QtCore.QTimer()
-		self.timer.setSingleShot(True)
-		self.timer.timeout.connect(self.initServer)
-		self.timer.start(1000)
+		self.netState.connect(self.standByDown)
 		self.StandBy = QtCore.QTimer()
-		self.StandBy.timeout.connect(self.standByDown)
+		self.StandBy.timeout.connect(self.checkNetwork)
 		self.StandBy.setInterval(20000)
+		self.NetworkState = 1	## 0 -- off; 1 -- on
+		self.restoredInitParameters = (None, None, '', False)
+		self.checkNetwork()
 
 	'''
 	data =  0/1/A/R(offline/online/answer/reinit)<separator>
@@ -343,10 +345,44 @@ class MainWindow(QtGui.QMainWindow):
 			s = threading.Thread(target = Sender, args = (data,))
 			s.start()
 
-	def standByDown(self):
-		ip, msg, onlineState = getIP()
-		if onlineState > 1 : return None
+	def checkNetwork(self, sharedSourceTree = None, \
+						 loadFile = None, previousState = '', \
+						 restart = False):
+		if type(sharedSourceTree) == TreeModel :
+			self.restoredInitParameters = (sharedSourceTree, loadFile, previousState, restart)
+		checkNetwork = NetworkCheck(self)
 		self.StandBy.stop()
+		if not self.menuTab.progressBar.isVisible(): self.menuTab.progressBar.show()
+		self.statusBar.clearMessage()
+		self.statusBar.showMessage('Server offline')
+		checkNetwork.start()
+
+	def standByDown(self, address = '', msg = '', netState = 2):
+		self.server_addr = str(address)
+		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
+										int(InitConfigValue(self.Settings, 'MaxPort', '34100')), \
+										self.server_addr)[1]
+		print self.server_addr, ':', self.server_port, 'free'
+		if netState > 1 :
+			if self.NetworkState == 1 :
+				self.NetworkState = 0
+				st = str(msg + '\nStandBy?')
+				question = QtGui.QMessageBox.question(self, 'Message', st, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+				if question == QtGui.QMessageBox.No : sys.exit(0)
+				else :
+					## standby mode run
+					if 'cachingThread' in dir(self) :
+						self.cachingThread._shutdown()
+						self.cachingThread.quit()
+						del self.cachingThread
+					
+					self.trayIconPixmap = QtGui.QPixmap('..' + self.SEP + 'icons' + self.SEP + 'LightMight_standBy.png')
+					self.trayIcon.setToolTip('LightMight (StandBy)')
+					self.trayIcon.setIcon(QtGui.QIcon(self.trayIconPixmap))
+					self.menuTab.enableRestartButton(False)
+			self.StandBy.start()
+			return None
+		self.NetworkState = 1
 		self.trayIconPixmap = QtGui.QPixmap('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png')
 		self.trayIcon.setToolTip('LightMight')
 		self.trayIcon.setIcon(QtGui.QIcon(self.trayIconPixmap))
@@ -375,31 +411,7 @@ class MainWindow(QtGui.QMainWindow):
 		else :
 			treeModel = TreeModel('Name', 'Description')
 			firstRun = True
-		self.statusBar.clearMessage()
-		self.statusBar.showMessage('Server offline')
 		self.serverReady = 0
-
-		self.server_addr, msg, onlineState = getIP()
-		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
-										int(InitConfigValue(self.Settings, 'MaxPort', '34100')), \
-										self.server_addr)[1]
-		print self.server_addr, self.server_port, 'free'
-		if onlineState > 1 :
-			st = str(msg + '\nStandBy?')
-			question = QtGui.QMessageBox.question(self, 'Message', st, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-			if question == QtGui.QMessageBox.No : sys.exit(0)
-			else :
-				## standby mode
-				if 'cachingThread' in dir(self) :
-					self.cachingThread._shutdown()
-					self.cachingThread.quit()
-					del self.cachingThread
-				self.restoredInitParameters = (sharedSourceTree, loadFile, previousState, restart)
-				self.trayIconPixmap = QtGui.QPixmap('..' + self.SEP + 'icons' + self.SEP + 'LightMight_standBy.png')
-				self.trayIcon.setToolTip('LightMight (StandBy)')
-				self.trayIcon.setIcon(QtGui.QIcon(self.trayIconPixmap))
-				self.StandBy.start()
-				return
 		certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
 		#print str(certificatePath)
 		if 'True' == InitConfigValue(self.Settings, 'UseTLS', 'False') and certificatePath != '' :
@@ -473,6 +485,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.statusBar.clearMessage()
 		self.statusBar.showMessage('Server online')
 		self.menuTab.progressBar.hide()
+		self.menuTab.enableRestartButton(True)
 
 	def uploadTask(self, info):
 			Info = unicode(info)
@@ -569,9 +582,9 @@ class MainWindow(QtGui.QMainWindow):
 		if 'changeConnectState' in dir(self) :
 			self.changeConnectState.disconnect(self.initAvahiBrowser)
 		if 'initServeR' in dir(self) :
-			self.initServeR.disconnect(self.initServer)
+			self.initServeR.disconnect(self.checkNetwork)
 		if 'reinitServer' in dir(self) :
-			self.reinitServer.disconnect(self.initServer)
+			self.reinitServer.disconnect(self.checkNetwork)
 		if 'serverDown' in dir(self) :
 			self.serverDown.disconnect(self.menuTab.preStartServer)
 
