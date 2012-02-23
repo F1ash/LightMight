@@ -3,6 +3,7 @@
 import xmlrpclib, string, os, os.path, ssl, socket, time
 from SSLOverloadClass import ThreadServer
 from Functions import *
+from clnt import xr_client
 
 class ServerDaemon():
 	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, \
@@ -11,8 +12,17 @@ class ServerDaemon():
 		self.serverState = randomString(DIGITS_LENGTH) if not restart else self.Parent.previousState
 		self.Parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
-		self.currentSessionID = {}	## {remoteServerAddr : (sessionID, customPolicy, temporarilySessionID)}
-		self.WAIT = []	## list of blocked IP for getting sessionID
+		## currentSessionID :
+		##	{remoteServerAddr : (sessionID, customPolicy, temporarilySessionID, certHash)}
+		self.currentSessionID = {}
+		## WAIT : list of blocked IP for getting sessionID
+		self.WAIT = []
+		## checkAddr :
+		##	 {_id] : (clientIP, time.time(), clientCert)}
+		self.checkAddr = {}
+		self.servPubKey = str(self.Parent.servPubKey)
+		self.servPrvKey = str(self.Parent.servPrvKey)
+		#print [self.servPrvKey, self.servPubKey]
 		try :
 			error = False; err = ''
 			self._srv = ThreadServer(serveraddr, allow_none = True, \
@@ -29,6 +39,7 @@ class ServerDaemon():
 		finally : pass
 		if not error :
 			self._srv.register_introspection_functions()
+			self._srv.register_function(self.clientRegAnswer, 'clientRegAnswer')
 			self._srv.register_function(self.sessionID, 'sessionID')
 			self._srv.register_function(self.sessionClose, 'sessionClose')
 			self._srv.register_function(self.accessRequest, 'accessRequest')
@@ -46,91 +57,117 @@ class ServerDaemon():
 			else :
 				self.Parent.initServeR.emit(None, '', str(self.serverState), False)
 
-	def sessionID(self, clientIP = ''):
-		#print [self._srv.client_address, clientIP], ' --sessionID'
-		if clientIP != self._srv.client_address[0] : return None
-		_id = randomString(DIGITS_LENGTH)
-		if clientIP not in self.currentSessionID :
-			self.WAIT.append(clientIP)
-			self.currentSessionID[clientIP] = (_id, self.Parent.Policy.Current)
-			#print 'current Sessions', [self.currentSessionID, _id , self.serverState, self.Parent.previousState]
-			data = ''.join((_id, str(self.serverState), str(self.Parent.previousState)))
-			self.WAIT.remove(clientIP)
+	def sessionID_exist(self, sessionID):
+		decrypt = prvKeyDecrypted(sessionID.decode('base64'), self.servPrvKey)
+		chunk1 = decrypt[:DIGITS_LENGTH]
+		chunk2 = decrypt[DIGITS_LENGTH:]
+		exist = False
+		thisItem = None
+		for item in self.currentSessionID.iteritems() :
+			if chunk1 == item[1][0] or chunk2 == item[1][0]:
+				exist = True
+				thisItem = item
+		return exist, thisItem
+
+	def clientRegAnswer(self, clientAnswer = ''):
+		#print clientAnswer.decode('base64'), '-- CA'
+		decrypt = prvKeyDecrypted(clientAnswer.decode('base64'), self.servPrvKey)
+		_id = decrypt[:DIGITS_LENGTH]
+		#print [clientAnswer, _id, self.checkAddr[_id]], '-- client answer'
+		if _id in self.checkAddr and \
+				((self.checkAddr[_id][1] + TIMEOUT - 1.0) > time.time()) :
+			## TODO : mutex lock
+			policy = readCashPolicy(self.checkAddr[_id][2], self.Parent.Policy.Current)
+			self.currentSessionID[self.checkAddr[_id][0]] = \
+				(_id, policy, None, hashKey(self.checkAddr[_id][2]))
+			del self.checkAddr[_id]
+			# clean delayed address
+			delayed = []
+			for key in self.checkAddr.keys() :
+				if (self.checkAddr[key][1] + TIMEOUT - 1.0) < time.time() :
+					delayed.append(key)
+			for key in delayed : del self.checkAddr[key]
+			## mutex unlock
+			return xmlrpclib.Boolean(True)
+		else :
+			return xmlrpclib.Boolean(False)
+
+	def sessionID(self, clientIP = '', clientCert = '', certHash = ''):
+		''' проверить по хешу сертификата & ip:port наличие активного контакта;
+			при отсутствии создать пару {id:randomKey}, зашифровать ключём клиента ID сессии
+			и передать со своим публичным ключём; ожидать TIMEOUT-1 подтверждение от клиента,
+			расшифровав его своим приватным.
+		'''
+		#print [clientIP, clientCert, certHash], '-- session'
+		if clientIP not in self.currentSessionID and certHash == hashKey(clientCert):
+			_id = randomString(DIGITS_LENGTH)
+			#print [_id, self.serverState, str(self.Parent.previousState)]
+			_str = ''.join((_id, randomString(DIGITS_LENGTH), str(self.serverState), \
+							randomString(DIGITS_LENGTH), str(self.Parent.previousState)))
+			encrypted = pubKeyEncrypted(_str, clientCert)
+			#print [encrypted, self.servPubKey, hashKey(self.servPubKey)], '-- before join'
+			data = ''.join((encrypted, 'SERVER_PUB_KEY:', self.servPubKey, 'HASH:', hashKey(self.servPubKey)))
+			self.checkAddr[_id] = (clientIP, time.time(), clientCert)
 		else :
 			data = 'ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY'
-			#self.currentSessionID[clientIP] = _id
 		#print [data], ' data'
 		return xmlrpclib.Binary(data)
 
 	def sessionClose(self, sessionID = ''):
-		#print self._srv.client_address, '--sessionClose'
-		#print sessionID, self.currentSessionID[self._srv.client_address[0]]
-		addr = str(self._srv.client_address[0])
-		if addr in self.currentSessionID :
-			if sessionID == self.currentSessionID[addr][0] :
-				del self.currentSessionID[addr]
+		exist, item = self.sessionID_exist(str(sessionID))
+		if exist :
+				del self.currentSessionID[item[0]]
 
 	def accessRequest(self, sessionID = ''):
-		address = str(self._srv.client_address[0])
-		if address in self.currentSessionID :
-			item = self.currentSessionID[address]
-			if sessionID == item[0] :
-				return item[1]
+		exist, item = self.sessionID_exist(str(sessionID))
+		if exist : return item[1][1]
 		return None
 
 	def checkAccess(self, sessionID = ''):
-		address = str(self._srv.client_address[0])
-		if address not in self.currentSessionID : return xmlrpclib.Binary('ACCESS_DENIED')
-		item = self.currentSessionID[address]
-		if sessionID == item[0] :
-			if item[1] == self.Parent.Policy.Allowed :
+		exist, _item = self.sessionID_exist(str(sessionID))
+		if not exist : return xmlrpclib.Binary('ACCESS_DENIED')
+		address = str(_item[0])
+		item = _item[1]
+		if item[1] == self.Parent.Policy.Allowed :
+			return xmlrpclib.Binary('ACCESS_ALLOWED')
+		elif item[1] == self.Parent.Policy.Confirm :
+			self.Parent.setAccess.emit(address)
+			timer = self._srv.timeout - 1
+			i = 0
+			while i < timer \
+				  and (self.currentSessionID[address][2] is None) \
+				  and (self.currentSessionID[address][1] > self.Parent.Policy.Allowed) :
+				time.sleep(0.2)
+				i += 0.2
+			item = self.currentSessionID[address]
+			if item[1] < self.Parent.Policy.Confirm :
 				return xmlrpclib.Binary('ACCESS_ALLOWED')
-			elif item[1] == self.Parent.Policy.Confirm :
-				self.Parent.setAccess.emit(address)
-				timer = self._srv.timeout - 1
-				i = 0
-				while i < timer \
-					  and (self.currentSessionID[address][1] == self.Parent.Policy.Confirm) \
-					  and (len(self.currentSessionID[address]) < 3) :
-					time.sleep(0.2)
-					i += 0.2
-				item = self.currentSessionID[address]
-				if len(item) == 3 :
-					if item[2] != 'CANCEL' :
-						return xmlrpclib.Binary('TEMPORARILY_ALLOWED_ACCESS:' + item[2])
-					else :
-						newItem = (item[0], item[1])
-						if address in self.Parent.serverThread.Obj.currentSessionID :
-							self.currentSessionID[address] = newItem
-				elif item[1] < self.Parent.Policy.Confirm :
-					return xmlrpclib.Binary('ACCESS_ALLOWED')
+			elif item[2] != 'CANCEL' :
+				return xmlrpclib.Binary('TEMPORARILY_ALLOWED_ACCESS:' + item[2])
+			else :
+				newItem = (item[0], item[1], None, item[3])
+				if address in self.Parent.serverThread.Obj.currentSessionID :
+					self.currentSessionID[address] = newItem
 		return xmlrpclib.Binary('ACCESS_DENIED')
 
 	def checkServerState(self, sessionID = '', controlServerState = ''):
-		addr = str(self._srv.client_address[0])
-		if addr not in self.currentSessionID : return xmlrpclib.Boolean(False)
-		controlID = self.currentSessionID[addr][0]
-		if controlID != sessionID : return xmlrpclib.Boolean(False)
+		exist, _item = self.sessionID_exist(str(sessionID))
+		if not exist : return xmlrpclib.Boolean(False)
 		if controlServerState != self.serverState :
 			return xmlrpclib.Boolean(False)
 		else : return xmlrpclib.Boolean(True)
 
-	def getSharedFile(self, id_, sessionID = '', controlServerState = ''):
-		#print self._srv.client_address, '--python_file'
-		#print id_, type(id_), str(self.commonSetOfSharedSource), '  serv'
-		addr = str(self._srv.client_address[0])
-		if addr not in self.currentSessionID : return None
+	def getSharedFile(self, id_, sessionID = '', tempSessionID = ''):
+		exist, _item = self.sessionID_exist(str(sessionID))
+		if not exist : return None
+		addr = str(_item[0])
 		item = self.currentSessionID[addr]
 		if self.Parent.Policy.Blocked <= item[1] : return None
 		elif self.Parent.Policy.Confirm == item[1] :
-			if len(item) < 3 or sessionID != item[2] : return None
-		elif self.Parent.Policy.Allowed == item[1] :
-			if sessionID != item[0] : return None
-		else : return None
+			if tempSessionID != item[2] : return None
 		if id_.isalpha() and id_ == 'FINITA' :
-			if len(item) == 3 :
-				newItem = (item[0], item[1])
-				self.currentSessionID[addr] = newItem
+			newItem = (item[0], item[1], None, item[3])
+			self.currentSessionID[addr] = newItem
 			return xmlrpclib.Binary('OK')
 		elif int(id_) in self.commonSetOfSharedSource :
 			fileName = str(self.commonSetOfSharedSource[int(id_)])
@@ -142,24 +179,15 @@ class ServerDaemon():
 		return xmlrpclib.Binary('')
 
 	def requestSharedSourceStruct(self, name, sessionID = ''):
-		#print self._srv.client_address, '--requestSharedSourceStruct; name :', name, 'sessionID', sessionID
-		addr = str(self._srv.client_address[0])
-		if addr not in self.currentSessionID : return None
-		item = self.currentSessionID[addr]
-		#print sessionID, item, self.Parent.Policy.Blocked
-		if sessionID != item[0] : return None
-		if self.Parent.Policy.Blocked <= item[1] : return None
-		#elif self.Parent.Policy.Confirm == item[1] :
-		#	if not self.confirmAction() : return None
+		exist, _item = self.sessionID_exist(str(sessionID))
+		if not exist : return None
+		if self.Parent.Policy.Blocked <= _item[1][1] : return None
 		with open(Path.multiPath(Path.tempStruct, 'server', name), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 
 	def requestAvatar(self, sessionID = ''):
-		#print self._srv.client_address, '--requestAvatar'
-		#print sessionID, self.currentSessionID[self._srv.client_address[0]]
-		addr = str(self._srv.client_address[0])
-		if addr not in self.currentSessionID or \
-		   sessionID != self.currentSessionID[addr][0] : return None
+		exist, _item = self.sessionID_exist(str(sessionID))
+		if not exist : return None
 		with open(unicode(self.Parent.avatarPath), "rb") as handle:
 			return xmlrpclib.Binary(handle.read())
 

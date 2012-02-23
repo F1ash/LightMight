@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtCore import QThread, SIGNAL, pyqtSignal, QSettings
-from Functions import InitConfigValue, Path, avatarInCache
+from Functions import *
 
 class ToolsThread(QThread):
 	""" custom signals for DownLoadClient """
@@ -28,9 +28,12 @@ class ToolsThread(QThread):
 	def getSharedData(self):
 		downLoadPath = unicode(InitConfigValue(QSettings('LightMight','LightMight'), \
 											'DownLoadTo', Path.Temp))
+		sessionID_ = self.Parent.sessionID
+		_keyHash = self.Parent.pubKeyHash
+		sessionID = createEncryptedSessionID(sessionID_, _keyHash)
 		self.Obj.getSharedData(self.maskSet, downLoadPath, \
 							   self, self.Parent.currentRemoteServerState, \
-							   self.Parent.sessionID)
+							   sessionID)
 
 	def cache_now(self):
 		addr = self.Obj.servaddr
@@ -41,7 +44,9 @@ class ToolsThread(QThread):
 			self.Obj.getSessionID(self.Parent.Obj.server_addr)
 		if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
 				and key in self.Parent.Obj.serverThread.Obj.currentSessionID :
-			sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[key][0]
+			sessionID_ = self.Parent.Obj.serverThread.Obj.currentSessionID[key][0]
+			_keyHash = self.Parent.Obj.serverThread.Obj.currentSessionID[key][3]
+			sessionID = createEncryptedSessionID(sessionID_, _keyHash)
 		else :
 			sessionID = ''
 		if addr in self.Parent.Obj.USERS and not avatarInCache(self.Parent.Obj.USERS[addr][4])[0] :

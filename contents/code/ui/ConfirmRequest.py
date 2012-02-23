@@ -64,21 +64,19 @@ class ConfirmRequest(QDialog):
 
 	def setTemporarilyAccess(self, str_ = ''):
 		item = self.Parent.serverThread.Obj.currentSessionID[self.address]
-		if str_ == 'CANCEL' :
-			temporarilySessionID = 'CANCEL'
-		else :
+		if str_ != 'CANCEL' :
 			temporarilySessionID = randomString(DIGITS_LENGTH)
-		newItem = (item[0], item[1], temporarilySessionID)
-		if self.address in self.Parent.serverThread.Obj.currentSessionID :
-			self.Parent.serverThread.Obj.currentSessionID[self.address] = newItem
+			newItem = (item[0], item[1], temporarilySessionID, item[3])
+			if self.address in self.Parent.serverThread.Obj.currentSessionID :
+				self.Parent.serverThread.Obj.currentSessionID[self.address] = newItem
 		self.done(0)
 
 	def setPermanentAccess(self, access):
 		item = self.Parent.serverThread.Obj.currentSessionID[self.address]
 		if access == self.Parent.Policy.Allowed :
-			newItem = (item[0], self.Parent.Policy.Allowed)
+			newItem = (item[0], self.Parent.Policy.Allowed, None, item[3])
 		elif access == self.Parent.Policy.Blocked :
-			newItem = (item[0], self.Parent.Policy.Blocked)
+			newItem = (item[0], self.Parent.Policy.Blocked, None, item[3])
 		else : return None
 		if self.address in self.Parent.serverThread.Obj.currentSessionID :
 			self.Parent.serverThread.Obj.currentSessionID[self.address] = newItem

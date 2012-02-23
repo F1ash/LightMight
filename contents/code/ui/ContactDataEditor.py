@@ -2,7 +2,7 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from Functions import InitConfigValue, avatarInCache, InCache
+from Functions import *
 from clnt import xr_client
 from ToolsThread import ToolsThread
 
@@ -70,9 +70,9 @@ class ContactDataEditor(QDialog):
 
 		self.buttonPanel = QHBoxLayout()
 
-		self.okButton = QPushButton('&Ok')
-		self.okButton.clicked.connect(self.ok)
-		self.buttonPanel.addWidget(self.okButton)
+		self.setButton = QPushButton('&Set')
+		self.setButton.clicked.connect(self.set)
+		self.buttonPanel.addWidget(self.setButton)
 
 		self.cancelButton = QPushButton('&Cancel')
 		self.cancelButton.clicked.connect(self.cancel)
@@ -109,7 +109,7 @@ class ContactDataEditor(QDialog):
 		self.refreshButton.setEnabled(status)
 		self.policySelect.setEnabled(status)
 		self.specialListSelect.setEnabled(status)
-		self.okButton.setEnabled(status)
+		self.setButton.setEnabled(status)
 		self.cancelButton.setEnabled(status)
 
 	def infoRefresh(self):
@@ -145,9 +145,11 @@ class ContactDataEditor(QDialog):
 				self.clientThread.Obj.getSessionID(self.Parent.Obj.server_addr)
 			if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
 					and addr in self.Parent.Obj.serverThread.Obj.currentSessionID :
-				sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[addr][0]
-			#print 'session:', sessionID
-			access = self.clientThread.Obj.getAccess(sessionID)
+				sessionID_ = self.Parent.Obj.serverThread.Obj.currentSessionID[addr][0]
+				_keyHash = self.Parent.Obj.serverThread.Obj.currentSessionID[addr][3]
+				sessionID = createEncryptedSessionID(sessionID_, _keyHash)
+			#print 'session:', [sessionID]
+			if sessionID != '' : access = self.clientThread.Obj.getAccess(sessionID)
 		self.clientThread._terminate()
 		if access > -1 :
 			text = 'My access in : ' + self.Parent.Obj.Policy.PolicyName[access]
@@ -157,7 +159,7 @@ class ContactDataEditor(QDialog):
 		self.setCachedStatus(self.serverState)
 		self.enabled_Change(True)
 
-	def ok(self):
+	def set(self):
 		#print 'ok'
 		customPolicyName = self.policySelect.currentText()
 		idx = self.Parent.Obj.Policy.PolicyName.index(customPolicyName)
@@ -166,7 +168,10 @@ class ContactDataEditor(QDialog):
 		if hasattr(self.Parent.Obj, 'serverThread') and self.Parent.Obj.serverThread is not None \
 				and key in self.Parent.Obj.serverThread.Obj.currentSessionID :
 			sessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[key][0]
-			self.Parent.Obj.serverThread.Obj.currentSessionID[key] = (sessionID, idx)
+			tempSessionID = self.Parent.Obj.serverThread.Obj.currentSessionID[key][2]
+			_keyHash = self.Parent.Obj.serverThread.Obj.currentSessionID[key][3]
+			self.Parent.Obj.serverThread.Obj.currentSessionID[key] = (sessionID, idx, tempSessionID, _keyHash)
+			saveContactPolicy(idx, _keyHash)
 		else :
 			self.Parent.Obj.showMSG('The setting not available.\nMay be contact not cached or fail.')
 		self.done(0)

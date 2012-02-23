@@ -1,7 +1,101 @@
 # -*- coding: utf-8 -*-
 
-import os, os.path, string, random, socket, ssl, time, sys, re, urllib2, select
-from Path import  Path
+import os, os.path, string, random, socket, ssl, time, re, urllib2, select
+import hashlib
+import cStringIO as S
+import M2Crypto as MC
+from Path import Path
+
+def mix(): return random.randint(0, 1)
+
+def cB (*args, **kwrds):
+	return '\n'
+
+def createCertificate():
+	rsaKey = MC.RSA.gen_key(2048, 65537)
+	rsaKey.save_key(Path.config('prvKey.pem'), cipher = None, callback = cB )
+	rsaKey.save_pub_key(Path.config('pubKey.pem'))
+
+def pubKeyEncrypted(str_, key_):
+	s = S.StringIO(key_)
+	bio = MC.BIO.MemoryBuffer(s.read())
+	rsa = MC.RSA.load_pub_key_bio(bio)
+	encrypted = ''
+	try :
+		encrypted = rsa.public_encrypt(str_, MC.RSA.pkcs1_oaep_padding)
+	except MC.RSA.RSAError, err :
+		print 'M2Crypto.RSA.RSAError', err
+	finally : pass
+	s.close()
+	return encrypted
+
+def prvKeyDecrypted(str_, key_):
+	s = S.StringIO(key_)
+	rsa = MC.RSA.load_key_string(s.read())
+	decrypted = ''
+	try :
+		decrypted = rsa.private_decrypt(str_, MC.RSA.pkcs1_oaep_padding)
+	except MC.RSA.RSAError, err :
+		print 'M2Crypto.RSA.RSAError', err
+	finally : pass
+	s.close()
+	return decrypted
+
+def hashKey(str_):
+	m = hashlib.sha256()
+	m.update(str_)
+	return m.hexdigest()
+
+def readCashPolicy(str_, policy):
+	fileName = hashKey(str_)
+	path_ = Path.certificates(fileName)
+	if os.path.isfile(path_) :
+		with open(path_, 'rb') as f :
+			data = f.read()
+		chunks = data.split()
+		policy = int(chunks[len(chunks) - 1])
+	return policy
+
+def addToCertCache(str_, policy):
+	fileName = hashKey(str_)
+	path_ = Path.certificates(fileName)
+	if not os.path.isfile(path_) :
+		with open(path_, 'wb') as f :
+			f.write(''.join((str_.encode('utf-8'), str(policy))))
+	else :
+		with open(path_, 'rb') as f :
+			data = f.read()
+		chunks = data.split()
+		policy = int(chunks[len(chunks) - 1])
+	return policy
+
+def saveContactPolicy(idx, fileName):
+	path = Path.certificates(fileName)
+	if not os.path.isfile(path) : return ''
+	with open(path, 'rb') as f :
+		str_ = f.read()
+	(head, sep, tail) = str_.partition('\n-----END PUBLIC KEY-----\n')
+	with open(path, 'wb') as f :
+		str_ = ''.join((head, sep, str(idx)))
+		f.write(str_)
+
+def readPubKeyFromCache(_keyHash):
+	path = Path.certificates(_keyHash)
+	if not os.path.isfile(path) : return ''
+	with open(path, 'rb') as f :
+		str_ = f.read()
+	(head, sep, tail) = str_.partition('\n-----END PUBLIC KEY-----')
+	return ''.join((head, sep)).encode('utf-8')
+
+def createEncryptedSessionID(sessionID_, pubKeyHash):
+	pubKey = readPubKeyFromCache(pubKeyHash)
+	if mix() :
+		mixtureString = ''.join((sessionID_, randomString(DIGITS_LENGTH)))
+	else :
+		mixtureString = ''.join((randomString(DIGITS_LENGTH), sessionID_))
+	#print [sessionID_, pubKey, mixtureString]
+	sessionID = '' if pubKey == '' else pubKeyEncrypted(mixtureString, pubKey).encode('base64')
+	return sessionID
 
 char_set = string.ascii_letters + string.digits
 DIGITS_LENGTH = 24
@@ -72,7 +166,8 @@ def createStructure():
 					Path.tempStruct('client'), \
 					Path.tempStruct('server'), \
 					Path.config('treeBackup'), \
-					Path.Avatar] :
+					Path.Avatar, \
+					Path.Certificates] :
 		if not os.path.isdir(nameDir):
 			os.makedirs(nameDir)
 	cwd = os.getcwd()
@@ -103,7 +198,6 @@ class DataRendering:
 	def listToFile(self, list_ = [], name_ = ''):
 		fileName = ''
 		if name_ != '' :
-			#fileName = str(pathPrefix() + '/dev/shm/LightMight/' + name_)
 			fileName = Path.tempStruct(name_)
 			with open(fileName, 'wb') as f :
 				f.writelines(list_)
@@ -131,7 +225,8 @@ def getIP():
 			except Exception, err:
 				#print '[in getIP()]:', err
 				error = True
-			finally : s.close()
+			finally :
+				s.close()
 			if not error :
 				Addr = addr
 				break
@@ -186,7 +281,7 @@ def moveFile(src, dst, delete = True):
 		return False
 
 def pathPrefix():
-	if sys.platform == 'win32':
+	if Path.platform == 'win':
 		return unicode(os.path.dirname(os.tempnam()))
 	else:
 		return u''

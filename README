@@ -7,7 +7,7 @@ Dependencies :
     avahi
     avahi-ui-tools (python-avahi in Ubuntu)
     avahi-compat-libdns_sd (Fedora name)
-    openssl
+    m2crypto
 
 Paths and files:
     Configuration file :
@@ -18,27 +18,24 @@ Paths and files:
         $HOME/.config/LightMight/
     Backupped shared files structure save in :
         $HOME/.config/LightMight/treeBackup
-    SSL certificate and key in one and the same file :
-        $HOME/cert.pem
-    Trusted certificates (ca_cert) in :
-        /etc/ssl/ca_bundle.trust.crt
+    Public and private keys in :
+        $HOME/.config/LightMight/*.pem
+    Cache in :
+        $HOME/.cache/LightMight
 
 Description:
     Simple FileTransmitter for publication and download users
 file resources in local network.
     This program is made as a standalone server that is not bound to the IM-messendgers. It can serve several clients at once (how powerful your computer or wide channel). Tree Shares transferred to the client side as a single object, so remote users can choose what they need, and get a selection from the server without prompting. However, the client can not have other resources available on the server side.
     Application use 34000-34100 (TCP) ports by default.
-    For using SSL encripted connection you must to generate SSL Cerificate and Key.
     For using broadcast you must to open port 34001 (UDP).
     For use Avahi detection you must to open port 5353 (mDNS).
     For using Avahi\Bonjour detection in Windows you must install and run Bonjour service from :
         http://support.apple.com/en_US/downloads/#bonjour%20for%20windows
-    OpenSSL for Win :
-        http://www.openssl.org/source/openssl-1.0.0e.tar.gz
-        http://www.slproweb.com/products/Win32OpenSSL.html
+    M2Crypto for Win :
+        http://chandlerproject.org/pub/Projects/MeTooCrypto/M2Crypto-0.21.1.win32-py2.7.msi
 
 Tested on :
     Fedora 14/15/16
     Kubuntu 11.04/10
-    Windows7 (Avahi\Bonjour is not working properly,
-              SSL encripted isn`t tested)
+    Windows7 (Avahi\Bonjour is not working properly)

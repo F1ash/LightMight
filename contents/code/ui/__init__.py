@@ -143,7 +143,20 @@ class MainWindow(QtGui.QMainWindow):
 		self.StandBy.setInterval(20000)
 		self.NetworkState = 1	## 0 -- off; 1 -- on
 		self.restoredInitParameters = (None, None, '', False)
+		self.searchCertificate()
 		self.checkNetwork()
+
+	def searchCertificate(self):
+		pubKeyPath = Path.config('pubKey.pem')
+		prvKeyPath = Path.config('prvKey.pem')
+		if not os.path.isfile(pubKeyPath) or not os.path.isfile(prvKeyPath) :
+			createCertificate()
+		with open(pubKeyPath, 'rb') as f :
+			_str = f.read()
+			self.servPubKey = _str.encode('utf-8')
+		with open(prvKeyPath, 'rb') as f :
+			_str = f.read()
+			self.servPrvKey = _str.encode('utf-8')
 
 	'''
 	data =  0/1/A/R(offline/online/answer/reinit)<separator>
@@ -188,7 +201,7 @@ class MainWindow(QtGui.QMainWindow):
 
 	def delContact(self, name, addr, port, encode, state):
 		#print [QtCore.QString().fromUtf8(name), addr, port, encode, state] , 'Must die!'
-		if addr != None and port != None :
+		if addr is not None and port is not None :
 			key = str(addr + ':' + port)
 			if key in self.USERS :
 				for i in xrange(self.menuTab.userList.count()) :
@@ -211,7 +224,7 @@ class MainWindow(QtGui.QMainWindow):
 			if len(item) > 0 :
 				for item_ in item :
 					data = item_.data(QtCore.Qt.AccessibleTextRole).toList()
-					if data[1].toBool() :
+					if str(data[1].toString())=='True' :
 						# because avahi & broadcast reinit together
 						if domain in data[2:] :
 							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
@@ -299,16 +312,16 @@ class MainWindow(QtGui.QMainWindow):
 		print 'Cache down signal received'
 
 	def initAvahiBrowser(self, *args):
-		if self.Settings.value('AvahiDetect', True).toBool() and 'avahiBrowser' not in dir(self):
+		if str(self.Settings.value('AvahiDetect', 'True').toString())=='True' and 'avahiBrowser' not in dir(self):
 			print 'Use Avahi'
 			if ModuleExist.AvahiAvailable and 'avahiBrowser' not in dir(self) :
 				self.avahiBrowser = AvahiBrowser(self.menuTab)
 				self.avahiBrowser.start()
-		if InitConfigValue(self.Settings, 'UseCache', 'False') == 'True' :
+		if str(InitConfigValue(self.Settings, 'UseCache', 'False')) == 'True' :
 			print 'Use Cache'
 			self.cachingThread = DataCache(self.USERS, self)
 			self.cachingThread.start()
-		if self.Settings.value('BroadcastDetect', True).toBool() :
+		if str(self.Settings.value('BroadcastDetect', 'True').toString())=='True' :
 			print 'Use Broadcast'
 			self.udpClient = UdpClient(self)
 			self.udpClient.start()
@@ -323,7 +336,7 @@ class MainWindow(QtGui.QMainWindow):
 			encode = 'Yes'
 		else :
 			encode = 'No'
-		if ModuleExist.AvahiAvailable and self.Settings.value('AvahiDetect', True).toBool() :
+		if ModuleExist.AvahiAvailable and str(self.Settings.value('AvahiDetect', 'True').toString())=='True' :
 			self.avahiService = AvahiService(self.menuTab, \
 								name = name_, \
 								port = self.server_port, \
@@ -333,7 +346,7 @@ class MainWindow(QtGui.QMainWindow):
 
 	def initBroadcast(self, name_ = None, encode = None):
 		if name_ is None or encode is None : return None
-		if self.Settings.value('BroadcastDetect', True).toBool() :
+		if str(self.Settings.value('BroadcastDetect', 'True').toString())=='True' :
 			data = QtCore.QString('1' + '<||>' + \
 								  name_ + '<||>' + \
 								  self.server_addr + '<||>' + \
@@ -348,10 +361,11 @@ class MainWindow(QtGui.QMainWindow):
 	def checkNetwork(self, sharedSourceTree = None, \
 						 loadFile = None, previousState = '', \
 						 restart = False):
+		self.StandBy.stop()
+		if self.NetworkState == 1 : self.menuTab.enableRestartButton(False)
 		if type(sharedSourceTree) == TreeModel :
 			self.restoredInitParameters = (sharedSourceTree, loadFile, previousState, restart)
 		checkNetwork = NetworkCheck(self)
-		self.StandBy.stop()
 		if not self.menuTab.progressBar.isVisible(): self.menuTab.progressBar.show()
 		self.statusBar.clearMessage()
 		self.statusBar.showMessage('Server offline')
@@ -362,7 +376,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.server_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
 										int(InitConfigValue(self.Settings, 'MaxPort', '34100')), \
 										self.server_addr)[1]
-		print self.server_addr, ':', self.server_port, 'free'
+		print [self.server_addr, ':', self.server_port], 'free'
 		if netState > 1 :
 			if self.NetworkState == 1 :
 				self.NetworkState = 0
@@ -412,19 +426,19 @@ class MainWindow(QtGui.QMainWindow):
 			treeModel = TreeModel('Name', 'Description')
 			firstRun = True
 		self.serverReady = 0
-		certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
-		#print str(certificatePath)
-		if 'True' == InitConfigValue(self.Settings, 'UseTLS', 'False') and certificatePath != '' :
+		#certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
+		#print str(self.certificatePath)
+		if 'True' == str(InitConfigValue(self.Settings, 'UseTLS', 'False')) :#and self.certificatePath != '' :
 			self.TLS = True
 		else :
 			self.TLS = False
-		#print self.TLS, '  <--- using TLS'
+		print self.TLS, '  <--- using TLS'
 		self.serverThread = ToolsThread(\
 										ServerDaemon( (self.server_addr, self.server_port), \
 													self.commonSetOfSharedSource, \
 													self, \
 													TLS = self.TLS, \
-													cert = str(certificatePath), \
+													cert = None, \
 													restart = restart), \
 										parent = self)
 
@@ -463,9 +477,10 @@ class MainWindow(QtGui.QMainWindow):
 		self.commonSetOfSharedSource = commonSet
 		#print len(self.commonSetOfSharedSource), ' commonSet.count '
 		""" this for server commonSet """
-		self.serverThread.Obj.commonSetOfSharedSource = commonSet
-		self.serverReady += 1
-		if self.serverReady == 2 : self.serverStart()
+		if hasattr(self, 'serverThread') and self.serverThread is not None :
+			self.serverThread.Obj.commonSetOfSharedSource = commonSet
+			self.serverReady += 1
+			if self.serverReady == 2 : self.serverStart()
 
 	def initServerComplete(self):
 		self.serverReady += 1
@@ -531,7 +546,8 @@ class MainWindow(QtGui.QMainWindow):
 												<< serverPort \
 												<< description \
 												<< encode \
-												<< self.serverThread.Obj.currentSessionID[serverAddr][0]), \
+												<< self.serverThread.Obj.currentSessionID[serverAddr][0] \
+												<< self.serverThread.Obj.currentSessionID[serverAddr][3]), \
 						 os.getcwd())
 
 	def show_n_hide(self):

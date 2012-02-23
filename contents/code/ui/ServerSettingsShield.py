@@ -77,16 +77,16 @@ class ServerSettingsShield(QtGui.QDialog):
 
 		form.addItem(self.detectionPanel, 4, 2)
 
-		self.useTLSLabel = QtGui.QLabel('Use encrypt (TLSv1):')
-		form.addWidget(self.useTLSLabel, 5, 1)
+		self.useEncryptLabel = QtGui.QLabel('Use encrypt:')
+		form.addWidget(self.useEncryptLabel, 5, 1)
 
-		self.useTLSCheck = QtGui.QCheckBox()
-		if InitConfigValue(self.Obj.Settings, 'UseTLS', 'False') == 'True' :
+		self.useEncryptCheck = QtGui.QCheckBox()
+		if InitConfigValue(self.Obj.Settings, 'UseEncrypt', 'False') == 'True' :
 			value = QtCore.Qt.Checked
 		else:
 			value = QtCore.Qt.Unchecked
-		self.useTLSCheck.setCheckState(value)
-		form.addWidget(self.useTLSCheck, 5, 2)
+		self.useEncryptCheck.setCheckState(value)
+		form.addWidget(self.useEncryptCheck, 5, 2)
 
 		self.saveLastStructureLabel = QtGui.QLabel('Save last Share Structure :')
 		form.addWidget(self.saveLastStructureLabel, 6, 1)
@@ -155,37 +155,15 @@ class ServerSettingsShield(QtGui.QDialog):
 		self.setLayout(form)
 		self.connect(self, QtCore.SIGNAL('refresh'), self.treeRefresh)
 		self.connect(self, QtCore.SIGNAL('threadError'), self.threadMSG)
-		self.useTLSCheck.stateChanged.connect(self.certificatePath)
+		self.useEncryptCheck.stateChanged.connect(self.useTLS)
 
-	def certificatePath(self, i):
+	def useTLS(self, i):
 		if i == QtCore.Qt.Checked :
 			#print '  checked'
-			self.certFileName = QtGui.QFileDialog.getOpenFileName(self, 'Path_to_', '~', 'OpenSSL Certificate (*.pem);;')
-			#print self.certFileName
-			""" check certificate """
-			self.verifyProcess = QtCore.QProcess()
-			self.vrfProcOutput = Path.multiPath(Path.tempStruct, 'server', randomString(24))
-			self.verifyProcess.setStandardOutputFile(self.vrfProcOutput)
-			self.verifyProcess.setStandardErrorFile(self.vrfProcOutput)
-			self.verifyProcess.finished.connect(self.readVrfProcOutput)
-			self.verifyProcess.start('openssl', \
-									QtCore.QStringList() << 'verify' << self.certFileName)
+			pass
 		else :
 			#print '  unchecked'
 			pass
-
-	def readVrfProcOutput(self, i):
-		#print '  finised : ', i
-		with open(self.vrfProcOutput, 'rb') as output :
-			str_ = output.read()
-		if str_.find('unable to load certificate') == -1 :
-			STR_ = "MSG: Exit code : " + str(i) + '\n' + str_
-		else :
-			self.useTLSCheck.setCheckState(QtCore.Qt.Unchecked)
-			STR_ = 'MSG: Certificate is a unavailable or incorrect.\n' + str_
-		showHelp = ListingText(STR_, self)
-		showHelp.exec_()
-		os.remove(self.vrfProcOutput)
 
 	def addDirPath(self):
 		_nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
@@ -280,16 +258,13 @@ class ServerSettingsShield(QtGui.QDialog):
 		else :
 			value = 'False'
 		self.Obj.Settings.setValue('SaveLastStructure', value)
-		if self.useTLSCheck.isChecked() :
+		if self.useEncryptCheck.isChecked() :
 			value = 'True'
-			if 'certFileName' in dir(self) :
-				self.Obj.Settings.setValue('PathToCertificate', self.certFileName)
 		else :
 			value = 'False'
-		self.Obj.Settings.setValue('UseTLS', value)
+		self.Obj.Settings.setValue('UseEncrypt', value)
 		self.Obj.Settings.sync()
 
 	def closeEvent(self, event):
 		event.ignore()
 		self.done(0)
-

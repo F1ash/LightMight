@@ -11,7 +11,8 @@ URL: https://github.com/F1ash/LightMight
 BuildArch: noarch
 
 %if %{defined fedora}
-Requires: python >= 2.6, dbus-python, PyQt4 >= 4.7, avahi, avahi-ui-tools, avahi-compat-libdns_sd, openssl
+Requires: python >= 2.6, dbus-python, PyQt4 >= 4.7, avahi, avahi-ui-tools, \
+	 avahi-compat-libdns_sd, m2crypto
 Conflicts: python >= 3.0
 BuildRequires: desktop-file-utils
 %endif

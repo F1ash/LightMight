@@ -2,7 +2,7 @@
 
 from PyQt4.QtCore import QThread, pyqtSignal, Qt
 from PyQt4.QtGui import QIcon
-from Functions import InitConfigValue, Path, DelFromCache, InCache, avatarInCache, moveFile
+from Functions import *
 from clnt import xr_client
 import os.path, threading
 
@@ -72,7 +72,9 @@ class DataCache(QThread):
 						self.Obj.menuTab.searchItem(itemValue[0])
 						self.clnt._shutdown()
 						continue
-					sessionID = self.Obj.serverThread.Obj.currentSessionID[currAddr][0]
+					sessionID_ = self.Obj.serverThread.Obj.currentSessionID[currAddr][0]
+					_keyHash = self.Obj.serverThread.Obj.currentSessionID[currAddr][3]
+					sessionID = createEncryptedSessionID(sessionID_, _keyHash)
 					pathExist = avatarInCache(self.clnt.serverState)
 					possibleAvatarTempPath = Path.tempAvatar(self.clnt.serverState)
 					avatarTempOut = not os.path.isfile(possibleAvatarTempPath)
@@ -128,6 +130,7 @@ class DataCache(QThread):
 			except RuntimeError, err :
 				print '[in initRefill() DataCache]:', err
 				continue
+			finally : pass
 		self.runState = False
 		#print 'caching down'
 

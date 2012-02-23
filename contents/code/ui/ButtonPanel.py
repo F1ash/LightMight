@@ -12,10 +12,12 @@ class ButtonPanel(QtGui.QWidget):
 	errorString = QtCore.pyqtSignal(str)
 	def __init__(self, name_ = '', downLoadSize = 0, jobNumber = -1, \
 					serverState = '', addr = '', port = '', info = '', \
-					TLS = 'False', sessionID = '', parent = None):
+					TLS = 'False', sessionID = '', pubKeyHash = '', \
+					parent = None):
 		QtGui.QWidget.__init__(self, parent)
 		self.Obj = self
 		self.SEP = os.sep
+		self.Settings = QtCore.QSettings('LightMight','LightMight')
 
 		self.nameMaskFile = name_
 		self.jobNumber = jobNumber
@@ -23,6 +25,7 @@ class ButtonPanel(QtGui.QWidget):
 		self.port = port
 		self.currentRemoteServerState = serverState
 		self.sessionID = sessionID
+		self.pubKeyHash = pubKeyHash
 		self.maskSet = {}
 		if 'True' == TLS :
 			self.TLS = True
@@ -63,6 +66,7 @@ class ButtonPanel(QtGui.QWidget):
 		self.setLayout(self.layout)
 		#print self.progressBar.value(), ' init value'
 		self.setMaskSet()
+		self.searchCertificate()
 
 	def setMaskSet(self):
 		path_ = Path.multiPath(Path.tempStruct, 'client', self.nameMaskFile)
@@ -81,6 +85,16 @@ class ButtonPanel(QtGui.QWidget):
 					#print self.maskSet[int(unicode(str(s[3].decode('utf-8')).replace('\n', '')))]
 
 		os.remove(path_)
+
+	def searchCertificate(self):
+		pubKeyPath = Path.config('pubKey.pem')
+		prvKeyPath = Path.config('prvKey.pem')
+		if not os.path.isfile(pubKeyPath) or not os.path.isfile(prvKeyPath) :
+			createCertificate()
+		with open(pubKeyPath, 'rb') as f :
+			self.servPubKey = f.read()
+		with open(prvKeyPath, 'rb') as f :
+			self.servPrvKey = f.read()
 
 	def startJob(self):
 		self.startButton.hide()

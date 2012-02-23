@@ -222,8 +222,10 @@ class Box(QtGui.QWidget):
 		self.Obj.initServeR.emit(self.treeModel, '', str_, True)
 
 	def sentOfflinePost(self):
-		if self.Obj.Settings.value('BroadcastDetect', True).toBool() :
-			key = str(self.Obj.server_addr + ':' + str(self.Obj.server_port))
+		if str(self.Obj.Settings.value('BroadcastDetect', 'True').toString())=='True' :
+			if hasattr(self.Obj, 'server_addr') :
+				key = str(self.Obj.server_addr + ':' + str(self.Obj.server_port))
+			else : key = '127.0.0.1:34000'
 			if key in self.Obj.USERS :
 				#print 'key :', key, ' in USERS'
 				data = QtCore.QString('0' + '<||>' + \
@@ -247,9 +249,13 @@ class Box(QtGui.QWidget):
 			Editor.exec_()
 
 	def enableRestartButton(self, on = False):
-		if on :
-			self.refreshButton.clicked.connect(self.restartServer)
-			self.refreshButton.setEnabled(True)
-		else :
-			self.refreshButton.clicked.disconnect(self.restartServer)
-			self.refreshButton.setEnabled(False)
+		try :
+			if on :
+				self.refreshButton.clicked.connect(self.restartServer)
+				self.refreshButton.setEnabled(True)
+			else :
+				self.refreshButton.clicked.disconnect(self.restartServer)
+				self.refreshButton.setEnabled(False)
+		except TypeError, err :
+			print '[in enableRestartButton() Box] :', err
+		finally : pass
