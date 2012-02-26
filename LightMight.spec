@@ -1,5 +1,5 @@
 Name: LightMight
-Version: 0.18.35
+Version: 0.19.37
 Release: 1%{?dist}.R
 Summary: Programm for resource publication and transmission in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
@@ -11,9 +11,7 @@ URL: https://github.com/F1ash/LightMight
 BuildArch: noarch
 
 %if %{defined fedora}
-Requires: python >= 2.6, dbus-python, PyQt4 >= 4.7, avahi, avahi-ui-tools, \
-	 avahi-compat-libdns_sd, m2crypto
-Conflicts: python >= 3.0
+Requires: python, dbus-python, PyQt4, avahi, avahi-ui-tools, avahi-compat-libdns_sd, m2crypto
 BuildRequires: desktop-file-utils
 %endif
 
@@ -85,6 +83,9 @@ if [ -x %{_bindir}/gtk-update-icon-cache ]; then
 fi
 
 %changelog
+
+* Sun Feb 26 2012 Fl@sh <kaperang07@gmail.com> - 0.19.37-1.R
+- version updated
 
 * Mon Dec 5 2011 Fl@sh <kaperang07@gmail.com> - 0.18.35-1.R
 - version updated
