@@ -170,7 +170,7 @@ class ServerDaemon():
 			self.currentSessionID[addr] = newItem
 			return xmlrpclib.Binary('OK')
 		elif int(id_) in self.commonSetOfSharedSource :
-			fileName = str(self.commonSetOfSharedSource[int(id_)])
+			fileName = self.commonSetOfSharedSource[int(id_)]
 			if os.path.isfile(fileName) :
 				with open(fileName, "rb") as handle :
 					return xmlrpclib.Binary(handle.read())

@@ -167,7 +167,7 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	def addDirPath(self):
 		_nameDir = QtGui.QFileDialog.getExistingDirectory(self, 'Path_to_', '~', QtGui.QFileDialog.ShowDirsOnly)
-		nameDir = QtCore.QString(_nameDir).toUtf8().data()
+		nameDir = _nameDir.toLocal8Bit().data()
 		if os.access(nameDir, os.R_OK) and os.access(nameDir, os.X_OK) :    ## and os.access(nameDir, os.W_OK) :
 			# print nameDir
 			P = PathToTree(_nameDir, self.treeModel.rootItem, 'dir')
@@ -179,7 +179,7 @@ class ServerSettingsShield(QtGui.QDialog):
 	def addFilePaths(self):
 		fileNames = QtGui.QFileDialog.getOpenFileNames(self, 'Path_to_', '~')
 		for _name in fileNames :
-			name_ = QtCore.QString(_name).toUtf8().data()
+			name_ = _name.toLocal8Bit().data()
 			if not stat.S_ISLNK(os.lstat(name_).st_mode) and os.access(name_, os.R_OK) :
 				P = PathToTree(_name, self.treeModel.rootItem, 'file')
 				self.treeModel.reset()

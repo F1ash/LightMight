@@ -112,7 +112,7 @@ class AvahiService(QtCore.QThread):
 		self.RUN = True
 		self.name = unicode(name)
 		self.regtype = '_LightMight._tcp'
-		self.address = getIP()
+		self.address = getIP()[0]
 		self.port = port
 		unicalName = False
 		_encode, _state = description.split('.')

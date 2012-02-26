@@ -1,7 +1,7 @@
 Name: LightMight
 Version: 0.18.35
 Release: 1%{?dist}.R
-Summary: Programm for file`s resource publication and transmittion in local network
+Summary: Programm for resource publication and transmission in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
 Group: Applications/Network
 License: GPL
@@ -19,7 +19,7 @@ BuildRequires: desktop-file-utils
 
 %description
 LightMight
-Programm for resource publication and transmittion in local network
+Programm for resource publication and transmission in local network
 
 %description -l ru
 LightMight

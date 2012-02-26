@@ -28,8 +28,8 @@ class DataCache(QThread):
 		if self.runState : print 'caching...'; return None
 		self.runState = True
 		self.Key = True
-		for itemValue in self.USERS.iteritems() :
-			try :
+		try :
+			for itemValue in self.USERS.iteritems() :
 				#print itemValue, '-- current item in USERS for caching'
 				if self.Key and not itemValue[1][5] :
 					""" call for fill clients data """
@@ -127,10 +127,10 @@ class DataCache(QThread):
 				elif self.Key is False :
 					#print 'cache key is locked...'
 					break
-			except RuntimeError, err :
-				print '[in initRefill() DataCache]:', err
-				continue
-			finally : pass
+		except RuntimeError, err :
+			print '[in initRefill() DataCache]:', err
+			if hasattr(self, 'clnt') : self.clnt._shutdown()
+		finally : pass
 		self.runState = False
 		#print 'caching down'
 
