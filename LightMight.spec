@@ -1,6 +1,6 @@
 Name: LightMight
 Version: 0.19.37
-Release: 1%{?dist}.R
+Release: 1%{?dist}
 Summary: Programm for resource publication and transmission in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
 Group: Applications/Network
@@ -11,7 +11,7 @@ URL: https://github.com/F1ash/LightMight
 BuildArch: noarch
 
 %if %{defined fedora}
-Requires: python, dbus-python, PyQt4, avahi, avahi-ui-tools, avahi-compat-libdns_sd, m2crypto
+Requires: python, dbus-python, PyQt4, avahi, avahi-ui-tools, m2crypto
 BuildRequires: desktop-file-utils
 %endif
 

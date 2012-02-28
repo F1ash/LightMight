@@ -83,10 +83,14 @@ class ServerDaemon():
 			del self.checkAddr[_id]
 			# clean delayed address
 			delayed = []
-			for key in self.checkAddr.keys() :
-				if (self.checkAddr[key][1] + TIMEOUT - 1.0) < time.time() :
-					delayed.append(key)
-			for key in delayed : del self.checkAddr[key]
+			try :
+				for key in self.checkAddr.keys() :
+					if (self.checkAddr[key][1] + TIMEOUT - 1.0) < time.time() :
+						delayed.append(key)
+				for key in delayed : del self.checkAddr[key]
+			except RuntimeError, err :
+					print '[in clientRegAnswer() ServerDaemon]: ', err
+			finally : pass
 			## mutex unlock
 			return xmlrpclib.Boolean(True)
 		else :
@@ -110,6 +114,7 @@ class ServerDaemon():
 			self.checkAddr[_id] = (clientIP, time.time(), clientCert)
 		else :
 			data = 'ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY'
+			## TODO : make the check available clientIP
 		#print [data], ' data'
 		return xmlrpclib.Binary(data)
 

@@ -224,7 +224,8 @@ class MainWindow(QtGui.QMainWindow):
 			if len(item) > 0 :
 				for item_ in item :
 					data = item_.data(QtCore.Qt.AccessibleTextRole).toList()
-					if str(data[1].toString())=='True' :
+					#for _item in data : print _item.toString()
+					if str(data[1].toString()).lower()=='true' :
 						# because avahi & broadcast reinit together
 						if domain in data[2:] :
 							self.menuTab.userList.takeItem(self.menuTab.userList.row(item_))
@@ -233,11 +234,11 @@ class MainWindow(QtGui.QMainWindow):
 								del self.USERS[key]
 								str_ = key.split(':')
 								self.delContact(None, str_[0], str_[1], None, None)
-								#print key, 'deleted'
+								#print key, 'deleted in avahi_type'
 		#print 'DEL down'
 
 	def addNewContact(self, name, addr, port, encode, state, domain, avahi_method = True):
-		#print QtCore.QString().fromUtf8(name), addr, port, 'new contact'
+		#print [QtCore.QString().fromUtf8(name), addr, port, domain], 'new contact'
 		key = str(addr + ':' + port)
 		''' check uniqualled contact (uniqual IP:port) '''
 		if not avahi_method :
@@ -272,7 +273,8 @@ class MainWindow(QtGui.QMainWindow):
 						item_.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant(data))
 					return True
 		new_item = QtGui.QListWidgetItem(name)
-		new_item.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant([key, avahi_method, domain]))
+		_data = [key, 'true' if avahi_method else 'false', domain]
+		new_item.setData(QtCore.Qt.AccessibleTextRole, QtCore.QVariant(_data))
 		in_cashe, path_ = InCache(state)
 		if in_cashe :
 			head, tail = os.path.split(str(path_))
@@ -340,7 +342,11 @@ class MainWindow(QtGui.QMainWindow):
 			self.avahiService = AvahiService(self.menuTab, \
 								name = name_, \
 								port = self.server_port, \
-								description = 'Encoding=' + encode + '.' + 'State=' + self.serverState)
+								description = 'Encoding=' + encode + ';' + \
+											  'State=' + str(self.serverState) + ';' + \
+											  'Port=' + str(self.server_port) + ';' + \
+											  'Address=' + self.server_addr + ';' + \
+											  'Name=' + name_.toUtf8().data())
 			self.avahiService.start()
 		self.initBroadcast(name_, encode)
 
@@ -490,13 +496,7 @@ class MainWindow(QtGui.QMainWindow):
 		if self.serverState != '' : self.serverThread.Obj.serverState = self.serverState
 		self.serverThread.start()
 		if self.serverReinited : self.preinitAvahiBrowser()
-		else :
-			name_ = InitConfigValue(self.Settings, 'ServerName', 'Own Avahi Server')
-			if self.TLS :
-				encode = 'Yes'
-			else :
-				encode = 'No'
-			self.initBroadcast(name_, encode)
+		else : self.initAvahiService()
 		self.statusBar.clearMessage()
 		self.statusBar.showMessage('Server online')
 		self.menuTab.progressBar.hide()

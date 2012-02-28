@@ -47,20 +47,22 @@ class AvahiBrowser():
 		print 'service resolved.'
 		'''
 		__str_state = ''; __str_encode = ''
-		for _str in string.split(str_, '.') :
+		chunks = str_.split(';')
+		for _str in chunks :
 			if _str.startswith('Encoding=') :
 				__str_encode = self.extractValue(_str)
 				#break
 			#else : __str_encode = _str
 			if _str.startswith('State=') :
 				__str_state = self.extractValue(_str)
-		self.obj.addNewContact(unicode(args[2]), str(args[7]), str(args[8]), __str_encode, __str_state, domain)
+		#print [unicode(args[2]), str(args[7]), str(args[8]), __str_encode, __str_state, domain, True]
+		self.obj.addNewContact(unicode(args[2]), str(args[7]), str(args[8]), __str_encode, __str_state, domain, True)
 
 	def print_error(self, *args):
-		print 'error_handler'
-		print args[0]
+		print 'error_handler', args[0]
 
 	def myhandlerRemove(self, interface, protocol, name, stype, domain, flags):
+		#print 'Service removed', [name, domain]
 		self.obj.delContact(name, None, None, None, domain)
 
 	def myhandler(self, interface, protocol, name, stype, domain, flags):
@@ -76,7 +78,7 @@ class AvahiBrowser():
 
 	def __del__(self):
 		self.USERS.clear()
-		self.mainloop.quit()
+		#self.mainloop.quit()
 		time.sleep(3)			## FIXME: replace on dbus event
 
 	def start(self): pass
@@ -177,7 +179,6 @@ class AvahiService():
 		elif state == avahi.ENTRY_GROUP_FAILURE :
 			print "Error in group state changed", error
 			self.main_loop.quit()
-			return
 
 	def __del__(self):
 		self.remove_service()
