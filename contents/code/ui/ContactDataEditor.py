@@ -181,4 +181,5 @@ class ContactDataEditor(QDialog):
 
 	def closeEvent(self, event):
 		event.ignore()
+		self.clientThread._terminate()
 		self.done(0)

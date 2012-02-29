@@ -46,7 +46,14 @@ class DataCache(QThread):
 									TLS = value)
 					self.clnt.serverState = itemValue[1][4]
 					#print itemValue[1][4], 'remote server state'
-					if self.Key : self.clnt.run()
+					if self.Key :
+						if not self.clnt.run() :
+							## delete dead contact
+							self.Obj.delContact(None, \
+												currAddr, \
+												unicode(itemValue[1][2]), \
+												None, \
+												None)
 					else :
 						self.clnt._shutdown()
 						break

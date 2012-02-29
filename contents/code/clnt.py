@@ -4,7 +4,7 @@ from xmlrpclib import ProtocolError, Fault
 from SSLOverloadClass import SSLServerProxy
 from httplib import HTTPException
 from Functions import *
-import os, os.path, string, socket, ssl
+import os, os.path, socket
 
 class xr_client:
 	def __init__(self, addr = 'http://localhost', port = '34100', obj = None, parent = None, TLS = False):
@@ -12,14 +12,14 @@ class xr_client:
 		self.serverState = ''
 		self.Parent = parent
 		if 'Obj' in dir(self) and self.Parent is None :
-			self.servPubKey = self.Obj.servPubKey
-			self.servPrvKey = self.Obj.servPrvKey
+			pref = self.Obj
 		elif 'Obj' in dir(self.Parent) and self.Parent.Obj is not None :
-			self.servPubKey = self.Parent.Obj.servPubKey
-			self.servPrvKey = self.Parent.Obj.servPrvKey
+			pref = self.Parent.Obj
 		else :
-			self.servPubKey = self.Parent.servPubKey
-			self.servPrvKey = self.Parent.servPrvKey
+			pref = self.Parent
+		self.servPrvKey = pref.servPrvKey
+		self.servPubKey = pref.servPubKey
+		self.servPubKeyHash = pref.servPubKeyHash
 		#print [self.servPrvKey, self.servPubKey]
 		self.TLS = False #TLS
 		#print self.servaddr, ' clnt '
@@ -63,29 +63,43 @@ class xr_client:
 			else :
 				if show : self.Parent.errorString.emit(str_)
 
+	def blockedIP(self, addr, checkSet):
+		res = None
+		while res is None :
+			try :
+				res = False
+				for item in checkSet.itervalues() :
+					if addr == item[0] :
+						res = True
+						break
+			except RuntimeError, err :
+				print '[in blockedIP() clnt.py ] RuntimeError :', err
+				res = None
+			finally : pass
+		return res
+
 	def getSessionID(self, ownIP = ''):
 		#print [ownIP], ' own IP'
 		addr = str(self.servaddr.split(':')[0])
 		# check for address at processing in opposite side
 		if hasattr(self.Parent, 'serverThread') :
-			if addr in self.Parent.serverThread.Obj.WAIT :
-				self.sendErrorString('ATTENTION:_REQUEST_PROCESSING_IN_OPPOSITE_SERVER')
-				return False
+			checkSet = self.Parent.serverThread.Obj.checkAddr
 		elif hasattr(self.Parent.Obj, 'serverThread') :
-			if addr in self.Parent.Obj.serverThread.Obj.WAIT :
-				self.sendErrorString('ATTENTION:_REQUEST_PROCESSING_IN_OPPOSITE_SERVER')
-				return False
+			checkSet = self.Parent.Obj.serverThread.Obj.checkAddr
 		elif hasattr(self.Parent.Parent, 'serverThread') :
-			if addr in self.Parent.Parent.serverThread.Obj.WAIT :
-				self.sendErrorString('ATTENTION:_REQUEST_PROCESSING_IN_OPPOSITE_SERVER')
-				return False
-		else : return False
+			checkSet = self.Parent.Parent.serverThread.Obj.checkAddr
+		else :
+			self.sendErrorString('ATTENTION:_SET_OF_BLOCKED_IP_NOT_FOUND')
+			return False
+		if self.blockedIP(addr, checkSet) :
+			self.sendErrorString('ATTENTION:_REQUEST_PROCESSING_IN_OPPOSITE_SERVER')
+			return False
 		# get session Id & server State
 		try :
 			str_ = ''
 			try :
 				if writeSocketReady(self.s.socket, self.s.timeout) :
-					rndString = self.s.sessionID(ownIP, self.servPubKey, hashKey(self.servPubKey)).data
+					rndString = self.s.sessionID(ownIP, self.servPubKey, self.servPubKeyHash).data
 				else :
 					self.sendErrorString('[in getSessionID()] Socket_Not_Ready')
 					return False

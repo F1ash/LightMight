@@ -12,15 +12,14 @@ class ServerDaemon():
 		self.serverState = randomString(DIGITS_LENGTH) if not restart else self.Parent.previousState
 		self.Parent.serverState = self.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
-		## currentSessionID :
+		## currentSessionID : set of registered client`s data
 		##	{remoteServerAddr : (sessionID, customPolicy, temporarilySessionID, certHash)}
 		self.currentSessionID = {}
-		## WAIT : list of blocked IP for getting sessionID
-		self.WAIT = []
-		## checkAddr :
-		##	 {_id] : (clientIP, time.time(), clientCert)}
+		## checkAddr : set of blocked IP for getting sessionID
+		##	{_id : (clientIP, time.time(), clientCert, certHash)}
 		self.checkAddr = {}
 		self.servPubKey = str(self.Parent.servPubKey)
+		self.servPubKeyHash = self.Parent.servPubKeyHash
 		self.servPrvKey = str(self.Parent.servPrvKey)
 		#print [self.servPrvKey, self.servPubKey]
 		try :
@@ -69,6 +68,26 @@ class ServerDaemon():
 				thisItem = item
 		return exist, thisItem
 
+	def checkMultiple(self, certHash):
+		try :
+			res1 = False; res2 = False
+			## TODO : mutex lock
+			for item in self.currentSessionID.itervalues() :
+				if certHash == item[3] :
+					res1 = True
+					break
+			for item in self.checkAddr.itervalues() :
+				if certHash == item[3] :
+					res2 = True
+					break
+			## mutex unlock
+			res = res1 or res2
+		except RuntimeError, err :
+			print '[in checkMultiple() ServerDaemon]: ', err
+			res = None
+		finally : pass
+		return res
+
 	def clientRegAnswer(self, clientAnswer = ''):
 		#print clientAnswer.decode('base64'), '-- CA'
 		decrypt = prvKeyDecrypted(clientAnswer.decode('base64'), self.servPrvKey)
@@ -79,18 +98,21 @@ class ServerDaemon():
 			## TODO : mutex lock
 			policy = readCashPolicy(self.checkAddr[_id][2], self.Parent.Policy.Current)
 			self.currentSessionID[self.checkAddr[_id][0]] = \
-				(_id, policy, None, hashKey(self.checkAddr[_id][2]))
+				(_id, policy, None, self.checkAddr[_id][3])
 			del self.checkAddr[_id]
 			# clean delayed address
-			delayed = []
-			try :
-				for key in self.checkAddr.keys() :
-					if (self.checkAddr[key][1] + TIMEOUT - 1.0) < time.time() :
-						delayed.append(key)
-				for key in delayed : del self.checkAddr[key]
-			except RuntimeError, err :
+			key = True
+			while key :
+				delayed = []
+				try :
+					for key in self.checkAddr.keys() :
+						if (self.checkAddr[key][1] + TIMEOUT - 1.0) < time.time() :
+							delayed.append(key)
+					for key in delayed : del self.checkAddr[key]
+					key = False
+				except RuntimeError, err :
 					print '[in clientRegAnswer() ServerDaemon]: ', err
-			finally : pass
+				finally : pass
 			## mutex unlock
 			return xmlrpclib.Boolean(True)
 		else :
@@ -104,16 +126,21 @@ class ServerDaemon():
 		'''
 		#print [clientIP, clientCert, certHash], '-- session'
 		if clientIP not in self.currentSessionID and certHash == hashKey(clientCert):
-			_id = randomString(DIGITS_LENGTH)
-			#print [_id, self.serverState, str(self.Parent.previousState)]
-			_str = ''.join((_id, randomString(DIGITS_LENGTH), str(self.serverState), \
-							randomString(DIGITS_LENGTH), str(self.Parent.previousState)))
-			encrypted = pubKeyEncrypted(_str, clientCert)
-			#print [encrypted, self.servPubKey, hashKey(self.servPubKey)], '-- before join'
-			data = ''.join((encrypted, 'SERVER_PUB_KEY:', self.servPubKey, 'HASH:', hashKey(self.servPubKey)))
-			self.checkAddr[_id] = (clientIP, time.time(), clientCert)
+			multiple = None
+			while multiple is None :
+				multiple = self.checkMultiple(certHash)
+			if not multiple :
+				_id = randomString(DIGITS_LENGTH)
+				#print [_id, self.serverState, str(self.Parent.previousState)]
+				_str = ''.join((_id, randomString(DIGITS_LENGTH), str(self.serverState), \
+								randomString(DIGITS_LENGTH), str(self.Parent.previousState)))
+				encrypted = pubKeyEncrypted(_str, clientCert)
+				#print [encrypted, self.servPubKey, self.servPubKeyHash], '-- before join'
+				data = ''.join((encrypted, 'SERVER_PUB_KEY:', self.servPubKey, 'HASH:', self.servPubKeyHash))
+				self.checkAddr[_id] = (clientIP, time.time(), clientCert, certHash)
+			else : data = 'ATTENTION:_MULTIPLE_CONNECT'
 		else :
-			data = 'ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY'
+			data = 'ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY\n(IP in use OR received brocken data.)'
 			## TODO : make the check available clientIP
 		#print [data], ' data'
 		return xmlrpclib.Binary(data)

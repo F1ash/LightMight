@@ -154,6 +154,7 @@ class MainWindow(QtGui.QMainWindow):
 		with open(pubKeyPath, 'rb') as f :
 			_str = f.read()
 			self.servPubKey = _str.encode('utf-8')
+			self.servPubKeyHash = hashKey(self.servPubKey)
 		with open(prvKeyPath, 'rb') as f :
 			_str = f.read()
 			self.servPrvKey = _str.encode('utf-8')
