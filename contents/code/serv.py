@@ -140,7 +140,7 @@ class ServerDaemon():
 				self.checkAddr[_id] = (clientIP, time.time(), clientCert, certHash)
 			else : data = 'ATTENTION:_MULTIPLE_CONNECT'
 		else :
-			data = 'ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY\n(IP in use OR received brocken data.)'
+			data = 'ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY'
 			## TODO : make the check available clientIP
 		#print [data], ' data'
 		return xmlrpclib.Binary(data)

@@ -69,15 +69,21 @@ class DataCache(QThread):
 						self.clnt._shutdown()
 						break
 					if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
-						''' brocken contact '''
+						''' brocken contact 
 						self.USERS[itemValue[0]] = (itemValue[1][0], \
 													itemValue[1][1], \
 													itemValue[1][2], \
 													itemValue[1][3], \
 													'error', \
 													True)
-						self.Obj.menuTab.searchItem(itemValue[0])
+						self.Obj.menuTab.searchItem(itemValue[0])'''
 						self.clnt._shutdown()
+						## delete dead contact
+						self.Obj.delContact(None, \
+											currAddr, \
+											unicode(itemValue[1][2]), \
+											None, \
+											None)
 						continue
 					sessionID_ = self.Obj.serverThread.Obj.currentSessionID[currAddr][0]
 					_keyHash = self.Obj.serverThread.Obj.currentSessionID[currAddr][3]

@@ -19,7 +19,8 @@ class xr_client:
 			pref = self.Parent
 		self.servPrvKey = pref.servPrvKey
 		self.servPubKey = pref.servPubKey
-		self.servPubKeyHash = pref.servPubKeyHash
+		self.servPubKeyHash = pref.servPubKeyHash if hasattr(pref, 'servPubKeyHash') \
+												  else hashKey(self.servPubKey)
 		#print [self.servPrvKey, self.servPubKey]
 		self.TLS = False #TLS
 		#print self.servaddr, ' clnt '
@@ -107,7 +108,7 @@ class xr_client:
 				self.sendErrorString('[in getSessionID() clnt.py ] AddressMissMatch : ' + str(err))
 				return False
 			if rndString.startswith('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY') :
-				self.sendErrorString('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY')
+				self.sendErrorString('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY\n(IP in use OR received brocken data.)')
 				return False
 			#print [rndString], '-- server answer'
 			answer = rndString.split('SERVER_PUB_KEY:')
