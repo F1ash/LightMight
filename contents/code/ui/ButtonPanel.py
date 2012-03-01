@@ -5,7 +5,7 @@ from ToolsThread import ToolsThread
 from ListingText import ListingText
 from clnt import xr_client
 from Functions import Path
-import os, string
+import os
 
 class ButtonPanel(QtGui.QWidget):
 	# custom signal
@@ -75,7 +75,7 @@ class ButtonPanel(QtGui.QWidget):
 			return None
 		with open(path_) as f :
 			for line in f :
-				s = string.split(line, '<||>')
+				s = line.split('<||>')
 				if s[0] == '1' :
 					self.maskSet[int(unicode(str(s[3].decode('utf-8')).replace('\n', '')))] = \
 												(int(unicode(str(s[0].decode('utf-8')).replace('\n', ''))), \
@@ -92,9 +92,11 @@ class ButtonPanel(QtGui.QWidget):
 		if not os.path.isfile(pubKeyPath) or not os.path.isfile(prvKeyPath) :
 			createCertificate()
 		with open(pubKeyPath, 'rb') as f :
-			self.servPubKey = f.read()
+			_str = f.read()
+			self.servPubKey = _str.encode('utf-8')
 		with open(prvKeyPath, 'rb') as f :
-			self.servPrvKey = f.read()
+			_str = f.read()
+			self.servPrvKey = _str.encode('utf-8')
 
 	def startJob(self):
 		self.startButton.hide()

@@ -7,6 +7,7 @@ import M2Crypto as MC
 from Path import Path
 
 SESSION_MISMATCH = -12
+SERVER_STATE_MISMATCH = -13
 
 def mix(): return random.randint(0, 1)
 

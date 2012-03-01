@@ -237,17 +237,17 @@ class xr_client:
 			self.sendErrorString(str_, self.avatarFileName)
 		return self.avatarFileName
 
-	def getAccess(self, sessionID = ''):
+	def getAccess(self, sessionID = '', remoteServerState = ''):
 		try :
 			str_ = ''
 			if writeSocketReady(self.s.socket, self.s.timeout) :
-				access = self.s.accessRequest(sessionID)
+				access = self.s.accessRequest(sessionID, remoteServerState)
 			else :
 				str_ == '[in getAccess() clnt.py ] Socket_Not_Ready'
 				access = -1
 		except AttributeError, err :
-			self.sendErrorString('[in getAccess() clnt.py ] SessionMisMatch : ' + str(err))
-			access = SESSION_MISMATCH
+			self.sendErrorString('[in getAccess() clnt.py ] AttributeError : ' + str(err))
+			access = -1
 		except socket.error, err :
 			str_ = '[in getAccess() clnt.py ] SocketError1 : ' + str(err)
 			access = -1
@@ -275,89 +275,78 @@ class xr_client:
 			self.sendErrorString(str_)
 		return access
 
-	def getSharedData(self, maskSet, downLoadPath, emitter, \
-					  remoteServerState = 'NOTHING', \
-					  sessionID = ''):
+	def getSharedData(self, maskSet, downLoadPath, emitter, sessionID = ''):
 		if len(maskSet) == 0 :
 			self.sendErrorString('Empty job. Upload canceled.')
-			emitter.complete.emit()
-			return None
-		# check remote server state
+			return False
+		# check remote server status
 		if not hasattr(self, 's') or not writeSocketReady(self.s.socket, self.s.timeout) :
 			self.sendErrorString('[in getSharedData()] Socket_Not_Ready')
-			emitter.complete.emit()
-			return None
-		if self.serverStart != remoteServerState :
-			str_ = 'Status of the remote server is changed or server is refused.\n Upload canceled.'
-			self.sendErrorString(str_)
-			emitter.complete.emit()
-			return None 
+			return False
 		# check access
 		access = self.s.checkAccess(sessionID).data
 		tempSessionID = randomString(DIGITS_LENGTH)
 		if access == 'ACCESS_ALLOWED' :
 			pass
 		elif access == 'ACCESS_DENIED' :
-			emitter.complete.emit()
 			self.sendErrorString('ACCESS_DENIED')
-			return None
+			return False
 		elif access.startswith('TEMPORARILY_ALLOWED_ACCESS:') :
 			self.sendErrorString('TEMPORARILY_ALLOWED_ACCESS')
 			tempSessionID = access.split(':')[1]
 			#print 'temporarySessionID', sessionID
 		else :
 			self.sendErrorString('ANSWER_INCORRECT')
-			return None
+			return False
 		# get shared sources
 		for i in maskSet.iterkeys() :
 			if maskSet[i][0] == 1 :
 				_path = os.path.join(downLoadPath, maskSet[i][1])
 				path, tail = os.path.split(_path)
 				#print downLoadPath, _path, i, ' clnt', path, tail
-				if not os.path.exists(path) :
-					try :
-						os.makedirs(path)
-					except IOError, err:
-						self.sendErrorString('[in getSharedData() clnt.py ] IOError : ' + str(err))
-						continue
-				with open(_path, "wb") as handle :
-					try :
+				try :
+					if not os.path.exists(path) : os.makedirs(path)
+				except IOError, err:
+					self.sendErrorString('[in getSharedData() clnt.py ] IOError : ' + str(err))
+					continue
+				try :
 						str_ = ''
-						if not(writeSocketReady(self.s.socket, self.s.timeout)) :
-							handle.close()
-							continue
-						handle.write(self.s.getSharedFile(str(i), sessionID, tempSessionID).data)
+						with open(_path, "wb") as handle :
+							if not(writeSocketReady(self.s.socket, self.s.timeout)) :
+								handle.close()
+								continue
+							handle.write(self.s.getSharedFile(str(i), sessionID, tempSessionID).data)
 						#print 'Downloaded : ', maskSet[i][1]
-					except AttributeError, err :
+				except AttributeError, err :
 						str_ = '[in getSharedData() clnt.py ] SessionMismatch : ' + str(err)
-						emitter.complete.emit()
 						self.sendErrorString(str_)
-						return None
-					except ProtocolError, err :
+						return False
+				except ProtocolError, err :
 						str_ = '[in getSharedData() clnt.py ] ProtocolError : ' + str(err)
 						"""print "A protocol error occurred"
 						print "URL: %s" % err.url
 						print "HTTP/HTTPS headers: %s" % err.headers
 						print "Error code: %d" % err.errcode
 						print "Error message: %s" % err.errmsg"""
-					except Fault, err :
+				except Fault, err :
 						str_ = '[in getSharedData() clnt.py ] FaultError : ' + str(err)
 						"""print "A fault occurred"
 						print "Fault code: %d" % err.faultCode
 						print "Fault string: %s" % err.faultString"""
-					except socket.error, err :
+				except socket.error, err :
 						str_ = '[in getSharedData() clnt.py ] SocketError1 : ' + str(err)
-					except socket.timeout, err :
+				except socket.timeout, err :
 						str_ = '[in getSharedData() clnt.py ] SocketError2 : ' + str(err)
-					finally :
+				finally :
 						handle.close()
 						self.sendErrorString(str_)
-					size_ = maskSet[i][2]
-					if size_ == 0 : size_ = 1
-					emitter.nextfile.emit(size_)
+				size_ = maskSet[i][2]
+				if size_ == 0 : size_ = 1
+				emitter.nextfile.emit(size_)
 		if self.s.getSharedFile('FINITA', sessionID, tempSessionID).data != 'OK' :
 			self.sendErrorString('Loading was completed incorrectly.')
-		emitter.complete.emit()
+			return False
+		return True
 
 	def sessionClose(self, sessionID = ''):
 		try :

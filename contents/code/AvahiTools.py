@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import dbus, gobject, avahi, time, os.path #, string
+import dbus, gobject, avahi, time, os.path
 from dbus import DBusException
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt4 import QtCore
-from Functions import randomString  #, toolTipsHTMLWrap, InCache
+from Functions import randomString
 
 class AvahiBrowser():
 	def __init__(self, obj = None, parent = None):
@@ -30,7 +30,6 @@ class AvahiBrowser():
 		self.USERS = self.obj.USERS
 
 	def extractValue(self, __str):
-		#_str_ = string.split(__str, '=')
 		_str_ = __str.split('=')
 		if len(_str_) > 1 :
 			str__ = _str_[1]
@@ -39,7 +38,6 @@ class AvahiBrowser():
 		return str__
 
 	def service_resolved(self, *args):
-		#str_ = string.join( avahi.txt_array_to_string_array(args[9]), '' )
 		str_ = ''.join( avahi.txt_array_to_string_array(args[9]))
 		domain = str(args[4])
 		'''print 'name:', unicode(args[2])

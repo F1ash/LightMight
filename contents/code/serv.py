@@ -149,10 +149,11 @@ class ServerDaemon():
 		if exist :
 				del self.currentSessionID[item[0]]
 
-	def accessRequest(self, sessionID = ''):
+	def accessRequest(self, sessionID = '', controlServerState = ''):
+		if controlServerState != self.serverState : return SERVER_STATE_MISMATCH
 		exist, item = self.sessionID_exist(str(sessionID))
 		if exist : return item[1][1]
-		return None
+		return SESSION_MISMATCH
 
 	def checkAccess(self, sessionID = ''):
 		exist, _item = self.sessionID_exist(str(sessionID))
@@ -189,6 +190,7 @@ class ServerDaemon():
 		if self.Parent.Policy.Blocked <= item[1] : return None
 		elif self.Parent.Policy.Confirm == item[1] :
 			if tempSessionID != item[2] : return None
+		#print [id_, sessionID, tempSessionID], 'upload request'
 		if id_.isalpha() and id_ == 'FINITA' :
 			newItem = (item[0], item[1], None, item[3])
 			self.currentSessionID[addr] = newItem
@@ -196,8 +198,13 @@ class ServerDaemon():
 		elif int(id_) in self.commonSetOfSharedSource :
 			fileName = self.commonSetOfSharedSource[int(id_)]
 			if os.path.isfile(fileName) :
-				with open(fileName, "rb") as handle :
-					return xmlrpclib.Binary(handle.read())
+				try :
+					with open(fileName, "rb") as handle :
+						return xmlrpclib.Binary(handle.read())
+				except IOError, err :
+					print '[in getSharedFile() ServerDaemon] IOError :', err
+				finally : pass
+			else : print fileName, 'not found'
 		# return empty data for not raising exception
 		# and not stopping download
 		return xmlrpclib.Binary('')

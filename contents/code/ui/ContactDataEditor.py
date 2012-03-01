@@ -149,7 +149,7 @@ class ContactDataEditor(QDialog):
 				_keyHash = self.Parent.Obj.serverThread.Obj.currentSessionID[addr][3]
 				sessionID = createEncryptedSessionID(sessionID_, _keyHash)
 			#print 'session:', [sessionID]
-			if sessionID != '' : access = self.clientThread.Obj.getAccess(sessionID)
+			if sessionID != '' : access = self.clientThread.Obj.getAccess(sessionID, self.serverState)
 		else :
 			## contact is a dead or brocken
 			self.Parent.Obj.showMSG('Contact is a dead or brocken.\nContact will be removed.')

@@ -144,12 +144,13 @@ class DataCache(QThread):
 					if res is not None :
 						if res : continue
 						else : break
-					self.clnt.serverState = unicode(itemValue[1][4])
+					serverState = unicode(itemValue[1][4])
 					#print [itemValue[1][4]], 'remote server state (Caching)'
 					sessionID_ = self.Obj.serverThread.Obj.currentSessionID[currAddr][0]
 					_keyHash = self.Obj.serverThread.Obj.currentSessionID[currAddr][3]
 					sessionID = createEncryptedSessionID(sessionID_, _keyHash)
-					if SESSION_MISMATCH == self.clnt.getAccess(sessionID) :
+					if self.clnt.getAccess(sessionID, serverState) \
+							in (SESSION_MISMATCH, SERVER_STATE_MISMATCH) :
 						deadClient.append((currAddr, currPort))
 					self.clnt._shutdown()
 			''' delete dead contact '''

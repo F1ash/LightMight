@@ -31,9 +31,18 @@ class ToolsThread(QThread):
 		sessionID_ = self.Parent.sessionID
 		_keyHash = self.Parent.pubKeyHash
 		sessionID = createEncryptedSessionID(sessionID_, _keyHash)
-		self.Obj.getSharedData(self.maskSet, downLoadPath, \
-							   self, self.Parent.currentRemoteServerState, \
-							   sessionID)
+		access = self.Obj.getAccess(sessionID, self.Parent.currentRemoteServerState)
+		if access == SESSION_MISMATCH :
+			self.Parent.errorString.emit('Session ID mismatched.\nRepeat, please.')
+		elif access == SERVER_STATE_MISMATCH :
+			self.Parent.errorString.emit('Server State mismatched.\nReinit self, please.')
+		elif access < 0 :
+			self.Parent.errorString.emit('Connect failed.\nRepeat, please.')
+		else :
+			if self.Obj.getSharedData(self.maskSet, downLoadPath, self, sessionID) :
+				self.Parent.errorString.emit('Success.')
+			else : self.Parent.errorString.emit('There are some problems in job.')
+		self.complete.emit()
 
 	def cache_now(self):
 		addr = self.Obj.servaddr
