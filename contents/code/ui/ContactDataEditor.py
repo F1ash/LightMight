@@ -136,7 +136,7 @@ class ContactDataEditor(QDialog):
 
 	def refreshRun(self):
 		self.disconnect(self.clientThread, SIGNAL('threadRunning'), self.refreshRun)
-		addr = str(self.key.split(':')[0])
+		addr, port = self.key.split(':')
 		sessionID = ''; access = -1
 		if hasattr(self.clientThread, 'runned') and self.clientThread.runned :
 			# get session ID if don`t it
@@ -150,9 +150,18 @@ class ContactDataEditor(QDialog):
 				sessionID = createEncryptedSessionID(sessionID_, _keyHash)
 			#print 'session:', [sessionID]
 			if sessionID != '' : access = self.clientThread.Obj.getAccess(sessionID)
+		else :
+			## contact is a dead or brocken
+			self.Parent.Obj.showMSG('Contact is a dead or brocken.\nContact will be removed.')
+			self.Parent.Obj.delContact(None, addr, port, None, None)
+			self.done(0)
 		self.clientThread._terminate()
 		if access > -1 :
 			text = 'My access in : ' + self.Parent.Obj.Policy.PolicyName[access]
+		elif SESSION_MISMATCH == access :
+			self.Parent.Obj.showMSG('Session ID mismatched.\nContact will be removed.')
+			self.Parent.Obj.delContact(None, addr, port, None, None)
+			self.done(0)
 		else :
 			text = 'My access in : Unknown'
 		self.myAccessLabel.setText(text)

@@ -14,7 +14,7 @@ from ListingText import ListingText
 from DataCache import DataCache
 from StatusBar import StatusBar
 
-if Path.platform == 'win':
+if Path.platform in ('win', 'apl'):
 	if ModuleExist.AvahiAvailable :
 		from BonjourTools import AvahiBrowser, AvahiService
 else:

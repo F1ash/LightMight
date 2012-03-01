@@ -43,7 +43,6 @@ class ServerDaemon():
 			self._srv.register_function(self.sessionClose, 'sessionClose')
 			self._srv.register_function(self.accessRequest, 'accessRequest')
 			self._srv.register_function(self.checkAccess, 'checkAccess')
-			self._srv.register_function(self.checkServerState, 'checkServerState')
 			self._srv.register_function(self.getSharedFile, 'getSharedFile')
 			self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
 			self._srv.register_function(self.requestAvatar, 'requestAvatar')
@@ -181,13 +180,6 @@ class ServerDaemon():
 				if address in self.Parent.serverThread.Obj.currentSessionID :
 					self.currentSessionID[address] = newItem
 		return xmlrpclib.Binary('ACCESS_DENIED')
-
-	def checkServerState(self, sessionID = '', controlServerState = ''):
-		exist, _item = self.sessionID_exist(str(sessionID))
-		if not exist : return xmlrpclib.Boolean(False)
-		if controlServerState != self.serverState :
-			return xmlrpclib.Boolean(False)
-		else : return xmlrpclib.Boolean(True)
 
 	def getSharedFile(self, id_, sessionID = '', tempSessionID = ''):
 		exist, _item = self.sessionID_exist(str(sessionID))

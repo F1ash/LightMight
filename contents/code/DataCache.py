@@ -6,6 +6,8 @@ from Functions import *
 from clnt import xr_client
 import os.path, threading
 
+TIMEOUT_CACHE = 2*1000*int(TIMEOUT)
+
 class DataCache(QThread):
 	newItem = pyqtSignal(unicode)
 	def __init__(self, userList = {}, parent = None):
@@ -21,7 +23,25 @@ class DataCache(QThread):
 		while self.Key :
 			t = threading.Thread(target = self.initRefill)
 			t.start()
-			self.msleep(30000)
+			self.msleep(TIMEOUT_CACHE)
+
+	def initCheckCilent(self, currAddr, currPort, tls, deadClient):
+		res = None
+		if hasattr(self, 'clnt') : del self.clnt; self.clnt = None
+		#print 'caching:', unicode(itemValue[1][1]), unicode(itemValue[1][2]), tls, '--', itemValue[0]
+		self.clnt = xr_client(addr = currAddr, \
+							  port = currPort, \
+							  parent = self, \
+							  TLS = tls)
+		if self.Key :
+			if not self.clnt.run() :
+				deadClient.append((currAddr, currPort))
+				self.clnt._shutdown()
+				res = True
+		else :
+			self.clnt._shutdown()
+			res = False
+		return res
 
 	def initRefill(self):
 		#print 'new cache loop'
@@ -29,62 +49,37 @@ class DataCache(QThread):
 		self.runState = True
 		self.Key = True
 		try :
+			deadClient = []
 			for itemValue in self.USERS.iteritems() :
 				#print itemValue, '-- current item in USERS for caching'
+				currAddr = unicode(itemValue[1][1])
+				currPort = unicode(itemValue[1][2])
+				tls = True if itemValue[1][3] == 'Yes' else False
 				if self.Key and not itemValue[1][5] :
 					""" call for fill clients data """
-					if itemValue[1][3] == 'Yes' :
-						value = True
-					else :
-						value = False
-					#print 'caching:', unicode(itemValue[1][1]), unicode(itemValue[1][2]), value, '--', itemValue[0]
-					currAddr = unicode(itemValue[1][1])
-					if hasattr(self, 'clnt') : del self.clnt; self.clnt = None
-					self.clnt = xr_client(addr = currAddr, \
-									port = unicode(itemValue[1][2]), \
-									parent = self, \
-									TLS = value)
-					self.clnt.serverState = itemValue[1][4]
-					#print itemValue[1][4], 'remote server state'
-					if self.Key :
-						if not self.clnt.run() :
-							## delete dead contact
-							self.Obj.delContact(None, \
-												currAddr, \
-												unicode(itemValue[1][2]), \
-												None, \
-												None)
-					else :
-						self.clnt._shutdown()
-						break
-					if not hasattr(self.clnt, 'runned') or not self.clnt.runned :
-						self.clnt._shutdown()
-						continue
+					res = self.initCheckCilent(currAddr, currPort, tls, deadClient)
+					if res is not None :
+						if res : continue
+						else : break
 					# get session ID if don`t it
 					#print self.Obj.serverThread.Obj.currentSessionID, '\n', currAddr, 'Runned:', runned
-					if self.Key and hasattr(self.Obj, 'serverThread') and self.Obj.serverThread is not None \
-								and currAddr not in self.Obj.serverThread.Obj.currentSessionID :
-						self.clnt.getSessionID(self.Obj.server_addr)
+					if self.Key :
+						if not hasattr(self.Obj, 'serverThread') or self.Obj.serverThread is None :
+							self.clnt._shutdown()
+							continue
+						if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
+							self.clnt.getSessionID(self.Obj.server_addr)
+							if self.clnt.serverState != itemValue[1][4] :
+								deadClient.append((currAddr, currPort))
+								continue
 					else :
 						self.clnt._shutdown()
 						break
 					if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
-						''' brocken contact 
-						self.USERS[itemValue[0]] = (itemValue[1][0], \
-													itemValue[1][1], \
-													itemValue[1][2], \
-													itemValue[1][3], \
-													'error', \
-													True)
-						self.Obj.menuTab.searchItem(itemValue[0])'''
-						self.clnt._shutdown()
-						## delete dead contact
-						self.Obj.delContact(None, \
-											currAddr, \
-											unicode(itemValue[1][2]), \
-											None, \
-											None)
+						deadClient.append((currAddr, currPort))
 						continue
+					if self.clnt.serverState == '' : self.clnt.serverState = unicode(itemValue[1][4])
+					#print [itemValue[1][4]], 'remote server state (Caching)'
 					sessionID_ = self.Obj.serverThread.Obj.currentSessionID[currAddr][0]
 					_keyHash = self.Obj.serverThread.Obj.currentSessionID[currAddr][3]
 					sessionID = createEncryptedSessionID(sessionID_, _keyHash)
@@ -140,8 +135,28 @@ class DataCache(QThread):
 				elif self.Key is False :
 					#print 'cache key is locked...'
 					break
+				else :
+					''' check the state of the online and cached contacts '''
+					if currAddr not in self.Obj.serverThread.Obj.currentSessionID :
+						deadClient.append((currAddr, currPort))
+						continue
+					res = self.initCheckCilent(currAddr, currPort, tls, deadClient)
+					if res is not None :
+						if res : continue
+						else : break
+					self.clnt.serverState = unicode(itemValue[1][4])
+					#print [itemValue[1][4]], 'remote server state (Caching)'
+					sessionID_ = self.Obj.serverThread.Obj.currentSessionID[currAddr][0]
+					_keyHash = self.Obj.serverThread.Obj.currentSessionID[currAddr][3]
+					sessionID = createEncryptedSessionID(sessionID_, _keyHash)
+					if SESSION_MISMATCH == self.clnt.getAccess(sessionID) :
+						deadClient.append((currAddr, currPort))
+					self.clnt._shutdown()
+			''' delete dead contact '''
+			for addr, port in deadClient :
+				self.Obj.delContact(None, addr, port, None, None)
 		except RuntimeError, err :
-			print '[in initRefill() DataCache]:', err
+			print '[in initRefill() DataCache] RuntimeError :', err
 			if hasattr(self, 'clnt') : self.clnt._shutdown()
 		finally : pass
 		self.runState = False

@@ -40,41 +40,52 @@ class CommonSettingsShield(QtGui.QDialog):
 		self.runTrayCheck.setCheckState(value)
 		form.addWidget(self.runTrayCheck, 3, 3)
 
+		self.showErrorsLabel = QtGui.QLabel('Show all Error Messages :')
+		form.addWidget(self.showErrorsLabel, 4, 0)
+
+		self.showErrorsCheck = QtGui.QCheckBox()
+		if InitConfigValue(self.Obj.Settings, 'ShowAllErrors', 'False') == 'True' :
+			value = QtCore.Qt.Checked
+		else:
+			value = QtCore.Qt.Unchecked
+		self.showErrorsCheck.setCheckState(value)
+		form.addWidget(self.showErrorsCheck, 4, 3)
+
 		self.useCacheLabel = QtGui.QLabel('Use Cache :')
-		form.addWidget(self.useCacheLabel, 4, 0)
+		form.addWidget(self.useCacheLabel, 5, 0)
 
 		self.sizeCacheLabel = QtGui.QLabel('Cache Size:')
-		form.addWidget(self.sizeCacheLabel, 5, 0, 6, 1)
+		form.addWidget(self.sizeCacheLabel, 6, 0, 7, 1)
 
 		value = InitConfigValue(self.Obj.Settings, 'CacheSize', '100')
 		self.sizeCacheValueLabel = QtGui.QLabel(str(int(value)/100.00) + ' MB')
 		self.sizeCacheValueLabel.setMinimumWidth(75)
-		form.addWidget(self.sizeCacheValueLabel, 5, 1, 6, 1)
+		form.addWidget(self.sizeCacheValueLabel, 6, 1, 7, 1)
 
 		self.sizeCacheSlider = QtGui.QSlider()
 		self.sizeCacheSlider.setOrientation(QtCore.Qt.Horizontal)
 		self.sizeCacheSlider.setRange(0, 1000)
 		self.sizeCacheSlider.setValue(int(value))
 		self.sizeCacheSlider.valueChanged.connect(self.valueSizeCacheChange)
-		form.addWidget(self.sizeCacheSlider, 5, 2, 6, 4)
+		form.addWidget(self.sizeCacheSlider, 6, 2, 7, 4)
 
 		self.cleanCacheLabel = QtGui.QLabel('Clean Cache :')
-		form.addWidget(self.cleanCacheLabel, 13, 0)
+		form.addWidget(self.cleanCacheLabel, 14, 0)
 
 		self.cleanAllButton = QtGui.QPushButton('&All')
 		self.cleanAllButton.setMaximumWidth(75)
 		self.cleanAllButton.setToolTip('Clean all cached data')
 		self.connect(self.cleanAllButton, QtCore.SIGNAL('clicked()'), self.cleanAllData)
-		form.addWidget(self.cleanAllButton, 13, 1)
+		form.addWidget(self.cleanAllButton, 14, 1)
 
 		self.cleanAbsentButton = QtGui.QPushButton('A&bsent')
 		self.cleanAbsentButton.setMaximumWidth(75)
 		self.cleanAbsentButton.setToolTip('Clean cached data of absent participant')
 		self.connect(self.cleanAbsentButton, QtCore.SIGNAL('clicked()'), self.cleanAbsentParticipantData)
-		form.addWidget(self.cleanAbsentButton, 13, 2)
+		form.addWidget(self.cleanAbsentButton, 14, 2)
 
 		self.policyLabel = QtGui.QLabel('Common policy')
-		form.addWidget(self.policyLabel, 14, 0)
+		form.addWidget(self.policyLabel, 15, 0)
 
 		self.policySelect = QtGui.QComboBox()
 		currentCommonPolicy = InitConfigValue(self.Obj.Settings, 'CommonPolicy', 'Blocked')
@@ -82,17 +93,17 @@ class CommonSettingsShield(QtGui.QDialog):
 		self.policySelect.addItem(QtGui.QIcon(), 'Confirm')
 		self.policySelect.addItem(QtGui.QIcon(), 'Blocked')
 		self.policySelect.setCurrentIndex(self.policySelect.findText(currentCommonPolicy))
-		form.addWidget(self.policySelect, 14, 2)
+		form.addWidget(self.policySelect, 15, 2)
 
 		self.okButton = QtGui.QPushButton('&Ok')
 		self.okButton.setMaximumWidth(75)
 		self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
-		form.addWidget(self.okButton, 15, 2)
+		form.addWidget(self.okButton, 16, 2)
 
 		self.cancelButton = QtGui.QPushButton('&Cancel')
 		self.cancelButton.setMaximumWidth(75)
 		self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-		form.addWidget(self.cancelButton, 15, 3)
+		form.addWidget(self.cancelButton, 16, 3)
 
 		self.useCacheCheck = QtGui.QCheckBox()
 		if InitConfigValue(self.Obj.Settings, 'UseCache', 'True') == 'True' :
@@ -101,7 +112,7 @@ class CommonSettingsShield(QtGui.QDialog):
 			value = QtCore.Qt.Unchecked
 		self.useCacheCheck.stateChanged.connect(self.cacheSettingsHide_n_Show)
 		self.useCacheCheck.setCheckState(value)
-		form.addWidget(self.useCacheCheck, 4, 3)
+		form.addWidget(self.useCacheCheck, 5, 3)
 
 		self.setLayout(form)
 		self.cacheSettingsHide_n_Show(value)
@@ -162,6 +173,11 @@ class CommonSettingsShield(QtGui.QDialog):
 		else :
 			value = 'False'
 		self.Obj.Settings.setValue('RunInTray', value)
+		if self.showErrorsCheck.isChecked() :
+			value = 'True'
+		else :
+			value = 'False'
+		self.Obj.Settings.setValue('ShowAllErrors', value)
 		if self.useCacheCheck.isChecked() :
 			value = 'True'
 			self.Obj.Settings.setValue('CacheSize', str(self.sizeCacheSlider.value()))
@@ -174,4 +190,3 @@ class CommonSettingsShield(QtGui.QDialog):
 	def closeEvent(self, event):
 		event.ignore()
 		self.done(0)
-

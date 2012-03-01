@@ -6,6 +6,8 @@ import cStringIO as S
 import M2Crypto as MC
 from Path import Path
 
+SESSION_MISMATCH = -12
+
 def mix(): return random.randint(0, 1)
 
 def cB (*args, **kwrds):

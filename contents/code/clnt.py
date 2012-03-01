@@ -34,7 +34,7 @@ class xr_client:
 			str_ = ''
 			self.runned = False
 			Settings = self.Obj.Settings if hasattr(self, 'Obj') else self.Parent.Obj.Settings
-			#certificatePath = unicode(InitConfigValue(Settings, 'PathToCertificate', ''))
+			self.showErrorMSGs = True if 'True' == Settings.value('ShowAllErrors', 'False').toString() else False
 			self.s = SSLServerProxy(self.servaddr, self.TLS) #, certificatePath)
 			# self.methods = self.s.system.listMethods()
 			if not self.s.Ready :
@@ -52,9 +52,10 @@ class xr_client:
 			self.sendErrorString(str_)
 		return True if str_ == '' else False
 
-	def sendErrorString(self, str_ = '', fileName = None, show = True):
+	def sendErrorString(self, str_ = '', fileName = None, show_ = True):
 		if str_ != '' :
 			print str_
+			show = show_ if self.showErrorMSGs else False
 			if fileName is not None and os.path.isfile(fileName) :
 				os.remove(fileName)
 			if 'Obj' in dir(self) and self.Parent is None :
@@ -105,7 +106,7 @@ class xr_client:
 					self.sendErrorString('[in getSessionID()] Socket_Not_Ready')
 					return False
 			except AttributeError, err :
-				self.sendErrorString('[in getSessionID() clnt.py ] AddressMissMatch : ' + str(err))
+				self.sendErrorString('[in getSessionID() clnt.py ] AddressMisMatch : ' + str(err))
 				return False
 			if rndString.startswith('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY') :
 				self.sendErrorString('ATTENTION:_REINIT_SERVER_FOR_MORE_STABILITY\n(IP in use OR received brocken data.)')
@@ -241,10 +242,12 @@ class xr_client:
 			str_ = ''
 			if writeSocketReady(self.s.socket, self.s.timeout) :
 				access = self.s.accessRequest(sessionID)
-			else : str_ == '[in getAccess() clnt.py ] Socket_Not_Ready'
+			else :
+				str_ == '[in getAccess() clnt.py ] Socket_Not_Ready'
+				access = -1
 		except AttributeError, err :
-			self.sendErrorString('[in getAccess() clnt.py ] SessionMissMatch : ' + str(err))
-			access = -1
+			self.sendErrorString('[in getAccess() clnt.py ] SessionMisMatch : ' + str(err))
+			access = SESSION_MISMATCH
 		except socket.error, err :
 			str_ = '[in getAccess() clnt.py ] SocketError1 : ' + str(err)
 			access = -1
@@ -284,7 +287,7 @@ class xr_client:
 			self.sendErrorString('[in getSharedData()] Socket_Not_Ready')
 			emitter.complete.emit()
 			return None
-		if not self.s.checkServerState(sessionID, remoteServerState) :
+		if self.serverStart != remoteServerState :
 			str_ = 'Status of the remote server is changed or server is refused.\n Upload canceled.'
 			self.sendErrorString(str_)
 			emitter.complete.emit()
