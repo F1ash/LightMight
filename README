@@ -6,8 +6,7 @@ Dependencies :
     dbus-python
     avahi
     avahi-ui-tools (python-avahi in Ubuntu)
-    avahi-compat-libdns_sd (Fedora name)
-    m2crypto
+    m2crypto (Ubuntu name is a python-m2crypto)
 
 Paths and files:
     Configuration file :
@@ -34,8 +33,9 @@ file resources in local network.
         http://support.apple.com/en_US/downloads/#bonjour%20for%20windows
     M2Crypto for Win :
         http://chandlerproject.org/pub/Projects/MeTooCrypto/M2Crypto-0.21.1.win32-py2.7.msi
+        (x86_64 build not found)
 
 Tested on :
     Fedora 14/15/16
     Kubuntu 11.04/10
-    Windows7 (Avahi\Bonjour is not working properly)
+    Windows7

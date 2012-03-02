@@ -1,10 +1,10 @@
 Name: LightMight
-Version: 0.19.37
+Version: 0.21.39
 Release: 1%{?dist}
 Summary: Programm for resource publication and transmission in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
 Group: Applications/Network
-License: GPL
+License: GPL2+
 Source0: %{name}-%{version}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: https://github.com/F1ash/LightMight
@@ -84,7 +84,12 @@ fi
 
 %changelog
 
+* Fri Mar 02 2012 Fl@sh <kaperang07@gmail.com> - 0.21.39-1
+- deleted added avahi-compat-libdns_sd require;
+- version updated
+
 * Sun Feb 26 2012 Fl@sh <kaperang07@gmail.com> - 0.19.37-1.R
+- added m2crypto & deleted openssl requires;
 - version updated
 
 * Mon Dec 5 2011 Fl@sh <kaperang07@gmail.com> - 0.18.35-1.R
