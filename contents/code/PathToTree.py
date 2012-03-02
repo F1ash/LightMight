@@ -75,14 +75,17 @@ class SharedSourceTree2XMLFile:
 
 		#print self.doc.toprettyxml()
 		try :
-			f = open(Path.multiPath(Path.tempStruct, 'server', self.fileName), 'wb')
-			#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
-			self.doc.writexml(f, encoding = 'utf-8')
-		except UnicodeError :
-			print '[SharedSourceTree2XMLFile.filePrepare() : File not saved['
+			fileName = Path.multiPath(Path.tempStruct, 'server', self.fileName)
+			with open(fileName, 'wb') as f :
+				#f.write(doc.toprettyxml())   ## без доп параметров неправильно отображает дерево
+				self.doc.writexml(f, encoding = 'utf-8')
+			#with open(fileName, 'rb') as f :
+			#	print 'Create item File %s :\n%s\n---END---\n' % (fileName, f.read())
+		except UnicodeError , err:
+			print '[SharedSourceTree2XMLFile.filePrepare() : File not saved]', err
 		except IOError, err :
 			print '[in SharedSourceTree2XMLFile.filePrepare()] IOError:', err
-		f.close()
+		finally : pass
 		self.doc.unlink()
 
 	def treeSharedDataToXML(self, obj, prefix = '', tab = '\t'):

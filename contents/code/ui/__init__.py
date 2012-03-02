@@ -37,12 +37,11 @@ class MainWindow(QtGui.QMainWindow):
 	# custom signals
 	errorString = QtCore.pyqtSignal(str)
 	commonSet = QtCore.pyqtSignal(dict)
-	startServer = QtCore.pyqtSignal()
 	uploadSignal = QtCore.pyqtSignal(QtCore.QString)
 	contactMessage = QtCore.pyqtSignal(QtCore.QString, QtCore.QString)
 	changeConnectState = QtCore.pyqtSignal()
 	cacheDown = QtCore.pyqtSignal()
-	serverDown = QtCore.pyqtSignal(str)
+	serverDown = QtCore.pyqtSignal(str, str)
 	serverDOWN = QtCore.pyqtSignal(str, str)
 	initServeR = QtCore.pyqtSignal(TreeModel, str, str, bool)
 	reinitServer = QtCore.pyqtSignal()
@@ -128,7 +127,6 @@ class MainWindow(QtGui.QMainWindow):
 
 		self.errorString.connect(self.showMSG)
 		self.commonSet.connect(self.preProcessingComplete)
-		self.startServer.connect(self.initServerComplete)
 		self.uploadSignal.connect(self.uploadTask)
 		self.contactMessage.connect(self.receiveBroadcastMessage)
 		self.changeConnectState.connect(self.initAvahiBrowser)
@@ -314,7 +312,7 @@ class MainWindow(QtGui.QMainWindow):
 	def cacheS(self):
 		print 'Cache down signal received'
 
-	def initAvahiBrowser(self, *args):
+	def initAvahiBrowser(self):
 		if str(self.Settings.value('AvahiDetect', 'True').toString())=='True' and 'avahiBrowser' not in dir(self):
 			print 'Use Avahi'
 			if ModuleExist.AvahiAvailable and 'avahiBrowser' not in dir(self) :
@@ -417,45 +415,36 @@ class MainWindow(QtGui.QMainWindow):
 	def initServer(self, sharedSourceTree = None, \
 						 loadFile = None, previousState = '', \
 						 restart = False):
+		#print 'FN:%s\nPS:%s\nR:%s' % (loadFile, previousState, restart)
 		self.previousState = previousState
 		self.menuTab.progressBar.show()
 		if 'serverThread' in dir(self) and restart :
+			''' restart (old state) '''
 			treeModel = sharedSourceTree
 			firstRun = False
 			del self.serverThread
 			self.serverThread = None
+			self.serverState = self.previousState
 		elif 'serverThread' in dir(self) :
+			''' reinit (new state) '''
 			treeModel = sharedSourceTree
 			firstRun = False
 			del self.serverThread
 			self.serverThread = None
+			self.serverState = randomString(DIGITS_LENGTH)
 		else :
+			''' init (last state if it saved) '''
 			treeModel = TreeModel('Name', 'Description')
 			firstRun = True
-		self.serverReady = 0
-		#certificatePath = InitConfigValue(self.Settings, 'PathToCertificate', '')
-		#print str(self.certificatePath)
-		if 'True' == str(InitConfigValue(self.Settings, 'UseTLS', 'False')) :#and self.certificatePath != '' :
-			self.TLS = True
-		else :
-			self.TLS = False
-		print self.TLS, '  <--- using TLS'
-		self.serverThread = ToolsThread(\
-										ServerDaemon( (self.server_addr, self.server_port), \
-													self.commonSetOfSharedSource, \
-													self, \
-													TLS = self.TLS, \
-													cert = None, \
-													restart = restart), \
-										parent = self)
+			lastServerState = str(InitConfigValue(self.Settings, 'LastServerState', ''))
+			#print [lastServerState]
+			if lastServerState != '' : self.serverState = lastServerState
+			else : self.serverState = randomString(DIGITS_LENGTH)
 
 		""" create file of SharedResurces Structure """
 		if firstRun :
-			lastServerState = str(InitConfigValue(self.Settings, 'LastServerState', ''))
-			#print [lastServerState]
 			path_ = Path.config('lastSharedSource')
 			if lastServerState != '' and os.path.exists(path_) :
-				self.serverState = lastServerState
 				shutil.move(path_, Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState))
 			else :
 				S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
@@ -467,13 +456,15 @@ class MainWindow(QtGui.QMainWindow):
 		else :
 			S = SharedSourceTree2XMLFile('sharedSource_' + self.serverState, treeModel.rootItem)
 			S.__del__(); S = None
+		self.serverReinited = firstRun
 
 		""" creating match dictionary {number : fileName} """
 		treeModel = TreeModel('Name', 'Description')		## cleaned treeModel.rootItem
-
-		self.serverReinited = not restart
+		pathToLoadFile = Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState)
+		#with open(pathToLoadFile, 'rb') as f :
+		#	print '%s consist :\n%s\n---END---' % (pathToLoadFile, f.read())
 		self.threadSetupTree = SetupTree(TreeProcessing(), \
-										[Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.serverState)], \
+										[pathToLoadFile], \
 										treeModel, \
 										self, \
 										True, \
@@ -481,20 +472,24 @@ class MainWindow(QtGui.QMainWindow):
 		self.threadSetupTree.start()
 
 	def preProcessingComplete(self, commonSet = {}):
-		self.commonSetOfSharedSource = commonSet
-		#print len(self.commonSetOfSharedSource), ' commonSet.count '
 		""" this for server commonSet """
-		if hasattr(self, 'serverThread') and self.serverThread is not None :
-			self.serverThread.Obj.commonSetOfSharedSource = commonSet
-			self.serverReady += 1
-			if self.serverReady == 2 : self.serverStart()
-
-	def initServerComplete(self):
-		self.serverReady += 1
-		if self.serverReady == 2 : self.serverStart()
+		self.commonSetOfSharedSource = commonSet
+		#print len(self.commonSetOfSharedSource), ' commonSet.count \n' #, self.commonSetOfSharedSource
+		self.serverStart()
 
 	def serverStart(self):
-		if self.serverState != '' : self.serverThread.Obj.serverState = self.serverState
+		if 'True' == str(InitConfigValue(self.Settings, 'UseTLS', 'False')) :
+			self.TLS = True
+		else :
+			self.TLS = False
+		#print self.TLS, '  <--- using TLS'
+		self.serverThread = ToolsThread(\
+										ServerDaemon( (self.server_addr, self.server_port), \
+													self.commonSetOfSharedSource, \
+													self, \
+													TLS = self.TLS, \
+													cert = None), \
+										parent = self)
 		self.serverThread.start()
 		if self.serverReinited : self.preinitAvahiBrowser()
 		else : self.initAvahiService()

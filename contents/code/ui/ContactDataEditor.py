@@ -158,8 +158,8 @@ class ContactDataEditor(QDialog):
 		self.clientThread._terminate()
 		if access > -1 :
 			text = 'My access in : ' + self.Parent.Obj.Policy.PolicyName[access]
-		elif SESSION_MISMATCH == access :
-			self.Parent.Obj.showMSG('Session ID mismatched.\nContact will be removed.')
+		elif access in (SESSION_MISMATCH, SERVER_STATE_MISMATCH) :
+			self.Parent.Obj.showMSG('Contact is dead or brocken.\nIt will be removed.')
 			self.Parent.Obj.delContact(None, addr, port, None, None)
 			self.done(0)
 		else :

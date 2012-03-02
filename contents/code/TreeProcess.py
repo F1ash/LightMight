@@ -28,12 +28,10 @@ class TreeProcessing:
 					#print 'dom2 -- deleted'
 			except xml.parsers.expat.ExpatError , x:
 				datasource.close()
-				#возникает при неправильной кодировке имени файла (временно устранено)
+				#возникает при неправильной кодировке имени файла
 				print x, '\nОшибка в пути к файлу.'
-				showHelp = ListingText("MSG: Наличие некорректного имени каталога\файла.\nПриложение будет завершено.", main)
+				showHelp = ListingText("MSG: Incorrect path.\nData not parsing.", main)
 				showHelp.exec_()
-				print "App exit."
-				#app.exit(0)
 			except xml.sax._exceptions.SAXParseException, err :
 				print '[SAXParseException] :', str(err)
 				datasource.close()

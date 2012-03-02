@@ -17,8 +17,11 @@ class ToolsThread(QThread):
 
 	def run(self):
 		self.Obj.run()
-		self.emit(SIGNAL('threadRunning'), self.Parent)
 		self.runned = self.Obj.runned
+		''' NB : self.runned sets before the emit signal
+				 for correct checking of the client start
+		'''
+		self.emit(SIGNAL('threadRunning'), self.Parent)
 		if self.runned and self.flag == 'cache_now' :
 			self.cache_now()
 

@@ -30,26 +30,32 @@ class xr_client:
 			if not os.path.isdir(self.downLoadPath) : self.downLoadPath = Path.Temp
 
 	def run(self):
-		try :
-			str_ = ''
-			self.runned = False
-			Settings = self.Obj.Settings if hasattr(self, 'Obj') else self.Parent.Obj.Settings
-			self.showErrorMSGs = True if 'True' == Settings.value('ShowAllErrors', 'False').toString() else False
-			self.s = SSLServerProxy(self.servaddr, self.TLS) #, certificatePath)
-			# self.methods = self.s.system.listMethods()
-			if not self.s.Ready :
-				str_ = '[in run() clnt.py ] Client not runned\nRepeat action.'
-			else : self.runned = True
-		except socket.error, err :
-			str_ = '[in run() clnt.py] SocketError1 : ' + str(err)
-		except socket.timeout, err :
-			str_ = '[in run() clnt.py] SocketError2 : ' + str(err)
-		except Exception, err :
-			str_ = '[in run() clnt.py] XXX : ' + str(err)
-		except :
-			str_ = '[in run() clnt.py ] UnknownError'
-		finally :
-			self.sendErrorString(str_)
+		self.runned = False
+		Settings = self.Obj.Settings if hasattr(self, 'Obj') else self.Parent.Obj.Settings
+		self.showErrorMSGs = True if 'True' == Settings.value('ShowAllErrors', 'False').toString() else False
+		count, succ = Settings.value('Probes', '5').toUInt()
+		self.probeCount = count if succ else 5
+		i = 0
+		while i < self.probeCount :
+			try :
+				str_ = ''
+				self.s = SSLServerProxy(self.servaddr, self.TLS)
+				# self.methods = self.s.system.listMethods()
+				if not self.s.Ready :
+					str_ = '[in run() clnt.py ] Client not runned\nRepeat action.'
+				else :
+					self.runned = True
+					break
+			except socket.error, err :
+				str_ = '[in run() clnt.py] SocketError1 : ' + str(err)
+			except socket.timeout, err :
+				str_ = '[in run() clnt.py] SocketError2 : ' + str(err)
+			except Exception, err :
+				str_ = '[in run() clnt.py] XXX : ' + str(err)
+			except :
+				str_ = '[in run() clnt.py ] UnknownError'
+			finally : i += 1
+		self.sendErrorString(str_)
 		return True if str_ == '' else False
 
 	def sendErrorString(self, str_ = '', fileName = None, show_ = True):
@@ -312,9 +318,9 @@ class xr_client:
 				try :
 						str_ = ''
 						with open(_path, "wb") as handle :
-							if not(writeSocketReady(self.s.socket, self.s.timeout)) :
-								handle.close()
-								continue
+							#if not(writeSocketReady(self.s.socket, self.s.timeout)) :
+							#	handle.close()
+							#	continue
 							handle.write(self.s.getSharedFile(str(i), sessionID, tempSessionID).data)
 						#print 'Downloaded : ', maskSet[i][1]
 				except AttributeError, err :

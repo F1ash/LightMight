@@ -7,10 +7,9 @@ from clnt import xr_client
 
 class ServerDaemon():
 	def __init__(self, serveraddr = ('', 34000), commonSetOfSharedSource = None, \
-				 parent = None, TLS = False, cert = '', restart = False):
+				 parent = None, TLS = False, cert = ''):
 		self.Parent = parent
-		self.serverState = randomString(DIGITS_LENGTH) if not restart else self.Parent.previousState
-		self.Parent.serverState = self.serverState
+		self.serverState = self.Parent.serverState
 		self.commonSetOfSharedSource = commonSetOfSharedSource
 		## currentSessionID : set of registered client`s data
 		##	{remoteServerAddr : (sessionID, customPolicy, temporarilySessionID, certHash)}
@@ -46,9 +45,9 @@ class ServerDaemon():
 			self._srv.register_function(self.getSharedFile, 'getSharedFile')
 			self._srv.register_function(self.requestSharedSourceStruct, 'requestSharedSourceStruct')
 			self._srv.register_function(self.requestAvatar, 'requestAvatar')
-			self.Parent.startServer.emit()
 		else :
 			self._shutdown()
+			print 'Init server error. Probe to restart.'
 			self.Parent.showMSG(str(err) + '\nServer not runned.\nRestart it.')
 			if hasattr(self.Parent, 'threadSetupTree') :
 				self.Parent.initServeR.emit(self.Parent.threadSetupTree.treeModel, '', str(self.serverState), True)
@@ -197,6 +196,7 @@ class ServerDaemon():
 			return xmlrpclib.Binary('OK')
 		elif int(id_) in self.commonSetOfSharedSource :
 			fileName = self.commonSetOfSharedSource[int(id_)]
+			#print fileName, '\n\tin Set[%s]' % id_
 			if os.path.isfile(fileName) :
 				try :
 					with open(fileName, "rb") as handle :
@@ -204,7 +204,12 @@ class ServerDaemon():
 				except IOError, err :
 					print '[in getSharedFile() ServerDaemon] IOError :', err
 				finally : pass
-			else : print fileName, 'not found'
+			else :
+				#print fileName, 'not found'
+				pass
+		else :
+			#print id_, ' not in Set'
+			pass
 		# return empty data for not raising exception
 		# and not stopping download
 		return xmlrpclib.Binary('')
@@ -238,9 +243,11 @@ class ServerDaemon():
 		if hasattr(self, '_srv') : self._srv.shutdown()
 		print ' server terminated ...'
 		if str_.startswith('REINIT') :
+			#print 'Start parameters:\n\t%s\n\t%s' % (str_, loadFile)
 			self.Parent.serverDOWN.emit(self.serverState, loadFile)
 		elif str_.startswith('reStart') :
-			self.Parent.serverDown.emit(self.serverState)
+			#print 'Start parameters:\n\t%s\n\t%s' % (str_, loadFile)
+			self.Parent.serverDown.emit(self.serverState, loadFile)
 
 	def __del__(self):
 		self._shutdown()

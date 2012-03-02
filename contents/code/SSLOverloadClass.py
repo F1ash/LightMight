@@ -40,19 +40,12 @@ class SSLServerProxy(ServerProxy):
 			servaddr = 'http://' + _servaddr
 		ServerProxy.__init__(self, servaddr)
 
-		count = 0
-		self.Ready = True
+		self.Ready = False
 		_addr = _servaddr.split(':')
 		addr = (str(_addr[0]), int(_addr[1]))
-		while count < 10 :
-			self.socketInit(addr, False, certificatePath)
-			if writeSocketReady(self.socket, TIMEOUT) : break
-			count += 1
-		else :
-			self.Ready = False
-			return
-		self.timeout = TIMEOUT
-		self.socket.settimeout(self.timeout)
+		self.socketInit(addr, TLS, certificatePath)
+		if writeSocketReady(self.socket, TIMEOUT) :
+			self.Ready = True
 
 	def socketInit(self, addr, TLS = False, certificatePath = ''):
 		if TLS :
@@ -67,6 +60,8 @@ class SSLServerProxy(ServerProxy):
 			#print '   TLS used on client ...'
 		else :
 			self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.setblocking(1)
+		#self.socket.setblocking(1)
 		self.socket.connect(addr)
+		self.timeout = TIMEOUT
+		self.socket.settimeout(self.timeout)
 		#print ssl.get_server_certificate(addr, ssl_version = ssl.PROTOCOL_TLSv1)

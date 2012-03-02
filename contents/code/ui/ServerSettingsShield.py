@@ -231,7 +231,8 @@ class ServerSettingsShield(QtGui.QDialog):
 
 	@QtCore.pyqtSlot(str, str, name = 'preInitServer')
 	def preInitServer(self, str_ = '', fileName = ''):
-		print 'serverDown signal received'
+		print 'serverDOWN signal received'
+		#print 'Received parameters:\n\t%s\n\t%s' % (str_, loadFile)
 		self.saveData()
 		self.Obj.initServeR.emit(self.treeModel, fileName, str_, False)
 		self.done(0)

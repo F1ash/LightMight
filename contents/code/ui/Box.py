@@ -211,15 +211,16 @@ class Box(QtGui.QWidget):
 			self.sharedTree.show()
 
 	def restartServer(self):
-		self.Obj.saveTemporaryData()
+		#self.Obj.saveTemporaryData()
+		pathToLoadFile = Path.multiPath(Path.tempStruct, 'server', 'sharedSource_' + self.Obj.serverState)
 		if 'serverThread' in dir(self.Obj) :
-			self.Obj.stopServices(True, '', 'reStart')
+			self.Obj.stopServices(True, pathToLoadFile, 'reStart')
 		else : self.preStartServer('reStart:')
 
-	@QtCore.pyqtSlot(str, name = 'preStartServer')
-	def preStartServer(self, str_ = ''):
+	def preStartServer(self, str_ = '', loadFile = ''):
 		print 'serverDown signal received'
-		self.Obj.initServeR.emit(self.treeModel, '', str_, True)
+		#print 'Received parameters:\n\t%s\n\t%s' % (str_, loadFile)
+		self.Obj.initServeR.emit(self.treeModel, loadFile, str_, True)
 
 	def sentOfflinePost(self):
 		if str(self.Obj.Settings.value('BroadcastDetect', 'True').toString())=='True' :
