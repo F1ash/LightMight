@@ -4,7 +4,7 @@ Release: 1%{?dist}
 Summary: Programm for resource publication and transmission in local network
 Summary(ru): Программа для публикации и обмена ресурсами в локальной сети
 Group: Applications/Network
-License: GPL2+
+License: GPLv2+
 Source0: %{name}-%{version}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: https://github.com/F1ash/LightMight
@@ -62,8 +62,8 @@ desktop-file-validate %{buildroot}/%{_datadir}/applications/lightMight.desktop
 %{_datadir}/icons/hicolor/64x64/apps/%{name}.png
 %{_datadir}/pixmaps/%{name}.png
 %{_datadir}/applications/lightMight.desktop
-%{_datadir}/%{name}/contents/icons/*
-%{_datadir}/%{name}/contents/code/*
+#%{_datadir}/%{name}/contents/icons/*
+#%{_datadir}/%{name}/contents/code/*
 %{_datadir}/%{name}/*
 %dir %{_datadir}/%{name}
 
