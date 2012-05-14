@@ -233,7 +233,9 @@ def getIP():
 			if not error :
 				Addr = addr
 				break
-		if Addr not in ('', '0.0.0.0', '127.0.0.1') : break
+		if Addr not in ('', '0.0.0.0', '127.0.0.1') :
+			j = 0
+			break
 		elif j == 1 :
 			msg += 'Internet not available\n'
 		elif j == 2 :

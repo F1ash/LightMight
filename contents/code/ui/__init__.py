@@ -9,6 +9,7 @@ from Wait import SetupTree
 from ServerSettingsShield import ServerSettingsShield
 from ClientSettingsShield import ClientSettingsShield
 from CommonSettingsShield import CommonSettingsShield
+from ProxySettingsShield import ProxySettingsShield
 #from ColorSettingsShield import ColorSettingsShield
 from ListingText import ListingText
 from DataCache import DataCache
@@ -85,6 +86,10 @@ class MainWindow(QtGui.QMainWindow):
 		clientSettings.setStatusTip('Set the download path, etc.')
 		self.connect(clientSettings, QtCore.SIGNAL('triggered()'), self.showClientSettingsShield)
 
+		proxySettings = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'&Proxy Settings', self)
+		proxySettings.setStatusTip('Set proxy...')
+		self.connect(proxySettings, QtCore.SIGNAL('triggered()'), self.showProxySettingsShield)
+
 		#colorSettings = QtGui.QAction(QtGui.QIcon('..' + self.SEP + 'icons' + self.SEP + 'help.png'),'Color&Font and Background', self)
 		#colorSettings.setStatusTip('Set font color & background.')
 		#self.connect(colorSettings, QtCore.SIGNAL('triggered()'), self.showColorSettingsShield)
@@ -101,6 +106,7 @@ class MainWindow(QtGui.QMainWindow):
 		set_.addAction(commonSettings)
 		set_.addAction(serverSettings)
 		set_.addAction(clientSettings)
+		set_.addAction(proxySettings)
 		#set_.addAction(colorSettings)
 
 		help_ = menubar.addMenu('&Help')
@@ -139,7 +145,11 @@ class MainWindow(QtGui.QMainWindow):
 		self.StandBy = QtCore.QTimer()
 		self.StandBy.timeout.connect(self.checkNetwork)
 		self.StandBy.setInterval(20000)
-		self.NetworkState = 1	## 0 -- off; 1 -- on
+
+		## 0 -- off; 1 -- on
+		self.NetworkState = 1
+		self.runServer4Proxy = 0
+
 		self.restoredInitParameters = (None, None, '', False)
 		self.searchCertificate()
 		self.checkNetwork()
@@ -170,7 +180,7 @@ class MainWindow(QtGui.QMainWindow):
 	def receiveBroadcastMessage(self, data, addr):
 		if data.count('<||>') != 6 : return None	## ignore non-standart packets
 		mark, name, addr_in_data, port, encode, state, info = data.split('<||>', QtCore.QString.KeepEmptyParts)
-		#print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
+		print 'New request :', mark, QtCore.QString().fromUtf8(name), addr_in_data, port, encode, state, info
 		''' check correct IP for local network '''
 		if addr == addr_in_data :
 			if   mark == '1' : self.sentAnswer(addr); self.addNewContact(name, addr, port, encode, state, None, False)
@@ -402,6 +412,7 @@ class MainWindow(QtGui.QMainWindow):
 			self.StandBy.start()
 			return None
 		self.NetworkState = 1
+		self.runServer4Proxy = 1 if self.Settings.value('UseProxy', 'False')=='True' and not netState else 0
 		self.trayIconPixmap = QtGui.QPixmap('..' + self.SEP + 'icons' + self.SEP + 'tux_partizan.png')
 		self.trayIcon.setToolTip('LightMight')
 		self.trayIcon.setIcon(QtGui.QIcon(self.trayIconPixmap))
@@ -424,6 +435,8 @@ class MainWindow(QtGui.QMainWindow):
 			firstRun = False
 			del self.serverThread
 			self.serverThread = None
+			del self.serverPThread
+			self.serverPThread = None
 			self.serverState = self.previousState
 		elif 'serverThread' in dir(self) :
 			''' reinit (new state) '''
@@ -431,6 +444,8 @@ class MainWindow(QtGui.QMainWindow):
 			firstRun = False
 			del self.serverThread
 			self.serverThread = None
+			del self.serverPThread
+			self.serverPThread = None
 			self.serverState = randomString(DIGITS_LENGTH)
 		else :
 			''' init (last state if it saved) '''
@@ -476,6 +491,7 @@ class MainWindow(QtGui.QMainWindow):
 		self.commonSetOfSharedSource = commonSet
 		#print len(self.commonSetOfSharedSource), ' commonSet.count \n' #, self.commonSetOfSharedSource
 		self.serverStart()
+		self.serverPStart()
 
 	def serverStart(self):
 		if 'True' == str(InitConfigValue(self.Settings, 'UseTLS', 'False')) :
@@ -497,6 +513,25 @@ class MainWindow(QtGui.QMainWindow):
 		self.statusBar.showMessage('Server online')
 		self.menuTab.progressBar.hide()
 		self.menuTab.enableRestartButton(True)
+
+	def serverPStart(self):
+		if not self.runServer4Proxy : return None
+		self.serverP_addr = getExternalIP()
+		if self.serverP_addr == '' : return None
+		'''self.serverP_port = getFreePort(int(InitConfigValue(self.Settings, 'MinPort', '34000')), \
+										int(InitConfigValue(self.Settings, 'MaxPort', '34100')), \
+										'127.0.0.1')[1]
+		'''
+		self.serverP_port = self.server_port
+		print [self.serverP_addr, ':', self.serverP_port], 'proxied server address'
+		self.serverPThread = ToolsThread(\
+										ServerDaemon( ('127.0.0.1', self.serverP_port), \
+													self.commonSetOfSharedSource, \
+													self, \
+													TLS = self.TLS, \
+													cert = None), \
+										parent = self)
+		self.serverPThread.start()
 
 	def uploadTask(self, info):
 			Info = unicode(info)
@@ -580,6 +615,10 @@ class MainWindow(QtGui.QMainWindow):
 		_ServerSettingsShield.exec_()
 		self.serverDOWN.disconnect(_ServerSettingsShield.preInitServer)
 
+	def showProxySettingsShield(self):
+		_ProxySettingsShield = ProxySettingsShield(self)
+		_ProxySettingsShield.exec_()
+
 	'''def showColorSettingsShield(self):
 		_ColorSettingsShield = ColorSettingsShield(self)
 		_ColorSettingsShield.exec_()'''
@@ -647,6 +686,8 @@ class MainWindow(QtGui.QMainWindow):
 		finally : pass'''
 		if 'serverThread' in dir(self) and self.serverThread is not None :
 			self.serverThread._terminate(mode if restart and mode != '' else '', loadFile)
+		if 'serverPThread' in dir(self) and self.serverPThread is not None :
+			self.serverPThread._terminate(mode if restart and mode != '' else '', loadFile)
 		if not restart : self.END = True
 
 	def saveCache(self):

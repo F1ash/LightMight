@@ -39,7 +39,7 @@ class xr_client:
 		while i < self.probeCount :
 			try :
 				str_ = ''
-				self.s = SSLServerProxy(self.servaddr, self.TLS)
+				self.s = SSLServerProxy(self.servaddr, self.TLS, Settings)
 				# self.methods = self.s.system.listMethods()
 				if not self.s.Ready :
 					str_ = '[in run() clnt.py ] Client not runned\nRepeat action.'

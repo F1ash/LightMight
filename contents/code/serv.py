@@ -24,7 +24,8 @@ class ServerDaemon():
 		try :
 			error = False; err = ''
 			self._srv = ThreadServer(serveraddr, allow_none = True, \
-									TLS = TLS, certificatePath = cert)
+									TLS = TLS, certificatePath = cert, \
+									S = self.Parent.Settings)
 			if not self._srv.Ready :
 				print 'server init Error'
 				error = True
